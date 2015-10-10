@@ -1,0 +1,1 @@
+load([fileparts(mfilename('fullpath')), '/data/painkiller9511main2.mat'])
