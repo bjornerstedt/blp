@@ -17,7 +17,7 @@ classdef RCpkTest < matlab.unittest.TestCase
            pk.asa = +(pk.substance =='ASA');
            pk.constant = ones(size(pk,1),1);
            pk.Xtablets2 = pk.Xtablets*10e-7;
-           demand = MixedLogitDemand(pk);
+           demand = MixedLogitDemand2(pk);
            if ces
                demand.settings.ces = true;
                demand.var.marketsize = 'BL_CES';

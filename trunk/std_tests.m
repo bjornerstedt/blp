@@ -26,7 +26,7 @@ testdiff(results{'p','Std_err'} , 0.0049173)
 % Test that result is within 0.1% of true value
 testtrue(results{'p','Coef'} , m.model.beta(1) )
 
-%% Test: MixedLogitDemand
+%% Test: MixedLogitDemand - rc_constant
 m = SimMarket(model);
 m.demand = MixedLogitDemand;
 m.init();
@@ -38,6 +38,21 @@ testdiff(results{'p','Coef'} , -1.001)
 testdiff(results{'p','Std_err'} , 0.0050055)
 
 testtrue(results{'p','Coef'} , m.model.beta(1) )
+
+%% Test: MixedLogitDemand - rc_x
+m = SimMarket(model);
+m.demand = MixedLogitDemand;
+m.model.nonlinear = 'x';
+%m.model.endog = true;
+m.init();
+results = m.simulateDemand()
+testdiff(results{1, 'sh'} , 0.018867)
+testdiff(results{1, 'p'} , 5.1041)
+results = m.estimate()
+testdiff(results{'p','Coef'} , -1.001)
+testdiff(results{'p','Std_err'} , 0.0050055)
+
+testtrue(results{'rc_x','Coef'} , m.model.rc_sigma )
 
 %% Test: CES MixedLogitDemand
 m = SimMarket(model);

@@ -1,4 +1,4 @@
-classdef SimMarket  < matlab.mixin.Copyable 
+classdef SimMarket < matlab.mixin.Copyable 
 % SimMarket creates simulated data and estimates on it
 % MONTE-CARLO NESTED AND MIXED LOGIT MODELS 
 % Simulate data based on model and estimate

@@ -20,6 +20,7 @@ classdef MixedLogitDemand < NestedLogitDemand
         W
         ZWZ
         inv_x1ZWZx1
+        estimationMatrix
     end
     
     methods
@@ -510,6 +511,8 @@ classdef MixedLogitDemand < NestedLogitDemand
             else
                 bet = obj.inv_x1ZWZx1 * (obj.X' * del);
             end
+%             bet = obj.estimationMatrix * del;
+
             xi = del - obj.X * bet;
         end
         
@@ -547,6 +550,12 @@ classdef MixedLogitDemand < NestedLogitDemand
                 obj.W = inv(xiZ'*xiZ);
             end
             
+%             if ~isempty(obj.Z)
+%                 obj.ZWZ = obj.Z * obj.W * obj.Z';
+%                 obj.estimationMatrix = inv(obj.X'*obj.ZWZ*obj.X) * obj.X' * obj.ZWZ;
+%             else
+%                 obj.estimationMatrix = inv(obj.X'*obj.X) * obj.X';
+%             end
             if ~isempty(obj.Z)
                 obj.ZWZ = obj.Z * obj.W * obj.Z';
                 obj.inv_x1ZWZx1 = inv(obj.X'*obj.ZWZ*obj.X);
