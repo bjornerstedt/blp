@@ -9,8 +9,8 @@ ces = true   % Set ces to choose between ces and unit demand
 
 % Other parameters
 show = true;
-saveXLS = false;
-bootreps = 1
+saveXLS = true;
+bootreps = 1000
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Demand Estimation
@@ -40,7 +40,6 @@ if RC
     end
     
     demand.var.nonlinear = 'paracetamol fizzy branded constant';
-    demand.var.nonlinear = 'paracetamol';
     
     demand.var.market = 'time';
     demand.var.panel = 'product';
@@ -53,7 +52,7 @@ if RC
     
     demand.settings.drawmethod = 'quadrature';
     demand.settings.paneltype = 'lsdv';
-    demand.settings.quaddraws = 4;
+    demand.settings.quaddraws = 10;
     demand.settings.nocons = true;
     demand.init();
     
@@ -340,7 +339,6 @@ parfor_progress;
 end
 parfor_progress(0);
 alldata.Result = categorical(alldata.Result);
-if bootreps > 1
-    save(fn, 'alldata');
-    pk_bootstrap_output
-end
+    
+pk_bootstrap_output
+

@@ -1,0 +1,3157 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Multi-dimensional derivatives in the analysis of demand and markets
+\end_layout
+
+\begin_layout Title
+(Matlab calcs documentation version)
+\end_layout
+
+\begin_layout Author
+Jonas Björnerstedt
+\end_layout
+
+\begin_layout Date
+2015-09-13
+\end_layout
+
+\begin_layout Abstract
+Analysis of the second derivatives of vector valued functions require the
+ definition of a multi-dimensional Hessian.
+ Rules for three dimensional matrix operations are defined and used to analyze
+ some issues in demand and market analysis.
+ 
+\end_layout
+
+\begin_layout Standard
+In various problems, multi-dimensional derivatives can be of use in calculation.
+ For a real valued function of several variables, the first derivative is
+ a vector valued function and the second derivative is a matrix valued function.
+ Higher dimensional derivatives require a representation beyond the standard
+ objects and operations of matrix algebra.
+ Similarly, for vector or matrix valued functions, the second and first
+ derivatives require a representation of derivative rules beyond standard
+ analysis.
+\end_layout
+
+\begin_layout Standard
+In Magnus & Neudecker (1999), the multi dimensional Hessian is represented
+ as a 
+\begin_inset Formula $pn\times n$
+\end_inset
+
+ matrix, with operations involving the Kronecker product to project extra
+ dimensions onto a two dimensional matrix representation of the derivative.
+ This strategy is less appealing than the one chosen in this paper for two
+ reasons.
+ Kronecker products generate sparse matrices in their representation, requiring
+ sparse matrix computations or an computational implementation that does
+ not correspond to the operations as defined.
+ We also believe that operations defined in this way are less clear than
+ one based on multi-dimensional matrices, with each derivative occupying
+ a single separate dimension.
+\end_layout
+
+\begin_layout Standard
+We develop methods required to handle multi dimensional derivatives in the
+ context of marked demand and equilibrium.
+ Complete generality of the methods defined has not been a goal of the analysis.
+ One can for example define multiplication of multi dimensional matrices
+ in various other ways than the ones chosen.
+ Only the methods required for differentiation of matrix expressions are
+ defined.
+ The analysis can relatively easily be extended to higher derivatives, with
+ matrices of more than three dimensions.
+ 
+\end_layout
+
+\begin_layout Standard
+The tools developed are then applied in the analysis of mixed logit demand
+ and markets.
+ 
+\end_layout
+
+\begin_layout Enumerate
+In a model with many random coefficients, the Hessian of the objective with
+ respect to the random coefficients is important in finding an equilibrium.
+ The Hessian could possibly eliminate local equilibria and improve the robustnes
+s of BLP estimation with many random coefficients.
+ In addition the number of steps required in the optimization is reduced,
+ increasing the speed of estimation.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Most of the computational time in a BLP estimation is in the contraction,
+ the fixed point itreation to find the average utilities.
+ With a Hessian, a better guess for a starting point for an iteration can
+ be made, using a second order Taylor expansion.
+\end_layout
+
+\begin_layout Enumerate
+Finding an equilibrium in a multi-product market entails finding the price
+ vector solving a n-dimensional root problem 
+\begin_inset Formula $f\left(p\right)=0$
+\end_inset
+
+.
+ The Newton method is the most common method to solve multi-dimensional
+ fixed point problems.
+ It uses the derivative of the function 
+\begin_inset Formula $f$
+\end_inset
+
+ to find the price 
+\begin_inset Formula $p$
+\end_inset
+
+ satisfying the equation.
+ As 
+\begin_inset Formula $f$
+\end_inset
+
+ is the first order condition, it includes the Jacobian matrix of demand.
+ A derivative of 
+\begin_inset Formula $f$
+\end_inset
+
+ necessitates the calculation of a three-dimensional Hessian.
+\end_layout
+
+\begin_layout Standard
+Routines for handling multi dimensional arrays have been implemented in
+ C++ using the Armadillo library, and Hessians for random coefficient and
+ nested logit demand in Matlab and C++.
+ 
+\end_layout
+
+\begin_layout Section
+Multi-dimensional matrices
+\end_layout
+
+\begin_layout Standard
+Here define matrix operations on three-dimensional arrays analogously to
+ the definition of standard matrix operations.
+ We will not provide a full generalization, with for example all possible
+ types of vector based multiplications.
+ The extensions provided are ones that are sufficient to handle rules of
+ derivations of second derivatives of vector valued functions.
+ The extension to higher order derivatives using higher dimensional arrays
+ require only a little more notation, however.
+\end_layout
+
+\begin_layout Standard
+A three dimensional array is an ordered set of matrices of identical dimensions.
+ Arrays are said to have rows, columns and layers.
+ A 
+\begin_inset Formula $m\times n\times k$
+\end_inset
+
+ array consists of 
+\begin_inset Formula $m$
+\end_inset
+
+ rows (
+\begin_inset Formula $n\times k$
+\end_inset
+
+ matrices), etc.
+ We will define array multiplication along the lines of matrix multiplication,
+ with the resultant array having elements that are dot products of vectors
+ from the arrays multiplied, as this is sufficient to specify product and
+ chain rules.
+\end_layout
+
+\begin_layout Subsection
+Multi-dimensional matrix operations
+\end_layout
+
+\begin_layout Standard
+To reduce notation, in the following we let 
+\begin_inset Formula $m,n,k$
+\end_inset
+
+ denote both indeces in a certain dimension and the dimensionality.
+ Multiplication by scalar and addition of arrays will be defined as with
+ matrices, requiring identical dimensions in the latter case.
+ For practical reasons we will allow the element by element operator 
+\begin_inset Formula $\odot$
+\end_inset
+
+ (the Hadamard product) to multiply a matrix 
+\begin_inset Formula $A$
+\end_inset
+
+ with an array 
+\begin_inset Formula $B$
+\end_inset
+
+, given that their first two dimensions are identical.
+ If 
+\begin_inset Formula $K$
+\end_inset
+
+ is a 
+\begin_inset Formula $n\times m$
+\end_inset
+
+ matrix and 
+\begin_inset Formula $M$
+\end_inset
+
+ is a 
+\begin_inset Formula $n\times m\times k$
+\end_inset
+
+ cube, we let 
+\begin_inset Formula $K\odot M=M\odot K$
+\end_inset
+
+ be the cube where each layer of 
+\begin_inset Formula $M$
+\end_inset
+
+ is multiplied term by term with 
+\begin_inset Formula $K$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection
+Vector multiplication
+\end_layout
+
+\begin_layout Standard
+A two dimensional matrix can be pre- and post multiplied by a vector.
+ The transposed vector is multiplied by each row/column in turn, reducing
+ this dimension to one.
+ Similarly, a three dimensional array can multipy in three directions.
+ Post-multiplication 
+\begin_inset Formula $Ax$
+\end_inset
+
+ implies that each row of the array 
+\begin_inset Formula $A$
+\end_inset
+
+ is multiplied by the (transposed) column vector 
+\begin_inset Formula $x$
+\end_inset
+
+.
+ The transpose of 
+\begin_inset Formula $b$
+\end_inset
+
+ is here denoted 
+\begin_inset Formula $b^{T}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+A three-dimensional matrix 
+\begin_inset Formula $A$
+\end_inset
+
+ can be multiplied by a vector 
+\begin_inset Formula $b$
+\end_inset
+
+ in three directions:
+\end_layout
+
+\begin_layout Enumerate
+Premultiplication 
+\begin_inset Formula $b{}^{T}A$
+\end_inset
+
+ multiplies the elements of 
+\begin_inset Formula $A$
+\end_inset
+
+ along it's first dimension, rows.
+\end_layout
+
+\begin_layout Enumerate
+Postmultiplication 
+\begin_inset Formula $Ab$
+\end_inset
+
+ multiplies along the second dimension, columns.
+\end_layout
+
+\begin_layout Enumerate
+Layer multiplication, here denoted by 
+\begin_inset Formula $A\cdot b$
+\end_inset
+
+ and 
+\begin_inset Formula $b{}^{T}\cdot A$
+\end_inset
+
+, multiplies 
+\begin_inset Formula $A$
+\end_inset
+
+ along the third dimension, layers.
+\end_layout
+
+\begin_layout Standard
+Analogously to the transformation of 1x1 matrices to scalars, we can collapse
+ arrays to matrices if the number of items in one direction is 1.
+ Thus for example post-multiplying an array by a vector creates an array
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Matrix multiplication
+\end_layout
+
+\begin_layout Standard
+A definition of array multiplication has to specify two things
+\end_layout
+
+\begin_layout Enumerate
+how to choose vectors of 
+\begin_inset Formula $A$
+\end_inset
+
+ and 
+\begin_inset Formula $B$
+\end_inset
+
+ to combine to form an element of 
+\begin_inset Formula $C$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+the order in which the vector multiplications are stacked in 
+\begin_inset Formula $C$
+\end_inset
+
+.
+ In using the product, we might need a transposition in order to obtain
+ the correct individual terms.
+ 
+\end_layout
+
+\begin_layout Standard
+Conceptually, it is best to think of 
+\begin_inset Formula $AB$
+\end_inset
+
+ as an extension of 
+\begin_inset Formula $Ab$
+\end_inset
+
+, multiplying rows of 
+\begin_inset Formula $A$
+\end_inset
+
+ with columns of 
+\begin_inset Formula $B$
+\end_inset
+
+ in turn (i.e.
+ the column index is the outer loop of the iteration).
+ 
+\end_layout
+
+\begin_layout Standard
+Post multiplication of 
+\begin_inset Formula $A$
+\end_inset
+
+ by a matrix 
+\begin_inset Formula $B$
+\end_inset
+
+ applies the vector multiplication above to each column 
+\begin_inset Formula $b_{i}$
+\end_inset
+
+ of 
+\begin_inset Formula $B$
+\end_inset
+
+.
+ If 
+\begin_inset Formula $A$
+\end_inset
+
+ is a 
+\begin_inset Formula $k\times m\times n$
+\end_inset
+
+ matrix, we define the post-multiplications 
+\end_layout
+
+\begin_layout Enumerate
+With 
+\begin_inset Formula $B$
+\end_inset
+
+ a 
+\begin_inset Formula $m\times p$
+\end_inset
+
+ matrix, 
+\begin_inset Formula $C=AB$
+\end_inset
+
+ denotes matrix multiplication in the 
+\emph on
+two first
+\emph default
+ dimensions, giving a 
+\begin_inset Formula $k\times p\times n$
+\end_inset
+
+ matrix.
+ Multiplication is for each layer 
+\begin_inset Formula $n$
+\end_inset
+
+ of 
+\begin_inset Formula $A$
+\end_inset
+
+.
+ Elements of 
+\begin_inset Formula $C$
+\end_inset
+
+ consist of rows of 
+\begin_inset Formula $A$
+\end_inset
+
+ multiplied with columns of 
+\begin_inset Formula $B$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+With 
+\begin_inset Formula $B$
+\end_inset
+
+ a 
+\begin_inset Formula $n\times p$
+\end_inset
+
+ matrix, 
+\begin_inset Formula $A\cdot B$
+\end_inset
+
+ denotes matrix multiplication in the 
+\emph on
+first and third
+\emph default
+ dimensions, giving a 
+\begin_inset Formula $k\times m\times p$
+\end_inset
+
+ matrix.
+ Multiplication is for each stack (third dimension) 
+\begin_inset Formula $n$
+\end_inset
+
+ of 
+\begin_inset Formula $A$
+\end_inset
+
+ multiplied with columns of 
+\begin_inset Formula $B$
+\end_inset
+
+.
+ It is thus a matrix multiplication for each matrix in the second dimension.
+ For each column, the elements in rows and layers constitute a 
+\begin_inset Formula $k\times n$
+\end_inset
+
+ matrix.
+\end_layout
+
+\begin_layout Standard
+Similarly for pre-multiplication
+\end_layout
+
+\begin_layout Enumerate
+With 
+\begin_inset Formula $B$
+\end_inset
+
+ a 
+\begin_inset Formula $p\times k$
+\end_inset
+
+ matrix, 
+\begin_inset Formula $BA$
+\end_inset
+
+ denotes matrix multiplication in the 
+\emph on
+two first
+\emph default
+ dimensions, giving a 
+\begin_inset Formula $p\times m\times n$
+\end_inset
+
+ matrix.
+ Multiplication is for each layer 
+\begin_inset Formula $n$
+\end_inset
+
+ of 
+\begin_inset Formula $A$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+With 
+\begin_inset Formula $B$
+\end_inset
+
+ a 
+\begin_inset Formula $p\times k$
+\end_inset
+
+ matrix, 
+\begin_inset Formula $B\cdot A$
+\end_inset
+
+ denotes matrix multiplication in the 
+\emph on
+first and third
+\emph default
+ dimensions, giving a 
+\begin_inset Formula $p\times m\times n$
+\end_inset
+
+ matrix.
+ Multiplication is for each first dimension 
+\begin_inset Formula $k$
+\end_inset
+
+ of 
+\begin_inset Formula $A$
+\end_inset
+
+.
+ (This type of pre-multiplication is not used in the current analysis.)
+\end_layout
+
+\begin_layout Standard
+The first type of multiplication is useful for calculations of derivatives
+ of products, while the second is useful to express the multi-dimensional
+ chain rule and for directional derivatives.
+\end_layout
+
+\begin_layout Subsubsection
+Reduction in dimensionality
+\end_layout
+
+\begin_layout Standard
+In most expositions of standard linear algebra, the transformation from
+ matrices to scalars are implicit.
+ We will extend this idea of implicit conversion to the reduction of dimensional
+ity when multiplying an array with a vector.
+ 
+\end_layout
+
+\begin_layout Standard
+As long as matrix multiplication is based on dot products of columns and
+ rows, multiplying a matrix by a vector reduces the dimensionality by 1,
+ multiplying by a matrix changes the number of elements in a dimension but
+ leaves the dimensionality unchanged.
+ Mutiplying by a three dimensional array increases the dimensionality of
+ the other matrix by 1.
+\end_layout
+
+\begin_layout Subsection
+Transpose
+\end_layout
+
+\begin_layout Standard
+A two-dimensional matrix can be transposed.
+ A three dimensional matrix has 6 configurations, that can be attained through
+ a rotation of one or two steps and by transposing two dimensions keeping
+ the third fixed.
+ (A rotation can be achieved by a pair of transpositions.) If the dimensions
+ are rows (down), columns (right) and layers (out), then a matrix reorientation
+ can be described by the new order compared to the previous, all the permutation
+s of the set 
+\begin_inset Formula $\left\{ 1,2,3\right\} $
+\end_inset
+
+.
+ In the applications that follow, only transposition in the first two dimensions
+ are used, however.
+ The transpose 
+\begin_inset Formula $\left\{ 2,1,3\right\} $
+\end_inset
+
+ implies a standard matrix transpose of each layer of a three dimensional
+ array.
+ 
+\end_layout
+
+\begin_layout Subsection
+Multi dimensional derivatives
+\end_layout
+
+\begin_layout Standard
+Now we will define derivatives of vector and array valued functions.
+ We will derive product and chain rules by verifying that the individual
+ elements have
+\end_layout
+
+\begin_layout Subsubsection
+The standard derivative
+\end_layout
+
+\begin_layout Standard
+Derivatives add a dimension to the end of matrices.
+ A function 
+\begin_inset Formula $f:\mathbb{R}^{k}\rightarrow\mathbb{R}$
+\end_inset
+
+ has a 
+\begin_inset Formula $1\times k$
+\end_inset
+
+ derivative (Jacobian), with the linear function being represented by post-multi
+plication of 
+\begin_inset Formula $x$
+\end_inset
+
+.
+ The second derivative adds rows, creating a 
+\begin_inset Formula $n\times n$
+\end_inset
+
+ matrix, with the linear function being a quadratic form.
+ 
+\end_layout
+
+\begin_layout Standard
+If 
+\begin_inset Formula $f:\mathbb{R}^{k}\rightarrow\mathbb{R}^{m}$
+\end_inset
+
+, the derivative (the Jacobian) is defined as a 
+\begin_inset Formula $m\times k$
+\end_inset
+
+ matrix, again with post-multiplication of 
+\begin_inset Formula $x\in\mathbb{R}^{k}$
+\end_inset
+
+, now to get a column vector in the range space 
+\begin_inset Formula $\mathbb{R}^{m}$
+\end_inset
+
+.
+ The columns of the Jacobian are the partials with respect to each of the
+ 
+\begin_inset Formula $k$
+\end_inset
+
+ dimensions.
+\end_layout
+
+\begin_layout Subsubsection
+Matrix valued derivatives
+\end_layout
+
+\begin_layout Standard
+We now define the derivative of vector and matrix valued functions as three
+ dimensional arrays.
+ Let 
+\begin_inset Formula $F:\mathbb{R}^{k}\rightarrow\mathbb{R}^{mp}$
+\end_inset
+
+ be a matrix valued function, for example the Jacobian in a FOC.
+ Analogously to the standard derivative, a dimension will be added to create
+ the 
+\begin_inset Formula $m\times p\times k$
+\end_inset
+
+ array 
+\begin_inset Formula $\frac{\partial F\left(x\right)}{\partial x}$
+\end_inset
+
+.
+ Each of the 
+\begin_inset Formula $k$
+\end_inset
+
+ layers in the array contain the partials of the matrix valued function
+ with respect to a dimension in the domain.
+ 
+\end_layout
+
+\begin_layout Standard
+We will allow vector valued functions to have multi dimensional derivatives,
+ rather than creating the Jacobian matrix as discussed above.
+ Letting 
+\begin_inset Formula $m=1$
+\end_inset
+
+ or 
+\begin_inset Formula $p=1$
+\end_inset
+
+ allows taking derivatives of row and column vector valued functions.
+ The resultant derivative will be 
+\begin_inset Formula $1\times p\times k$
+\end_inset
+
+ and 
+\begin_inset Formula $m\times1\times k$
+\end_inset
+
+ arrays.
+ As will be shown, consistent and simple expressions of product rules emerge
+ with these derivatives, in contrast with standard derivatives.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Verifying that the new and the standard rules can be used interchangably.
+\end_layout
+
+\begin_layout Standard
+Unfinished...
+\end_layout
+
+\begin_layout Standard
+In order for the derivative rules to be simple for scalar, vector and matrix
+ functions, we define the Hessian as a 
+\begin_inset Formula $1\times n\times n$
+\end_inset
+
+ array for scalar valued functions, using the array multiplication rules
+ as defined to reduce dimensionality.
+ The derivative of a 
+\begin_inset Formula $1\times m$
+\end_inset
+
+ vector valued function is thus 
+\begin_inset Formula $1\times m\times n$
+\end_inset
+
+, not a 
+\begin_inset Formula $m\times n$
+\end_inset
+
+ matrix.
+ 
+\end_layout
+
+\begin_layout Standard
+In a directional derivative the two last dimensions can be multiplied by
+ a direction in a Hessian differential.
+ Thus we have 
+\begin_inset Formula $x{}^{T}\cdot Ax$
+\end_inset
+
+, a 
+\begin_inset Formula $n\times1$
+\end_inset
+
+ vector.
+\end_layout
+
+\begin_layout Subsubsection
+Derivatives and linear functionals
+\end_layout
+
+\begin_layout Standard
+If 
+\begin_inset Formula $A$
+\end_inset
+
+ is the Hessian, then 
+\begin_inset Formula $x{}^{T}A$
+\end_inset
+
+ is the row vector representing the change in the derivative at 
+\begin_inset Formula $x$
+\end_inset
+
+.
+ In constructing the second derivative of a real valued function 
+\begin_inset Formula $f:\mathbb{R}^{k}\rightarrow\mathbb{R}$
+\end_inset
+
+, it can be seen as the derivative of a vector valued function.
+ As the first derivative 
+\begin_inset Formula $\frac{\partial f}{\partial x}$
+\end_inset
+
+ is a row vector, however, we let 
+\begin_inset Formula $g$
+\end_inset
+
+ be transpose of the derivative 
+\begin_inset Formula $g\left(x\right)=\left(\frac{\partial f}{\partial x}\right)^{T}$
+\end_inset
+
+.
+ We then have 
+\begin_inset Formula 
+\[
+\frac{\partial g}{\partial x}=\left(\frac{\partial^{2}f}{\partial x^{2}}\right)^{T}=\frac{\partial^{2}f}{\partial x^{2}}
+\]
+
+\end_inset
+
+as cross derivatives are equal for continuously differentiable functions.
+\end_layout
+
+\begin_layout Standard
+One requirement for matrix multiplication is that directional derivatives
+ work for this operation.
+ 
+\end_layout
+
+\begin_layout Subsection
+Product rule
+\end_layout
+
+\begin_layout Standard
+We wish to define the product rule to get a resultant derivative that conforms
+ with the rules above.
+\end_layout
+
+\begin_layout Subsubsection
+Vector product
+\end_layout
+
+\begin_layout Standard
+With standard rules of differentiating the product rule is rather different
+ than the scalar version.
+ Let the function 
+\begin_inset Formula $h\left(x\right)=f\left(x\right){}^{T}\cdot g\left(x\right)=\sum_{i=1}^{k}f_{i}\left(x\right)g_{i}\left(x\right)$
+\end_inset
+
+ where 
+\begin_inset Formula $h:\mathbb{R}^{k}\rightarrow\mathbb{R}$
+\end_inset
+
+ has the derivative (row vector) 
+\begin_inset Formula $\mathsf{D}h\left(x\right)$
+\end_inset
+
+.
+ Element 
+\begin_inset Formula $k$
+\end_inset
+
+ is given by
+\begin_inset Formula 
+\begin{equation}
+\frac{\partial h}{\partial x}=g\left(x\right){}^{T}\frac{\partial f\left(x\right)}{\partial x}+f\left(x\right){}^{T}\frac{\partial g\left(x\right)}{\partial x}\label{eq:prod-rule}
+\end{equation}
+
+\end_inset
+
+The change of terms that are transposed are needed to make the terms of
+ the RHS of the same dimension and the derivative of 
+\begin_inset Formula $h$
+\end_inset
+
+ a 
+\begin_inset Formula $1\times k$
+\end_inset
+
+ vector valued function.
+ Some intuition can be gained by the observation that 
+\begin_inset Formula $f\left(x\right){}^{T}\cdot g\left(x\right)=g\left(x\right){}^{T}\cdot f\left(x\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection
+Product of matrices
+\end_layout
+
+\begin_layout Standard
+We can extend the product rule to 
+\begin_inset Formula $H\left(x\right)=F\left(x\right)G\left(x\right)$
+\end_inset
+
+ for matrix functions 
+\begin_inset Formula $F\left(x\right)$
+\end_inset
+
+ and 
+\begin_inset Formula $G\left(x\right)$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Consider a term 
+\begin_inset Formula 
+\[
+h_{mn}\left(x\right)=\sum_{p}f_{mp}\left(x\right)g_{pn}\left(x\right)
+\]
+
+\end_inset
+
+The derivative wrt 
+\begin_inset Formula $x_{k}$
+\end_inset
+
+ is given by 
+\begin_inset Formula 
+\[
+\frac{\partial h_{mn}\left(x\right)}{\partial x_{k}}=\sum_{p}\frac{\partial f_{mp}\left(x\right)}{\partial x_{k}}g_{pn}\left(x\right)+\sum_{p}f_{mp}\left(x\right)\frac{\partial g_{pn}\left(x\right)}{\partial x_{k}}
+\]
+
+\end_inset
+
+by application of the univariate product rule on each term in the sum.
+ In matrix terms, this can be rewritten as the following matrix equation
+ 
+\begin_inset Formula 
+\[
+\frac{\partial H\left(x\right)}{\partial x_{k}}=\frac{\partial F\left(x\right)}{\partial x_{k}}G\left(x\right)+F\left(x\right)\frac{\partial G\left(x\right)}{\partial x_{k}}
+\]
+
+\end_inset
+
+Stacking the derivative matrices 
+\begin_inset Formula $\frac{\partial H\left(x\right)}{\partial x_{k}}$
+\end_inset
+
+ into arrays, and using the definitions of array multiplications above gives
+ 
+\begin_inset Formula 
+\[
+\frac{\partial H\left(x\right)}{\partial x}=\frac{\partial F\left(x\right)}{\partial x}G\left(x\right)+F\left(x\right)\frac{\partial G\left(x\right)}{\partial x}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+With the alternate notation, this can be written as.
+ 
+\begin_inset Formula 
+\[
+\mathsf{D}h\left(x\right)=\mathsf{D}F\left(x\right)G\left(x\right)+F\left(x\right)\mathsf{D}G\left(x\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula $F:\mathbb{R}^{k}\rightarrow\mathbb{R}^{m\times p}$
+\end_inset
+
+ and 
+\begin_inset Formula $G:\mathbb{R}^{k}\rightarrow\mathbb{R}^{p\times n}$
+\end_inset
+
+.
+ Then 
+\begin_inset Formula $\mathsf{D}F\left(x\right)$
+\end_inset
+
+ is a 
+\begin_inset Formula $m\times p\times k$
+\end_inset
+
+, and 
+\begin_inset Formula $\mathsf{D}G\left(x\right)$
+\end_inset
+
+ is a 
+\begin_inset Formula $p\times n\times k$
+\end_inset
+
+ matrix.
+ Thus the product in both of the elements fo the sum below is 
+\begin_inset Formula $m\times n\times k$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Subsection
+The chain rule
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula $h\left(x\right)=g\left(f\left(x\right)\right)$
+\end_inset
+
+, where
+\begin_inset Formula $f:\mathbb{R}^{n}\rightarrow\mathbb{R}^{m}$
+\end_inset
+
+ and 
+\begin_inset Formula $g:\mathbb{R}^{m}\rightarrow\mathbb{R}^{p}$
+\end_inset
+
+.
+ 
+\begin_inset Formula $\mathsf{D}g$
+\end_inset
+
+ is a 
+\begin_inset Formula $p\times m$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathsf{D}f$
+\end_inset
+
+ a 
+\begin_inset Formula $m\times n$
+\end_inset
+
+ matrix.
+ The chain rule of the first derivative is given by:
+\begin_inset Formula 
+\begin{equation}
+\mathsf{D}h\left(x\right)=\mathsf{D}g\left(f\left(x\right)\right)\mathbf{\mathsf{D}}f\left(x\right)\label{eq:standard-chain-rule}
+\end{equation}
+
+\end_inset
+
+or
+\begin_inset Formula 
+\[
+\left(\begin{array}{cccc}
+\frac{\partial g_{1}}{\partial y_{1}} & \frac{\partial g_{1}}{\partial y_{2}} & \ldots & \frac{\partial g_{1}}{\partial y_{n}}\\
+\frac{\partial g_{2}}{\partial y_{1}} & \frac{\partial g_{2}}{\partial y_{2}} & \ldots & \frac{\partial g_{2}}{\partial y_{n}}\\
+\vdots & \vdots & \ddots & \vdots\\
+\frac{\partial g_{n}}{\partial y_{1}} & \frac{\partial g_{n}}{\partial y_{2}} & \ldots & \frac{\partial g_{n}}{\partial y_{n}}
+\end{array}\right)\left(\begin{array}{cccc}
+\frac{\partial f_{1}}{\partial x_{1}} & \frac{\partial f_{1}}{\partial x_{2}} & \ldots & \frac{\partial f_{1}}{\partial x_{n}}\\
+\frac{\partial f_{2}}{\partial x_{1}} & \frac{\partial f_{2}}{\partial x_{2}} & \ldots & \frac{\partial f_{2}}{\partial x_{n}}\\
+\vdots & \vdots & \ddots & \vdots\\
+\frac{\partial f_{n}}{\partial x_{1}} & \frac{\partial f_{n}}{\partial x_{2}} & \ldots & \frac{\partial f_{n}}{\partial x_{n}}
+\end{array}\right)
+\]
+
+\end_inset
+
+This result from standard multivariate calculus can be extended to the case
+ where 
+\begin_inset Formula $g$
+\end_inset
+
+ is a matrix valued function, by taking each dimension 
+\begin_inset Formula $p$
+\end_inset
+
+ and stacking.
+\begin_inset Formula 
+\begin{equation}
+\mathsf{D}H\left(x\right)=\mathsf{D}G\left(f\left(x\right)\right)\cdot\mathbf{\mathsf{D}}f\left(x\right)\label{eq:chain-rule}
+\end{equation}
+
+\end_inset
+
+For each dimension in the range, the calculus is the same for the input
+ dimensions.
+ Thus it is a matrix operation on the last two dimensions.
+ 
+\end_layout
+
+\begin_layout Standard
+Note that the dimensionality of 
+\begin_inset Formula $\mathbf{\mathsf{D}}f\left(x\right)$
+\end_inset
+
+ has been reduced to a 
+\begin_inset Formula $m\times n$
+\end_inset
+
+ matrix.
+ One could alternatively let it be a 
+\begin_inset Formula $m\times1\times n$
+\end_inset
+
+ array, resulting in the product of arrays.
+ Verify that the most natural definition of such multiplication results
+ in a four dimensional array that can be reduced in dimensionality to correspond
+ to the result where reduction in dimensionality id done directly.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Second order chain rule
+\end_layout
+
+\begin_layout Standard
+In the real valued case the second order chain rule is given by:
+\begin_inset Formula 
+\[
+h''\left(x\right)=g''\left(f\left(x\right)\right)\left(f'\left(x\right)\right)^{2}+f''\left(x\right)g'\left(f\left(x\right)\right)
+\]
+
+\end_inset
+
+Extending the chain rule (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:standard-chain-rule"
+
+\end_inset
+
+) to the second derivative, by using (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:chain-rule"
+
+\end_inset
+
+) and the product rule, we get
+\begin_inset Formula 
+\begin{equation}
+\mathsf{D}^{2}h\left(x\right)=\left(\mathsf{D}^{2}g\left(f\left(x\right)\right)\cdot\mathbf{\mathsf{D}}f\left(x\right)\right)\mathbf{\mathsf{D}}f\left(x\right)+\mathsf{D}g\left(f\left(x\right)\right)\mathbf{\mathsf{D}}^{2}f\left(x\right)\label{eq:chain-rule-second-order}
+\end{equation}
+
+\end_inset
+
+Here the second derivatives are arrays.
+\end_layout
+
+\begin_layout Subsubsection
+Partial derivatives with respect to vector arguments
+\end_layout
+
+\begin_layout Standard
+In the generalized implicit function theorem, the function 
+\begin_inset Formula $z=f\left(x,y\right)$
+\end_inset
+
+ where 
+\begin_inset Formula $x,y,z$
+\end_inset
+
+ all have different dimensions.
+ Here we define the derivatives with respect to 
+\begin_inset Formula $x$
+\end_inset
+
+ and 
+\begin_inset Formula $y$
+\end_inset
+
+.
+ Here we define multidimensional derivatives of 
+\begin_inset Formula $z$
+\end_inset
+
+ with respect to 
+\begin_inset Formula $x$
+\end_inset
+
+ and 
+\begin_inset Formula $y$
+\end_inset
+
+ in order to formulate the second order implicit function theorem for vector
+ valued functions.
+ Let 
+\begin_inset Formula $f:\mathbb{R}^{k}\times\mathbb{R}^{p}\rightarrow\mathbb{R}^{m}$
+\end_inset
+
+ .
+ Then 
+\begin_inset Formula $\frac{\partial f}{\partial x}$
+\end_inset
+
+ is a 
+\begin_inset Formula $m\times k$
+\end_inset
+
+ and 
+\begin_inset Formula $\frac{\partial f}{\partial y}$
+\end_inset
+
+ is a 
+\begin_inset Formula $m\times p$
+\end_inset
+
+ matrix.
+ 
+\end_layout
+
+\begin_layout Standard
+With second derivatives, the order of taking derivatives matter for matrix
+ dimensions.
+ The order of derivatives is denoted as follows: 
+\begin_inset Formula $\frac{\partial^{2}f}{\partial x\partial y}\equiv\frac{\partial}{\partial y}\left(\frac{\partial f}{\partial x}\right)$
+\end_inset
+
+.
+ The second derivative 
+\begin_inset Formula $\frac{\partial^{2}f}{\partial x\partial y}$
+\end_inset
+
+ is a 
+\begin_inset Formula $m\times k\times p$
+\end_inset
+
+ and 
+\begin_inset Formula $\frac{\partial^{2}f}{\partial y\partial x}$
+\end_inset
+
+ is a 
+\begin_inset Formula $m\times p\times k$
+\end_inset
+
+ matrix.
+ Note that if a vector 
+\begin_inset Formula $b$
+\end_inset
+
+ multiplies both 
+\begin_inset Formula 
+\begin{equation}
+\frac{\partial^{2}f}{\partial x\partial y}b=\frac{\partial^{2}f}{\partial y\partial x}\cdot b\label{eq:deriv-symmetry-rule}
+\end{equation}
+
+\end_inset
+
+by the definitions of the array multiplication operators.
+ Multiplication by a matrix 
+\begin_inset Formula $B$
+\end_inset
+
+, however, requires transposition of the last two dimensions fo equality.
+ Thus, in general
+\begin_inset Formula 
+\[
+\frac{\partial^{2}f}{\partial x\partial y}B\neq\frac{\partial^{2}f}{\partial y\partial x}\cdot B
+\]
+
+\end_inset
+
+If, however, 
+\begin_inset Formula $y=g\left(x\right)$
+\end_inset
+
+, we have 
+\begin_inset Formula 
+\begin{equation}
+\frac{\partial^{2}f}{\partial x\partial y}\frac{\partial g}{\partial x}=\frac{\partial^{2}f}{\partial y\partial x}\cdot\frac{\partial g}{\partial x}\label{eq:deriv-symmetry-rule-1}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The dimensions are the same 
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+Prove this!
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Old text
+\end_layout
+
+\begin_layout Standard
+In Magnus & Neudecker (1999), the multi dimensional Hessian is represented
+ as a 
+\begin_inset Formula $pn\times n$
+\end_inset
+
+ matrix, where each 
+\begin_inset Formula $\mathsf{H}h_{i}\left(x\right)$
+\end_inset
+
+ is stacked on top of each other.
+ Here we denote the stacked Hessian as 
+\begin_inset Formula $\overline{\mathsf{H}}h\left(x\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Then 
+\begin_inset Formula $\mathsf{H}h\left(x\right)$
+\end_inset
+
+ is a 
+\begin_inset Formula $p\times n\times n$
+\end_inset
+
+ matrix, where elements 
+\begin_inset Formula $\mathsf{H}h_{i}\left(x\right)$
+\end_inset
+
+ is the Hessian of the real valued function 
+\begin_inset Formula $h_{i}\left(x\right)$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Using the notation of Magnus & Neudecker (1999, p 110), we have 
+\begin_inset Formula 
+\begin{equation}
+\overline{\mathsf{H}}h\left(x\right)=\left(I_{p}\otimes\mathbf{\mathsf{D}}f\left(x\right)\right){}^{T}\overline{\mathsf{H}}g\left(f\left(x\right)\right)\mathbf{\mathsf{D}}f\left(x\right)+\left(\mathbf{\mathsf{D}}g\left(f\left(x\right)\right)\otimes I_{n}\right)\overline{\mathsf{H}}f\left(x\right)\label{eq:MN-hessian-chain-rule}
+\end{equation}
+
+\end_inset
+
+The first term in the sum creates the stacked matrix of 
+\begin_inset Formula $p$
+\end_inset
+
+ products of 
+\begin_inset Formula 
+\[
+\mathsf{D}f\left(x\right){}^{T}\mathsf{H}g_{p}\left(f\left(x\right)\right)\mathbf{\mathsf{D}}f\left(x\right)
+\]
+
+\end_inset
+
+In the second term in the sum in (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:MN-hessian-chain-rule"
+
+\end_inset
+
+), 
+\begin_inset Formula $\overline{\mathsf{H}}f\left(x\right)$
+\end_inset
+
+ is a 
+\begin_inset Formula $mn\times n$
+\end_inset
+
+ matrix, with 
+\begin_inset Formula $m$
+\end_inset
+
+ stacked 
+\begin_inset Formula $n\times n$
+\end_inset
+
+ matrices.
+ Each element in the 
+\begin_inset Formula $p\times m$
+\end_inset
+
+ Jacobian 
+\begin_inset Formula $\mathbf{\mathsf{D}}g$
+\end_inset
+
+ is transformed to a 
+\begin_inset Formula $n\times n$
+\end_inset
+
+ diagonal matrix with the same value, creating a 
+\begin_inset Formula $pn\times mn$
+\end_inset
+
+ matrix.
+ 
+\begin_inset Formula 
+\[
+\left(\begin{array}{ccc}
+g_{11}\left(\begin{array}{cc}
+1 & 0\\
+0 & 1
+\end{array}\right) & g_{12}\left(\begin{array}{cc}
+1 & 0\\
+0 & 1
+\end{array}\right) & g_{13}\left(\begin{array}{cc}
+1 & 0\\
+0 & 1
+\end{array}\right)\\
+g_{21}\left(\begin{array}{cc}
+1 & 0\\
+0 & 1
+\end{array}\right) & g_{22}\left(\begin{array}{cc}
+1 & 0\\
+0 & 1
+\end{array}\right) & g_{23}\left(\begin{array}{cc}
+1 & 0\\
+0 & 1
+\end{array}\right)
+\end{array}\right)\left(\begin{array}{c}
+\left(\begin{array}{cc}
+f_{11}^{1} & f_{12}^{1}\\
+f_{21}^{1} & f_{22}^{1}
+\end{array}\right)\\
+\left(\begin{array}{cc}
+f_{11}^{2} & f_{12}^{2}\\
+f_{21}^{2} & f_{22}^{2}
+\end{array}\right)\\
+\left(\begin{array}{cc}
+f_{11}^{3} & f_{12}^{3}\\
+f_{21}^{3} & f_{22}^{3}
+\end{array}\right)
+\end{array}\right)
+\]
+
+\end_inset
+
+Each matrix 
+\begin_inset Formula $i$
+\end_inset
+
+ in the stacked product is the product of row 
+\begin_inset Formula $i$
+\end_inset
+
+ in the g matrix with the vertical column vector in the 
+\begin_inset Formula $f$
+\end_inset
+
+ matrix.
+ 
+\end_layout
+
+\begin_layout Subsection
+Derivative of affine function
+\end_layout
+
+\begin_layout Standard
+Consider the function 
+\begin_inset Formula $F\left(x\right)a$
+\end_inset
+
+, where 
+\begin_inset Formula $F:\mathbb{R}^{k}\rightarrow\mathbb{R}^{n}\times\mathbb{R}^{m}$
+\end_inset
+
+ is a matrix valued function.
+ Then 
+\begin_inset Formula $\mathbf{\mathsf{D}}F$
+\end_inset
+
+ is a 
+\begin_inset Formula $n\times m\times k$
+\end_inset
+
+ matrix, incompatible with the 
+\begin_inset Formula $m\times1$
+\end_inset
+
+ vector 
+\begin_inset Formula $a$
+\end_inset
+
+.
+ But if the taking of derivatives transforms the product to a premultiplication
+ operator (multiplying the 
+\begin_inset Formula $k$
+\end_inset
+
+ different 
+\begin_inset Formula $n\times m$
+\end_inset
+
+ matrices), the correct product is produced.
+ Taking derivatives leaves the products binding by the old dimensions, adding
+ new ones at the end.
+ Note that the individual partials are correct if the last index is layering.
+ If 
+\begin_inset Formula $F$
+\end_inset
+
+ is transposed, the derivative index comes first, solving the problem.
+\end_layout
+
+\begin_layout Subsection
+The implicit function theorem
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula $f\left(x,y\right)=0$
+\end_inset
+
+ where 
+\begin_inset Formula $f:\mathbb{R}^{n}\times\mathbb{R}^{m}\rightarrow\mathbb{R}^{m}$
+\end_inset
+
+.
+ If 
+\begin_inset Formula $\frac{\partial f}{\partial y}^{-1}$
+\end_inset
+
+ exists, then there exists a function 
+\begin_inset Formula $g$
+\end_inset
+
+ locally such that 
+\begin_inset Formula $f\left(x,g(x)\right)=0$
+\end_inset
+
+ and 
+\begin_inset Formula $\frac{\partial y}{\partial x}=-\frac{\partial f}{\partial y}^{-1}\frac{\partial f}{\partial x}$
+\end_inset
+
+.
+ This follows from 
+\begin_inset Formula 
+\begin{equation}
+\frac{\partial f}{\partial y}\frac{\partial y}{\partial x}+\frac{\partial f}{\partial x}=0.\label{eq:first-deriv-implicit}
+\end{equation}
+
+\end_inset
+
+In order for the theorem to hold, the dimensionality of 
+\begin_inset Formula $y$
+\end_inset
+
+ has to be the same as the range space of 
+\begin_inset Formula $f$
+\end_inset
+
+.
+ The dimensionality of (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:first-deriv-implicit"
+
+\end_inset
+
+) is 
+\begin_inset Formula $m\times n$
+\end_inset
+
+.
+  
+\end_layout
+
+\begin_layout Standard
+The second derivative can be found by taking the derivative of the expression
+ above, using the chain and product rules.
+ The derivative of the first term is given by: 
+\begin_inset Formula 
+\[
+\frac{\partial}{\partial x}\left(\frac{\partial f}{\partial y}\frac{\partial y}{\partial x}\right)=\frac{\partial}{\partial x}\left(\frac{\partial f}{\partial y}\right)\frac{\partial y}{\partial x}+\frac{\partial f}{\partial y}\frac{\partial}{\partial x}\left(\frac{\partial y}{\partial x}\right)=\left(\frac{\partial^{2}f}{\partial y\partial x}+\frac{\partial^{2}f}{\partial y^{2}}\cdot\frac{\partial y}{\partial x}\right)\frac{\partial y}{\partial x}+\frac{\partial f}{\partial y}\frac{\partial^{2}y}{\partial x^{2}}
+\]
+
+\end_inset
+
+The derivative of the last term is given by: 
+\begin_inset Formula 
+\[
+\frac{\partial}{\partial x}\frac{\partial f\left(x,y\left(x\right)\right)}{\partial x}=\frac{\partial^{2}f}{\partial x^{2}}+\frac{\partial^{2}f}{\partial x\partial y}\cdot\frac{\partial y}{\partial x}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We have 
+\begin_inset Formula 
+\begin{equation}
+\left(\frac{\partial^{2}f}{\partial y^{2}}\cdot\frac{\partial y}{\partial x}\right)\frac{\partial y}{\partial x}+\frac{\partial^{2}f}{\partial y\partial x}\frac{\partial y}{\partial x}+\frac{\partial^{2}f}{\partial x\partial y}\cdot\frac{\partial y}{\partial x}+\frac{\partial f}{\partial y}\frac{\partial^{2}y}{\partial x^{2}}+\frac{\partial^{2}f}{\partial x^{2}}=0\label{eq:second-deriv-implicit}
+\end{equation}
+
+\end_inset
+
+The dimensionality of (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:second-deriv-implicit"
+
+\end_inset
+
+) is 
+\begin_inset Formula $m\times n\times n$
+\end_inset
+
+.
+ The third term is the transpose of the second term in dimensions 2 and
+ 3.
+\end_layout
+
+\begin_layout Standard
+Thus the second derivative is
+\begin_inset Formula 
+\begin{equation}
+\frac{\partial^{2}y}{\partial x^{2}}=-\frac{\partial f}{\partial y}^{-1}\left[\left(\frac{\partial^{2}f}{\partial y^{2}}\cdot\frac{\partial y}{\partial x}\right)\frac{\partial y}{\partial x}+\frac{\partial^{2}f}{\partial y\partial x}\frac{\partial y}{\partial x}+\frac{\partial^{2}f}{\partial x\partial y}\cdot\frac{\partial y}{\partial x}+\frac{\partial^{2}f}{\partial x^{2}}\right]\label{eq:implicit-function-second-order}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Note that the order of the partials in 
+\begin_inset Formula $\frac{\partial^{2}f}{\partial x\partial y}$
+\end_inset
+
+ makes a difference as to the dimension ordering above.
+ Even though the order of derivatives does not matter given regular assumptions,
+ the matrix will be transposed in dimensions 2 and 3 if the ordering is
+ changed.
+ Perhaps one can use a modified notation in the spirit of Magnus & Neudecker
+ using the transpose operator: 
+\begin_inset Formula $\frac{\partial^{2}f}{\partial x{}^{T}\partial y}$
+\end_inset
+
+.
+ This would perhaps enable a consistent handling of differentials in such
+ expressions.
+\end_layout
+
+\begin_layout Subsection
+The derivative of a matrix inverse
+\end_layout
+
+\begin_layout Standard
+To derive the derivative of a matrix inverse, we start with the identity
+ 
+\begin_inset Formula 
+\[
+F\left(x\right)F\left(x\right)^{-1}=I
+\]
+
+\end_inset
+
+Taking derivatives using the array product rule
+\begin_inset Formula 
+\[
+F\left(x\right)\mathbf{\mathsf{D}}F^{-1}\left(x\right)+\mathbf{\mathsf{D}}F\left(x\right)F^{-1}\left(x\right)=0
+\]
+
+\end_inset
+
+Thus we have
+\begin_inset Formula 
+\begin{equation}
+\mathbf{\mathsf{D}}F^{-1}\left(x\right)=-F\left(x\right){}^{-1}\mathbf{\mathsf{D}}F\left(x\right)F\left(x\right)^{-1}\label{eq:inverse-derivative}
+\end{equation}
+
+\end_inset
+
+Note that it is unclear why transposes are ignored (unless 
+\begin_inset Formula $F$
+\end_inset
+
+ is a symmetric matrix).
+ Multiplications have to be checked also.
+ Compare Magnus & Neudecker, p 183.
+\end_layout
+
+\begin_layout Subsection
+Other operations 
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula $y=f(x)$
+\end_inset
+
+ be a multivariate function 
+\begin_inset Formula $f:\mathbb{R}^{m}\rightarrow\mathbb{R}^{n}$
+\end_inset
+
+ with the 
+\begin_inset Formula $n\times m$
+\end_inset
+
+ Jacobian 
+\begin_inset Formula $\frac{\partial y}{\partial x}$
+\end_inset
+
+.
+ The function 
+\begin_inset Formula $\hat{y}=\widehat{f\left(x\right)}$
+\end_inset
+
+ is then a matrix valued function.
+ It can easily be seen that the multi-dimensional derivative is given by
+\begin_inset Formula 
+\[
+\frac{\partial\hat{y}}{\partial x}=\widehat{\frac{\partial y}{\partial x}}
+\]
+
+\end_inset
+
+ where the 
+\begin_inset Formula $\widehat{}$
+\end_inset
+
+ function maps each column of 
+\begin_inset Formula $\frac{\partial y}{\partial x}$
+\end_inset
+
+ into a diagonal matrix layer of the resultant matrix.
+ 
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+Explain a bit more.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula $Y\left(x\right)=K\odot F\left(x\right)$
+\end_inset
+
+ where 
+\begin_inset Formula $K$
+\end_inset
+
+ does not depend on 
+\begin_inset Formula $x$
+\end_inset
+
+.
+ Then 
+\begin_inset Formula 
+\[
+\frac{\partial Y}{\partial x}=K\odot\frac{\partial F\left(x\right)}{\partial x}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Providing the Hessian in BLP optimization
+\end_layout
+
+\begin_layout Standard
+Calculations become difficult in practice with many random coefficients
+ for two reasons.
+ In order to provide variability over individuals a large population to
+ simulate over is necessary.
+ In addition the optimization routine has to find the optimum over a high
+ dimensional vector when there are many random coefficients.
+\end_layout
+
+\begin_layout Subsection
+The objective function
+\end_layout
+
+\begin_layout Standard
+The objective of the GMM optimization problem is to minimize the residuals
+ 
+\begin_inset Formula $\xi$
+\end_inset
+
+ with respect to the non-linear parameters 
+\begin_inset Formula $\theta$
+\end_inset
+
+: 
+\begin_inset Formula 
+\[
+\xi\left(\theta\right)^{T}\xi\left(\theta\right)
+\]
+
+\end_inset
+
+(In the case where supply is simultaneously estimated, a weighting matrix
+ is required.) 
+\end_layout
+
+\begin_layout Standard
+As shown in Nevo (), the Jacobian of the objective can be calculated, using
+ the implicit function theorem.
+ Individual conditional utility is given by 
+\begin_inset Formula 
+\[
+u_{j}^{i}=\delta_{j}+\mu_{j}^{i}\left(\theta\right)+\xi_{j}+\varepsilon_{ij}
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $\varepsilon$
+\end_inset
+
+ is assumed to have a double exponential distribution.
+ The Jacobian is given by
+\begin_inset Formula 
+\[
+2\xi\left(\theta\right)^{T}\frac{\partial\xi\left(\theta\right)}{\partial\theta}=2\xi\left(\theta\right)^{T}\frac{\partial\delta\left(\theta\right)}{\partial\theta}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Extending the analysis of Nevo, we can calculate the analytic Hessian of
+ the objective with respect to the parameters.
+ The second derivative is given by
+\begin_inset Formula 
+\begin{equation}
+\frac{\partial}{\partial\theta}\left(2\xi\left(\theta\right)^{T}\frac{\partial\delta\left(\theta\right)}{\partial\theta}\right)=2\frac{\partial\delta\left(\theta\right)^{T}}{\partial\theta}\frac{\partial\delta\left(\theta\right)}{\partial\theta}+2\xi\left(\theta\right)^{T}\frac{\partial^{2}\delta\left(\theta\right)}{\partial\theta^{2}}\label{eq:objective-hessian}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The objective function can be split by market:
+\begin_inset Formula 
+\[
+\xi\left(\theta\right)^{T}\xi\left(\theta\right)=\sum_{t}\xi_{t}\left(\theta\right)^{T}\xi_{t}\left(\theta\right)
+\]
+
+\end_inset
+
+By taking the corresponding derivatives of the sum by term, the Jacobian
+ is then given by
+\begin_inset Formula 
+\[
+2\sum_{t}\xi_{t}\left(\theta\right)^{T}\frac{\partial\delta_{t}\left(\theta\right)}{\partial\theta}
+\]
+
+\end_inset
+
+and the Hessian by the sum of (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:objective-hessian"
+
+\end_inset
+
+) subscripted by 
+\begin_inset Formula $t$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Subsection
+Calculating the share Hessians
+\end_layout
+
+\begin_layout Standard
+For individual 
+\begin_inset Formula $i$
+\end_inset
+
+ at time 
+\begin_inset Formula $t$
+\end_inset
+
+, suppressing the 
+\begin_inset Formula $i$
+\end_inset
+
+ index, the first partials in the Jacobian are given by
+\begin_inset Formula 
+\[
+\frac{\partial s_{j}}{\partial\delta_{j}}=s_{j}-s_{j}^{2}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\frac{\partial s_{j}}{\partial\delta_{m}}=-s_{j}s_{m}
+\]
+
+\end_inset
+
+Using these, we get 
+\begin_inset Formula 
+\[
+\frac{\partial^{2}s_{j}}{\partial\delta_{j}^{2}}=\frac{\partial s_{j}}{\partial\delta_{j}}-2\frac{\partial s_{j}}{\partial\delta_{j}}s_{j}=\left(1-2s_{j}\right)\left(s_{j}-s_{j}^{2}\right)=s_{j}-3s_{j}^{2}+2s_{j}^{3}
+\]
+
+\end_inset
+
+The diagonal terms in each layer 
+\begin_inset Formula 
+\[
+\frac{\partial^{2}s_{j}}{\partial\delta_{j}\partial\delta_{m}}=\frac{\partial s_{j}}{\partial\delta_{m}}-2\frac{\partial s_{j}}{\partial\delta_{m}}s_{j}=\left(1-2s_{j}\right)\frac{\partial s_{j}}{\partial\delta_{m}}=-s_{j}s_{m}+2s_{j}s_{j}s_{m}
+\]
+
+\end_inset
+
+By symmetry, the terms with identical first and third dimensions also have
+ this value.
+ Also
+\begin_inset Formula 
+\[
+\frac{\partial^{2}s_{j}}{\partial\delta_{m}\partial\delta_{m}}=\frac{\partial s_{j}}{\partial\delta_{m}}s_{m}+\frac{\partial s_{m}}{\partial\delta_{m}}s_{j}=s_{j}s_{m}s_{m}-\left(s_{m}-s_{m}^{2}\right)s_{j}=-s_{j}s_{m}+2s_{m}s_{m}s_{j}
+\]
+
+\end_inset
+
+Thus these terms are also on the third diagonal.
+ Adding these terms for all three diagonal incorporates the 
+\begin_inset Formula $3s_{j}^{2}$
+\end_inset
+
+ on the main diagonal in the array.
+ Thus only adding 
+\begin_inset Formula $s_{j}$
+\end_inset
+
+ on the main diagonal is required to complete the array.
+\end_layout
+
+\begin_layout Standard
+Other terms are given by
+\begin_inset Formula 
+\[
+\frac{\partial^{2}s_{j}}{\partial\delta_{m}\partial\delta_{n}}=\frac{\partial}{\partial\delta_{n}}\frac{\partial s_{j}}{\partial\delta_{m}}=-\frac{\partial}{\partial\delta_{n}}s_{j}s_{m}=2s_{j}s_{m}s_{n}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The three-dimensional array Hessian can be written as the sum of three arrays:
+\begin_inset Formula 
+\[
+\frac{\partial^{2}s}{\partial\delta^{2}}=S_{1}-S_{2}+2S_{3}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+The diagonal array 
+\begin_inset Formula $S_{1}$
+\end_inset
+
+ has 
+\begin_inset Formula $s_{j}-2s_{j}^{2}$
+\end_inset
+
+ on the diagonal, zeros elsewhere.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Elements in 
+\begin_inset Formula $S_{2}$
+\end_inset
+
+ are 
+\begin_inset Formula $s_{j}s_{m}$
+\end_inset
+
+ for all indices 
+\begin_inset Formula $\left(j,j,m\right)$
+\end_inset
+
+ and 
+\begin_inset Formula $\left(j,m,j\right)$
+\end_inset
+
+ , zero elsewhere
+\end_layout
+
+\begin_layout Enumerate
+Array element 
+\begin_inset Formula $\left(j,m,n\right)$
+\end_inset
+
+ in 
+\begin_inset Formula $S_{3}$
+\end_inset
+
+ is 
+\begin_inset Formula $s_{j}s_{m}s_{n}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+To obtain the Hessian over all individuals the (weighted) average is calculated.
+ Note that the arrays can be calculated successively, summing over individuals
+ first and spreading over symmetric terms afterwards.
+\end_layout
+
+\begin_layout Standard
+The outer product of 
+\begin_inset Formula $s^{i}$
+\end_inset
+
+ with itself generalized to a three dimensional array, can also be more
+ efficiently calculated.
+ Using symmetries
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+Replace 
+\begin_inset Formula $i$
+\end_inset
+
+ index for individuals with 
+\begin_inset Formula $p$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ both multiplication can be done for indeces 
+\begin_inset Formula $i\ge j\ge k$
+\end_inset
+
+, replicating in the component final arrays.
+ This is done with the following steps:
+\end_layout
+
+\begin_layout Enumerate
+Calculate triangular matrix 
+\begin_inset Formula $J^{p}$
+\end_inset
+
+ with 
+\begin_inset Formula $s_{i}^{p}s_{j}^{p}$
+\end_inset
+
+ for 
+\begin_inset Formula $i\ge j$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+For 
+\begin_inset Formula $i\ge j\ge k$
+\end_inset
+
+ calculate triangular array 
+\begin_inset Formula $H^{p}$
+\end_inset
+
+ with terms 
+\begin_inset Formula $\left(s_{i}^{p}s_{j}^{p}\right)s_{k}^{p}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Accumulate 
+\begin_inset Formula $J=\sum_{p}J^{p}$
+\end_inset
+
+ and 
+\begin_inset Formula $H=\sum_{p}H^{p}$
+\end_inset
+
+, 
+\end_layout
+
+\begin_layout Enumerate
+To calculate the other derivatives 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Fill 
+\begin_inset Formula $J^{p}$
+\end_inset
+
+ and 
+\begin_inset Formula $H^{p}$
+\end_inset
+
+ as described below 
+\end_layout
+
+\begin_layout Enumerate
+Calculate products
+\end_layout
+
+\begin_layout Enumerate
+Accumulate
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Fill matrices 
+\begin_inset Formula $J$
+\end_inset
+
+ and 
+\begin_inset Formula $H$
+\end_inset
+
+ with symmetric terms
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+for 
+\begin_inset Formula $j>i$
+\end_inset
+
+ set 
+\begin_inset Formula $J_{ij}=J_{ji}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+for 
+\begin_inset Formula $i>j$
+\end_inset
+
+ and 
+\begin_inset Formula $k>j$
+\end_inset
+
+ set 
+\begin_inset Formula $H_{ijk}=H_{ikj}$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Enumerate
+for 
+\begin_inset Formula $j>i$
+\end_inset
+
+ and all 
+\begin_inset Formula $k$
+\end_inset
+
+ set 
+\begin_inset Formula $H_{ijk}=H_{jik}$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Enumerate
+Subtract 
+\begin_inset Formula $J$
+\end_inset
+
+ from 
+\begin_inset Formula $H$
+\end_inset
+
+ in three 'diagonal' directions and add 
+\begin_inset Formula $s_{j}$
+\end_inset
+
+ to main diagonal
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+For individual 
+\begin_inset Formula $i$
+\end_inset
+
+ at time 
+\begin_inset Formula $t$
+\end_inset
+
+, the vectors of individual shares are denoted 
+\begin_inset Formula $s^{i}$
+\end_inset
+
+ and the vector of individual valuations 
+\begin_inset Formula $\mu^{i}$
+\end_inset
+
+ has elements
+\begin_inset Formula 
+\[
+\mu_{j}^{i}\left(\theta\right)=\sum_{k}\theta_{k}v_{k}^{i}x_{jk}
+\]
+
+\end_inset
+
+In matrix notation, where matrix 
+\begin_inset Formula $V^{i}$
+\end_inset
+
+ has terms 
+\begin_inset Formula $V_{jk}^{i}=v_{k}^{i}x_{jk}$
+\end_inset
+
+ we have
+\begin_inset Formula 
+\[
+\mu_{j}^{i}\left(\theta\right)=V^{i}\theta
+\]
+
+\end_inset
+
+Note that product properties 
+\begin_inset Formula $x_{kj}$
+\end_inset
+
+ and 
+\begin_inset Formula $\theta$
+\end_inset
+
+ are the same for all individuals, and 
+\begin_inset Formula $v_{k}^{i}$
+\end_inset
+
+ the same for all products.
+ With market draws, 
+\begin_inset Formula $v_{k}^{i}$
+\end_inset
+
+ can vary by market.
+ We have 
+\begin_inset Formula 
+\[
+\frac{\partial\mu^{i}}{\partial\theta}=V^{i}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+(Thus 
+\begin_inset Formula $s_{j}^{i}$
+\end_inset
+
+ denote the share of good 
+\begin_inset Formula $j$
+\end_inset
+
+ in individual 
+\begin_inset Formula $i$
+\end_inset
+
+'s demand.) The derivative wrt 
+\begin_inset Formula $\theta$
+\end_inset
+
+ is given by the chain rule.
+ This is simply the matrix product of 
+\begin_inset Formula $\frac{\partial s^{i}}{\partial\delta}$
+\end_inset
+
+ and 
+\begin_inset Formula $\frac{\partial\mu^{i}}{\partial\theta}$
+\end_inset
+
+ jacobians.
+ 
+\begin_inset Formula 
+\[
+\frac{\partial s^{i}}{\partial\theta}=\frac{\partial s^{i}}{\partial\mu^{i}}\frac{\partial\mu^{i}}{\partial\theta}=\frac{\partial s^{i}}{\partial\delta}\frac{\partial\mu^{i}}{\partial\theta}
+\]
+
+\end_inset
+
+Similarly the second derivatives are for each 
+\begin_inset Formula $j$
+\end_inset
+
+ given by 
+\begin_inset Formula $\frac{\partial^{2}s^{i}}{\partial\delta^{2}}$
+\end_inset
+
+, 
+\begin_inset Formula 
+\[
+\frac{\partial^{2}s^{i}}{\partial\theta\partial\delta}=\frac{\partial^{2}s^{i}}{\partial\delta^{2}}\frac{\partial\mu^{i}}{\partial\theta}
+\]
+
+\end_inset
+
+ and as 
+\begin_inset Formula $\frac{\partial\mu^{i}}{\partial\theta}$
+\end_inset
+
+ does not depend on 
+\begin_inset Formula $\theta$
+\end_inset
+
+, the second term in (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:chain-rule-second-order"
+
+\end_inset
+
+) is zero, and we have
+\begin_inset Formula 
+\[
+\frac{\partial^{2}s^{i}}{\partial\theta^{2}}=\frac{\partial^{2}s^{i}}{\partial\delta^{2}}\frac{\partial\mu^{i}}{\partial\theta}\cdot\frac{\partial\mu^{i}}{\partial\theta}
+\]
+
+\end_inset
+
+ Note that the similarity of the last two expressions allow simplification
+ of the second order implicit function calculation.
+ 
+\end_layout
+
+\begin_layout Subsection
+Implicit function theorem
+\end_layout
+
+\begin_layout Standard
+As shown in Nevo (Appendix to Practicioner's guide, 2000), the derivative
+ of the weighted average shares 
+\begin_inset Formula $\sum_{i}w_{i}s^{i}$
+\end_inset
+
+ with weights 
+\begin_inset Formula $w_{i}$
+\end_inset
+
+ is given by 
+\begin_inset Formula 
+\[
+\frac{\partial s}{\partial\delta}=\sum_{i}w^{i}\frac{\partial s^{i}}{\partial\delta}
+\]
+
+\end_inset
+
+and 
+\begin_inset Formula 
+\[
+\frac{\partial s}{\partial\theta}=\sum_{i}w^{i}\frac{\partial s^{i}}{\partial\delta}\frac{\partial\mu^{i}}{\partial\theta}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The second order derivatives are given by: 
+\begin_inset Formula 
+\[
+\frac{\partial^{2}s}{\partial\delta^{2}}=\sum_{i}w^{i}\frac{\partial^{2}s^{i}}{\partial\delta^{2}}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\frac{\partial^{2}s}{\partial\theta\partial\delta}=\sum_{i}w^{i}\frac{\partial^{2}s^{i}}{\partial\delta^{2}}\frac{\partial\mu^{i}}{\partial\theta}
+\]
+
+\end_inset
+
+ and 
+\begin_inset Formula 
+\[
+\frac{\partial^{2}s}{\partial\theta^{2}}=\sum_{i}w^{i}\frac{\partial^{2}s^{i}}{\partial\delta^{2}}\frac{\partial\mu^{i}}{\partial\theta}\cdot\frac{\partial\mu^{i}}{\partial\theta}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Similarly, the second derivatives of shares is the sum of the individual
+ second derivatives.
+ Given a large number of individuals, the share Hessians have to be accumulated
+ together with the share Jacobians.
+ (In Matlab, the function can return several results.)
+\end_layout
+
+\begin_layout Standard
+Applying the second order implicit function (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:implicit-function-second-order"
+
+\end_inset
+
+) 
+\begin_inset Formula 
+\[
+\frac{\partial^{2}\delta\left(\theta\right)}{\partial\theta^{2}}=-\frac{\partial s}{\partial\delta}^{-1}\left[\left(\frac{\partial^{2}s}{\partial\delta^{2}}\cdot\frac{\partial\delta}{\partial\theta}\right)\frac{\partial\delta}{\partial\theta}+\frac{\partial^{2}s}{\partial\delta\partial\theta}\frac{\partial\delta}{\partial\theta}+\frac{\partial^{2}s}{\partial\theta\partial\delta}\cdot\frac{\partial\delta}{\partial\theta}+\frac{\partial^{2}s}{\partial\theta^{2}}\right]
+\]
+
+\end_inset
+
+The Hessian for a market can be calculated by inserting this array in (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:objective-hessian"
+
+\end_inset
+
+).
+ Summing thes matrices over markets gives the Hessian of the objective function.
+\end_layout
+
+\begin_layout Section
+The contraction mapping
+\end_layout
+
+\begin_layout Standard
+the contraction finds the 
+\begin_inset Formula $\delta$
+\end_inset
+
+ given 
+\begin_inset Formula $\mu\left(\theta\right)$
+\end_inset
+
+ that gives the shares corresponding to the actual
+\begin_inset Formula 
+\[
+s_{jt}=\sum_{i}\frac{\exp\left(\delta_{j}+\mu_{ij}\left(\theta\right)\right)}{1+\sum_{j}\exp\left(\delta_{j}+\mu_{ij}\left(\theta\right)\right)}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+s_{jt}=\sum_{i}\frac{\exp\left(\mu_{ij}\left(\theta\right)\right)}{\exp\left(-\delta_{j}\right)+\sum_{j}\exp\left(\mu_{ij}\left(\theta\right)\right)}
+\]
+
+\end_inset
+
+Note that if we have a delta Jacobian, we can use it to get a starting point
+ for 
+\begin_inset Formula $\delta_{t+1}$
+\end_inset
+
+ given 
+\begin_inset Formula $\delta_{t}$
+\end_inset
+
+: 
+\begin_inset Formula 
+\[
+\delta_{t+1}=\delta_{t}+\frac{\partial\delta\left(\theta_{t}\right)}{\partial\theta}\left(\theta_{t+1}-\theta_{t}\right).
+\]
+
+\end_inset
+
+ We can also use a delta Hessian if it is available to further improve the
+ starting point of the fixed point algorithm.
+ 
+\begin_inset Formula 
+\[
+\delta_{t+1}=\delta_{t}+\frac{\partial\delta\left(\theta_{t}\right)}{\partial\theta}\left(\theta_{t+1}-\theta_{t}\right)+\frac{\partial^{2}\delta\left(\theta_{t}\right)}{\partial\theta^{2}}\left(\theta_{t+1}-\theta_{t}\right)\cdot\left(\theta_{t+1}-\theta_{t}\right).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Equilibrium
+\end_layout
+
+\begin_layout Standard
+In equilibrium finding, the root is the price given by the system of first
+ order conditions:
+\begin_inset Formula 
+\[
+f\left(p\right)=\left(R\odot\mathsf{D}s\left(p\right)\right)\left(p-c\right)+s\left(p\right)=0
+\]
+
+\end_inset
+
+Equilibrium can be found using the Newton method, using either a numerical
+ or an analytic derivative of the FOC.
+ 
+\end_layout
+
+\begin_layout Standard
+Taking the derivative of the FOC, we have
+\begin_inset Formula 
+\begin{equation}
+\mathbf{\mathsf{D}}f\left(p\right)=\left(R\odot\mathsf{H}s\left(p\right)\right)\left(p-c\right)+R\odot\mathsf{D}s\left(p\right)+\mathsf{D}s\left(p\right)\label{eq:dfoc}
+\end{equation}
+
+\end_inset
+
+Setting terms to zero before or after taking derivatives does not affect
+ the calculations.
+ We thus have have the Hadamard product 
+\begin_inset Formula $\odot$
+\end_inset
+
+ of each layer along the lines of matrix multiplication above.
+ 
+\end_layout
+
+\begin_layout Itemize
+In calculating the Hessian, the R matrix can be used to reduce the number
+ of calculations if individual calculations are necessary.
+\end_layout
+
+\begin_layout Itemize
+Note that the share Jacobian wrt price uses the Jacobian wrt delta and the
+ Jacobian of the foc uses the Hessian wrt delta.
+\end_layout
+
+\begin_layout Standard
+We thus need
+\begin_inset Formula 
+\[
+\frac{\partial s}{\partial p}=\frac{\partial s}{\partial\delta}\frac{\partial\delta}{\partial p}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\frac{\partial^{2}s}{\partial p^{2}}=\frac{\partial^{2}s}{\partial\delta^{2}}\cdot\frac{\partial\delta}{\partial p}\frac{\partial\delta}{\partial p}
+\]
+
+\end_inset
+
+If prices are not non-linear, the Jacobian and Hessians wrt price are simply
+ 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ and 
+\begin_inset Formula $\alpha^{2}$
+\end_inset
+
+ the Hessian wrt to 
+\begin_inset Formula $\delta$
+\end_inset
+
+ respectively.
+ With non-linear price the sums of individual chain rules cannot be simplified
+ this way.
+ Both partials depend on individual draws, allowing no factorization through
+ the sum that averages over individuals.
+ Thus, in this case 
+\begin_inset Formula 
+\[
+\frac{\partial s}{\partial p}=\frac{1}{N}\sum_{i=1}^{N}\frac{\partial s_{i}}{\partial\delta}\frac{\partial\delta_{i}}{\partial p}=\frac{1}{N}\sum_{i=1}^{N}\frac{\partial s_{i}}{\partial\delta}\left(\alpha+\theta_{p}v_{i}\right)
+\]
+
+\end_inset
+
+ where the sum is a sum of matrices.
+ Similarly
+\begin_inset Formula 
+\[
+\frac{\partial^{2}s}{\partial p^{2}}=\frac{1}{N}\sum_{i=1}^{N}\frac{\partial^{2}s_{i}}{\partial\delta^{2}}\left(\alpha+\theta_{p}v_{i}\right)^{2}
+\]
+
+\end_inset
+
+Note that in calculating the product of the Hessian 
+\begin_inset Formula $R\odot\mathsf{H}s\left(p\right)$
+\end_inset
+
+ in (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:dfoc"
+
+\end_inset
+
+), the 
+\begin_inset Formula $R$
+\end_inset
+
+ matrix can be used a mask of non-zero elements to only calculate partial
+ derivatives that remain.
+\end_layout
+
+\begin_layout Subsection
+Nested logit Hessian
+\end_layout
+
+\begin_layout Standard
+To calculate shares matrix algebra is used.
+ Binary transformation matrix 
+\begin_inset Formula $T_{g}$
+\end_inset
+
+ is a 
+\begin_inset Formula $\left|G\right|\times\left|L\right|$
+\end_inset
+
+ matrix where element 
+\begin_inset Formula $T_{g}\left(g,j\right)=1$
+\end_inset
+
+ if 
+\begin_inset Formula $j$
+\end_inset
+
+ is in group 
+\begin_inset Formula $g$
+\end_inset
+
+.
+ Matrix 
+\begin_inset Formula $T_{h}$
+\end_inset
+
+ is similarly defined for subgroup membership, and ownership matrix 
+\begin_inset Formula $R$
+\end_inset
+
+ similarly maps ownership of firm 
+\begin_inset Formula $r$
+\end_inset
+
+ to product 
+\begin_inset Formula $j$
+\end_inset
+
+.
+ Define 
+\begin_inset Formula 
+\[
+A_{1}=\frac{1}{1-\sigma_{h}}\widehat{s}
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $\hat{s}$
+\end_inset
+
+ is the diagonal matrix of the share vector.
+ Define 
+\begin_inset Formula 
+\begin{equation}
+A_{2}=\left(\frac{1}{1-\sigma_{h}}-\frac{1}{1-\sigma_{g}}\right)T_{h}T_{h}'\odot\left(\hat{s}_{h}^{-1}ss^{T}\right)\label{eq:A_2}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $\odot$
+\end_inset
+
+ denotes element by element multiplication.
+ The 
+\begin_inset Formula $\hat{s}_{h}^{-1}s$
+\end_inset
+
+ term comes from that shares in the subgroup can be expressed as the quotient
+ of shares and the share of the group.
+\begin_inset Formula 
+\begin{eqnarray*}
+A_{3} & = & \frac{\sigma_{g}}{1-\sigma_{g}}T_{g}T_{g}'\odot\left(\hat{s}_{g}^{-1}ss^{T}\right)\\
+ & = & \left(\frac{1}{1-\sigma_{g}}-1\right)T_{g}T_{g}'\odot\left(\hat{s}_{g}^{-1}ss^{T}\right)
+\end{eqnarray*}
+
+\end_inset
+
+We also define 
+\begin_inset Formula 
+\[
+A_{4}=ss^{T}
+\]
+
+\end_inset
+
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\noun off
+\color none
+Then
+\begin_inset Formula 
+\begin{equation}
+\frac{\partial s}{\partial p}=\alpha\left(-A_{1}+A_{2}+A_{3}+A_{4}\right)\label{eq:A-sum}
+\end{equation}
+
+\end_inset
+
+For a derivation of the nested logit share Jacobian see Björnerstedt & Verboven
+ (2014), 
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\noun default
+\color inherit
+Market analysis with mergersim 2
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\noun off
+\color none
+.
+\end_layout
+
+\begin_layout Subsubsection
+Derivative of group shares
+\end_layout
+
+\begin_layout Standard
+We define 
+\begin_inset Formula $G_{h}$
+\end_inset
+
+ as the part of 
+\begin_inset Formula $A_{2}$
+\end_inset
+
+ in (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:A_2"
+
+\end_inset
+
+) that does not depend on shares: 
+\begin_inset Formula 
+\[
+G_{h}=\left(\frac{1}{1-\sigma_{h}}-\frac{1}{1-\sigma_{g}}\right)T_{h}T_{h}^{T}
+\]
+
+\end_inset
+
+The matrix 
+\begin_inset Formula $G_{g}$
+\end_inset
+
+ is defined correspondingly from 
+\begin_inset Formula $A_{3}$
+\end_inset
+
+.
+ Matrices 
+\begin_inset Formula $G_{g}$
+\end_inset
+
+ and 
+\begin_inset Formula $G_{h}$
+\end_inset
+
+ are unchanged over markets, and can thus be calculated once.
+ 
+\end_layout
+
+\begin_layout Standard
+Then we have
+\begin_inset Formula 
+\[
+A_{2}=G_{h}\odot\hat{s}_{h}^{-1}ss^{T}
+\]
+
+\end_inset
+
+Since group shares are given by 
+\begin_inset Formula $s_{h}=T_{h}T_{h}'s$
+\end_inset
+
+, we have 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\noun off
+\color none
+
+\begin_inset Formula 
+\[
+\frac{\partial s_{h}}{\partial p}=T_{h}T_{h}^{T}\frac{\partial s}{\partial p}
+\]
+
+\end_inset
+
+The diagonalization does not affect the fundamental analysis, as it will
+ only put the resultant jacobian on the main diagonal of the cube.
+ Using the derivative of the inverse rule (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:inverse-derivative"
+
+\end_inset
+
+), we have
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\frac{\partial\hat{s}_{h}^{-1}}{\partial p}=-\hat{s}_{h}^{-1}\frac{\partial\hat{s}_{h}}{\partial p}\hat{s}_{h}^{-1}=-\hat{s}_{h}^{-2}\widehat{T_{h}T_{h}^{T}\frac{\partial s}{\partial p}}
+\]
+
+\end_inset
+
+Note that this is just the term by term quotient rule for 
+\begin_inset Formula $1/s_{h}$
+\end_inset
+
+.
+ The diagonalization of 
+\begin_inset Formula $s^{-1}$
+\end_inset
+
+ does not affect the derivatives, but the resultant matrix 
+\begin_inset Formula $\frac{\partial s_{h}^{-1}}{\partial p}$
+\end_inset
+
+ is put on the main diagonal of a cube, denoted 
+\begin_inset Formula $diag\left(\frac{\partial s_{h}}{\partial p}\right)$
+\end_inset
+
+, making each column a diagonal matrix.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Derivative of the outer product of shares
+\end_layout
+
+\begin_layout Standard
+The derivative of the outer product can be calculated if we regard the resultant
+ derivative of a 
+\begin_inset Formula $n\times1$
+\end_inset
+
+ vector as a 
+\begin_inset Formula $n\times1\times n$
+\end_inset
+
+ cube.
+ Then 
+\begin_inset Formula 
+\begin{equation}
+\frac{\partial}{\partial p}ss^{T}=\frac{\partial s}{\partial p}s^{T}+s\frac{\partial s}{\partial p}^{T}=\frac{\partial s}{\partial p}s^{T}+\left(\frac{\partial s}{\partial p}s^{T}\right)^{T}\label{eq:outer-product}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note that this calculation is similar to share hessian calculation for BLP.
+ As the share Jacobian is rather complicated for nested logit, using the
+ Jacobian rather than decomposing it to expressions in terms of shares is
+ preferable.
+\end_layout
+
+\begin_layout Subsubsection
+Combining terms
+\end_layout
+
+\begin_layout Standard
+Taking the derivative of (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:A-sum"
+
+\end_inset
+
+), we get 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\noun off
+\color none
+
+\begin_inset Formula 
+\begin{equation}
+\frac{\partial^{2}s}{\partial p^{2}}=\alpha\left(-\frac{\partial}{\partial p}A_{1}+\frac{\partial}{\partial p}A_{2}+\frac{\partial}{\partial p}A_{3}+\frac{\partial}{\partial p}A_{4}\right)\label{eq:A-sum-deriv}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Taking derivatives of 
+\begin_inset Formula $A_{2}$
+\end_inset
+
+ above
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+In the following expression, 
+\begin_inset Formula $\frac{\partial s}{\partial p}$
+\end_inset
+
+ denotes both the normal Jacobian and the three dimensional one with dim
+ 
+\begin_inset Formula $n\times1\times m$
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+\frac{\partial}{\partial p}A_{2} & = & G_{h}\odot\frac{\partial}{\partial p}\left(\hat{s}_{h}^{-1}ss^{T}\right)\\
+ & = & G_{h}\odot\left(\hat{s}_{h}^{-1}\left(\frac{\partial s}{\partial p}s^{T}+s\frac{\partial s}{\partial p}^{T}\right)+\widehat{\frac{\partial s_{h}^{-1}}{\partial p}}ss^{T}\right)\\
+\end{eqnarray*}
+
+\end_inset
+
+where the 
+\begin_inset Formula $diag$
+\end_inset
+
+ operator is diagonalization from matrix to cube, as defined above.
+ The derivative of 
+\begin_inset Formula $A_{3}$
+\end_inset
+
+ is similar, with 
+\begin_inset Formula $g$
+\end_inset
+
+ subscripts rather than 
+\begin_inset Formula $h$
+\end_inset
+
+.
+ The derivative of 
+\begin_inset Formula $A_{4}$
+\end_inset
+
+ is given by (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:outer-product"
+
+\end_inset
+
+) and 
+\begin_inset Formula 
+\[
+\frac{\partial}{\partial p}A_{1}=\widehat{\frac{\partial s}{\partial p}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+To do
+\end_layout
+
+\begin_layout Itemize
+When are normal and multi dimensional derivatives appropriate? The derivative
+ of an expression that is a matrix is a matrix derivative in it's parts.
+ Do we need to distinguish these notationally? 
+\end_layout
+
+\begin_layout Itemize
+Three different notations in paper: 
+\begin_inset Formula $\frac{\partial^{2}s}{\partial p^{2}}$
+\end_inset
+
+, 
+\begin_inset Formula $\frac{d^{2}s}{dp^{2}}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbf{\mathsf{D}}F\left(x\right)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+Do regular derivatives conceptually correspond to keeping derivative dimensions
+ separate? Taylor expansion where Jacobian is a matrix corresponds to a
+ multi-dimensional variant.
+ How are reductions in terms of resultant row and col vectors?
+\end_layout
+
+\begin_layout Itemize
+Calculate Nested logit Hessian in Matlab and compare with the numerical
+ Hessian.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+As with the numerical delta hessian, do it in steps for each 
+\begin_inset Formula $A_{i}$
+\end_inset
+
+ above, for 
+\begin_inset Formula $i=1,4,2,(3)$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Is there a difference between the derivative of a matrix valued function
+ and the second derivative in how deep the multiplication is?
+\end_layout
+
+\begin_layout Itemize
+Should left- and right hand dot multiplication be defined differently, and
+ which should be used?
+\end_layout
+
+\end_body
+\end_document
