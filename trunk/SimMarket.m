@@ -192,7 +192,11 @@ classdef SimMarket < matlab.mixin.Copyable
             
             mr = obj.means(obj.data, {'p', 'sh'}, 'productid') ;
             if obj.model.endog
-                obj.estDemand.var.instruments = 'nprod nprod2';
+                if obj.model.randproducts
+                    obj.estDemand.var.instruments = 'nprod nprod2';
+                else
+                    obj.estDemand.var.instruments = 'c';
+                end
             end
             obj.estDemand.data = obj.data;
        end
