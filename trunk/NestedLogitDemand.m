@@ -24,6 +24,17 @@ classdef NestedLogitDemand < Estimate
     end
     
     methods
+        function q = getDemand(obj, p)
+            q = zeros(size(obj.dummarket, 1), 1);
+            for t = 1:size(obj.dummarket, 2)
+                obj.initSimulation(t);
+                q(obj.dummarket(:, t)) = obj.shares(p(obj.dummarket(:, t)));
+            end            
+            if obj.settings.ces
+                q = q ./ p;
+            end
+        end   
+        
         function initSimulation(obj, market)
             % initSimulation does the per market initialization
             % Invoke init() for general initialization

@@ -31,25 +31,26 @@ classdef SimMarket < matlab.mixin.Copyable
             if nargin > 0
                 obj.model = varargin{1};
             else
-                obj.model.RC = true;          % RC or NL
                 obj.model.endog = false;      % Endog with count instruments or no endog
-                obj.model.ces = false;
                 obj.model.markets = 200;
                 obj.model.products = 5;
                 obj.model.randproducts = true; % Let the number of products be random
                 
-                obj.model.beta = [-1; 1; 0];
-                obj.model.rc_sigma = 1;
-                
+                % p and x mean and sd:
                 obj.model.x = [5,0];
                 obj.model.x_sigma = [1,1];
                 obj.model.c = 4;
                 obj.model.c_sigma = 1;
                 
+                % Individual and product level shocks:
                 obj.model.epsilon_sigma = .1;
                 obj.model.sigma_xi = .1;
+                
                 obj.model.endog_sigma = 0.1; % Degree of corr between x and epsilon
                 obj.model.prob_prod = .8;    % Prob of product existing in market
+                
+                obj.model.beta = [-1; 1; 0];
+                obj.model.rc_sigma = 1;
                 
                 obj.model.optimalIV = true;
                 obj.model.nonlinear = 'constant';
@@ -88,10 +89,6 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.createData();
             obj.simDemand.data = obj.data;
             obj.simDemand.d = obj.data.d;
-            if obj.model.ces
-                obj.simDemand.settings.ces = true;
-                obj.estDemand.settings.ces = true;
-            end
             
             obj.simDemand.beta = obj.model.beta;            
             obj.simDemand.alpha = -obj.model.beta(1);
@@ -110,26 +107,29 @@ classdef SimMarket < matlab.mixin.Copyable
             epsilon =  randn(n, 1) * obj.model.epsilon_sigma + ...
                 repmat(randn(obj.model.products, 1) * obj.model.sigma_xi, ...
                 obj.model.markets, 1);
-
+ 
+            % Create random price:
             if obj.model.endog
-                A = 2 + 0.2 * randn(n, 6);
-                M = ones(6, 6)*0.8;
-                M(1:7:36) = 1; % Make diagonal elements = 1
-                inst = A*chol(M);
+                % Instruments a la Nevo:
+                ninstr = 6; 
+                A = 2 + 0.2 * randn(n, ninstr);
+                M = eye(ninstr)*0.2 + ones(ninstr, ninstr)*0.8;
+                inst = A * chol(M);
                 % Keep expected effect of instruments on p to be zero
                 suminst = sum(inst, 2) - mean(sum(inst, 2));
-                obj.data.p = obj.model.x(1) + randn(n, 1)*obj.model.x_sigma(1) ...
+                obj.data.p = obj.model.x(1) + randn(n, 1) * obj.model.x_sigma(1) ...
                     + suminst + obj.model.endog_sigma * epsilon;
             else
-                obj.data.p = obj.model.x(1) + randn(n, 1)*obj.model.x_sigma(1);
+                obj.data.p = obj.model.x(1) + randn(n, 1) * obj.model.x_sigma(1);
                 inst = [];
             end
-            
-            obj.data.x = obj.model.x(2) + obj.data.productid/obj.model.products ...
-                + randn(n, 1)*obj.model.x_sigma(2);    
+           
+            % Create random x var:
+            obj.data.x = obj.model.x(2) + obj.data.productid / obj.model.products ...
+                + randn(n, 1) * obj.model.x_sigma(2);    
             obj.data.constant = ones(n, 1);
             x0 = [table2array(obj.data(:, 'x')), obj.data.constant];
-            obj.data.d = x0*obj.model.beta(2:end) + epsilon;
+            obj.data.d = x0 * obj.model.beta(2:end) + epsilon;
             obj.data.c = obj.data.constant * obj.model.c ...
                 + randn(n, 1) * obj.model.c_sigma;
 
@@ -150,23 +150,13 @@ classdef SimMarket < matlab.mixin.Copyable
         
         % Function can reset data and i
         function mr = calculateDemand(obj)
-            obj.data.sh = zeros(size(obj.data.d));
             obj.simDemand.init();
-            % This functionality should be in NestedLogitDemand:
-            for t = 1:obj.model.markets
-                selection = obj.data.marketid == t;
-                obj.simDemand.initSimulation(t);
-                obj.data.sh(selection) = obj.simDemand.shares(obj.data.p(selection));
-            end            
-            if obj.model.ces
-                obj.data.q = obj.data.sh ./ obj.data.p;
-            else
-                obj.data.q = obj.data.sh;
-            end
-            mr = obj.means(obj.data, {'p', 'sh'}, 'productid') ;
+            obj.data.q = obj.simDemand.getDemand(obj.data.p);
+            
+            mr = obj.means(obj.data, {'p', 'q'}, 'productid') ;
             
             display 'Average sum shares'
-            disp(mean(accumarray(obj.data.marketid, obj.data.sh)))
+            disp(mean(accumarray(obj.data.marketid, obj.data.q)))
             if obj.model.endog
                 obj.estDemand.var.instruments = sprintf('inst%d ', 1:6);
             end
@@ -184,6 +174,7 @@ classdef SimMarket < matlab.mixin.Copyable
         end
         
         function mr = simulateDemand(obj, varargin)
+            obj.simDemand.init();
             if nargin > 1
                 obj.market = Market(varargin{1});
             else
@@ -197,19 +188,16 @@ classdef SimMarket < matlab.mixin.Copyable
             
             obj.data.p = obj.market.p;
             obj.data.sh = obj.market.s;
-            if obj.model.ces
-                obj.data.q = obj.data.sh./obj.data.p;
-            else
-                obj.data.q = obj.data.sh;
-            end
+            obj.data.q = obj.simDemand.getDemand(obj.data.p);    
+            
             mr = obj.means(obj.data, {'p', 'sh'}, 'productid') ;
             if obj.model.endog
                 obj.estDemand.var.instruments = 'nprod nprod2';
             end
             obj.estDemand.data = obj.data;
        end
-        
-        function results = estimate(obj)           
+                   
+       function results = estimate(obj)           
             result = obj.estDemand.estimate();
             if strcmpi(obj.estDemand.settings.paneltype, 'fe')
                 beta = obj.model.beta(1:end-1);

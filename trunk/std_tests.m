@@ -57,7 +57,7 @@ testtrue(results{'rc_x','Coef'} , m.model.rc_sigma )
 %% Test: CES MixedLogitDemand
 m = SimMarket(model);
 m.demand = MixedLogitDemand;
-m.model.ces = true;
+m.demand.settings.ces = true;
 %         m.estDemand.settings.robust = 'false';
 m.model.endog = false;
 m.model.beta = [-4; 1; 4];
