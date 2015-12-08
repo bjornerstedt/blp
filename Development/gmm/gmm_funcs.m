@@ -47,18 +47,24 @@ function alpha = opt3(demand)
 W = inv(demand.Z' * demand.Z);
 market = Market(demand);
 market.var.firm = 'productid';
+market.settings.paneltype = 'none';
+market.var.exog = 'constant';
+market.init();
 alpha = [-.3]';
-options = optimoptions(@fminunc, 'Algorithm','quasi-newton', 'MaxIter',50);
+options = optimoptions(@fminunc, 'Algorithm', 'quasi-newton', 'MaxIter',50);
 
 [alpha,fval,exitflag] = fminunc(@(x)objective(x, demand, market), alpha, options);
 
     function val = objective(alpha, demand, market)
+        % Residuals as function of demand params:
         X0 = demand.X(: , 2:end);
         beta = (X0' * X0)\ (X0' * (demand.y - demand.X(:, 1) * alpha));
         xi = demand.y - demand.X * [alpha; beta];
         
         market.D.alpha = alpha;
         market.findCosts();
+        
+        % Residuals of market estimation
         gamma = mean(market.c);
         eta = market.c - gamma;
         xiZ = xi' * demand.Z;

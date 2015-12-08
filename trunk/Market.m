@@ -40,14 +40,14 @@ classdef Market < Estimate % matlab.mixin.Copyable
             if isempty(obj.firm) 
                 obj.firm = obj.D.data{:, obj.var.firm};
             end
+
+            % Market 'inherits' variables from Demand, to avoid unnecessary
+            % specification
+            obj.data = obj.D.data;
             % This is for cost estimation:
             if ~isempty(obj.var.exog)
                 init@Estimate(obj);
             end
-            % Market 'inherits' variables from Demand, to avoid unnecessary
-            % specification
-            obj.data = obj.D.data;
-
             % Can probably join these in a table directly, for sim
             obj.p = obj.D.p;
             obj.q = obj.D.q; 
@@ -323,13 +323,14 @@ classdef Market < Estimate % matlab.mixin.Copyable
         end
         
         function obj = Market(varargin)
+            obj = obj@Estimate();
             if nargin > 0
                 obj.D = copy(varargin{1});
             end
             varsEstimate = {'market','panel','depvar','exog', ...
                 'endog','instruments'};
             obj.var = SettingsClass([varsEstimate, {'firm'}]);
-            obj.settings = SettingsClass([varsEstimate, {'conduct'}]);
+            obj.settings.addprop('conduct');
             obj.settings.conduct = 0;     
         end      
         

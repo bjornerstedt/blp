@@ -1,3 +1,5 @@
 GMM tests
 
-gmm1.m tests single equation gmm, also with nests
+gmm_test.m - estimates various single and multiple eq., invoking:
+
+gmm_func.m - uses fminunc for estimation of 2SLS and GMM
