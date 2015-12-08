@@ -223,16 +223,13 @@ classdef Estimate  < matlab.mixin.Copyable
             Z = obj.Z;
             dgf = (size(obj.X,1) - size(obj.X,2));
             
-            %STAGE I: INITIAL WEIGHTING MATRIX*/
+            % STAGE I: INITIAL WEIGHTING MATRIX
             W = inv(Z'*Z);
             mid = Z*W*Z';
             btsls = inv(X'*mid*X) * (X'*mid*y);
             xi = y - X*btsls;
-%             sst = inv(X'*mid*X);
-%             ser = (xi'*xi) ./ dgf;
-%             setsls = sqrt( ser * diag(sst) );
 
-            %STAGE II: OPTIMAL WEIGHTING MATRIX
+            % STAGE II: OPTIMAL WEIGHTING MATRIX
             W = inv((bsxfun(@times,xi,Z))'*(bsxfun(@times,xi,Z)));
             mid = Z*W*Z';
             beta = inv(X'*mid*X)*(X'*mid*y);

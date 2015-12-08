@@ -21,8 +21,15 @@ m.demand = NestedLogitDemand;
 m.demand.settings.paneltype = 'none';
 m.init();
 m.simulateDemand();
+
+display('2SLS estimate')
 m.estDemand.settings.paneltype = 'none';
+results = m.estimate();
 
-results = m.estimate()
+% display('GMM estimate')
+% m.estDemand.settings.paneltype = 'none';
+% m.estDemand.settings.estimateMethod = 'gmm';
+% results = m.estimate();
 
-gmm1(m.estDemand)
+gmm_funcs(m.estDemand);
+ 
