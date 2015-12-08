@@ -11,12 +11,12 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function beta = opt1(demand)
-% Simple regression using fminunc
-W = inv(demand.Z' * demand.Z);
-beta = [.3,.3,.3]';
-options = optimoptions(@fminunc, 'Algorithm','quasi-newton', 'MaxIter',50);
+    % Simple regression using fminunc
+    W = inv(demand.Z' * demand.Z);
+    beta = [.3,.3,.3]';
+    options = optimoptions(@fminunc, 'Algorithm','quasi-newton', 'MaxIter',50);
 
-[beta,fval,exitflag] = fminunc(@(x)objective(x, demand), beta, options);
+    [beta,fval,exitflag] = fminunc(@(x)objective(x, demand), beta, options);
 
     function val = objective(beta, demand)
         xi = demand.y - demand.X*beta;
@@ -26,12 +26,12 @@ options = optimoptions(@fminunc, 'Algorithm','quasi-newton', 'MaxIter',50);
 end
 
 function alpha = opt2(demand)
-% Nested finding of alpha
-W = inv(demand.Z' * demand.Z);
-alpha = [-.3]';
-options = optimoptions(@fminunc, 'Algorithm','quasi-newton', 'MaxIter',50);
+    % Nested finding of alpha
+    W = inv(demand.Z' * demand.Z);
+    alpha = [-.3]';
+    options = optimoptions(@fminunc, 'Algorithm','quasi-newton', 'MaxIter',50);
 
-[alpha,fval,exitflag] = fminunc(@(x)objective(x, demand), alpha, options);
+    [alpha,fval,exitflag] = fminunc(@(x)objective(x, demand), alpha, options);
 
     function val = objective(alpha, demand)
         X0 = demand.X(: , 2:end);
@@ -43,17 +43,18 @@ options = optimoptions(@fminunc, 'Algorithm','quasi-newton', 'MaxIter',50);
 end
 
 function alpha = opt3(demand)
-% Simultaneous estimate of demand and costs over alpha
-W = inv(demand.Z' * demand.Z);
-market = Market(demand);
-market.var.firm = 'productid';
-market.settings.paneltype = 'none';
-market.var.exog = 'constant';
-market.init();
-alpha = [-.3]';
-options = optimoptions(@fminunc, 'Algorithm', 'quasi-newton', 'MaxIter',50);
+    % Simultaneous 2SLS estimate of demand and costs over alpha
+    W = inv(demand.Z' * demand.Z);
+    market = Market(demand);
+    market.var.firm = 'productid';
+    market.settings.paneltype = 'none';
+    market.var.exog = 'marketid';
+    market.init();
+    WC = inv(market.X' * market.X);
+    alpha = [-.3]';
+    options = optimoptions(@fminunc, 'Algorithm', 'quasi-newton', 'MaxIter',50);
 
-[alpha,fval,exitflag] = fminunc(@(x)objective(x, demand, market), alpha, options);
+    [alpha,fval,exitflag] = fminunc(@(x)objective(x, demand, market), alpha, options);
 
     function val = objective(alpha, demand, market)
         % Residuals as function of demand params:
@@ -65,9 +66,11 @@ options = optimoptions(@fminunc, 'Algorithm', 'quasi-newton', 'MaxIter',50);
         market.findCosts();
         
         % Residuals of market estimation
-        gamma = mean(market.c);
-        eta = market.c - gamma;
+        gamma = (market.X' * market.X) \ ( market.X' * market.c);
+        eta = market.c -  market.X * gamma;
+        
         xiZ = xi' * demand.Z;
-        val = xiZ * W * xiZ' + eta' * eta ./ size(market.c, 1);
+        etaZ = eta' * market.X;
+        val = xiZ * W * xiZ' + etaZ * WC * etaZ';
     end
 end
