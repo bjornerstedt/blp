@@ -41,6 +41,7 @@ classdef SimMarket < matlab.mixin.Copyable
                 obj.model.x_sigma = [1,1];
                 obj.model.c = 4;
                 obj.model.c_sigma = 1;
+                obj.model.gamma = 0;
                 
                 % Individual and product level shocks:
                 obj.model.epsilon_sigma = .1;
@@ -130,7 +131,13 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.data.constant = ones(n, 1);
             x0 = [table2array(obj.data(:, 'x')), obj.data.constant];
             obj.data.d = x0 * obj.model.beta(2:end) + epsilon;
+            if obj.model.gamma ~= 0 % Otherwise existing tests fail
+                obj.data.w = randn(n, 1);
+            else
+                obj.data.w = zeros(n,1);
+            end
             obj.data.c = obj.data.constant * obj.model.c ...
+                + obj.model.gamma * obj.data.w ...
                 + randn(n, 1) * obj.model.c_sigma;
 
             obj.data = [obj.data, array2table(inst)];

@@ -1,7 +1,7 @@
 function beta = gmm_funcs(demand)
 % Various GMM estimates
-display('Simple Estimate')
-beta = opt1(demand)
+%display('Simple Estimate')
+%beta = opt1(demand)
 display('Nested Estimate')
 beta = opt2(demand)
 display('Simultaneous Estimate')
@@ -48,7 +48,7 @@ function alpha = opt3(demand)
     market = Market(demand);
     market.var.firm = 'productid';
     market.settings.paneltype = 'none';
-    market.var.exog = 'marketid';
+    market.var.exog = 'w';
     market.init();
     WC = inv(market.X' * market.X);
     alpha = [-.3]';
