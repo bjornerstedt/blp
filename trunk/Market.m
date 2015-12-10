@@ -203,6 +203,35 @@ classdef Market < Estimate % matlab.mixin.Copyable
 			f = [i,convergence];
 		end 
     
+        function theta = gmm_estimate(obj, theta)
+            % Simultaneous 2SLS estimate of demand and costs over alpha
+            
+            WC = inv(obj.X' * obj.X);
+            W = inv(obj.D.Z' * obj.D.Z);
+            options = optimoptions(@fminunc, 'Algorithm', 'quasi-newton', 'MaxIter',50);
+            
+            [theta,fval, exitflag] = fminunc(@(x)objective(x, obj), theta, options);
+            [~, beta ] = obj.D.residuals(theta);
+            [~, gamma ] = obj.residuals();
+            theta = [beta; gamma];
+            
+            function val = objective(theta, obj)
+                % Residuals as function of demand params:
+                xi = obj.D.residuals(theta);
+                obj.findCosts();
+                eta = obj.residuals();
+                
+                xiZ = xi' * obj.D.Z;
+                etaZ = eta' * obj.X;
+                val = xiZ * W * xiZ' + etaZ * WC * etaZ';
+            end
+        end
+        
+        function [xi, gamma] = residuals(obj)
+            gamma = (obj.X' * obj.X) \ ( obj.X' * obj.c);
+            xi = obj.c - obj.X * gamma;
+        end
+        
 		function f = foc(obj,  P, ct)
 			S = obj.D.shares( P );
 			f = ( obj.RR .* obj.D.shareJacobian( P ))*(P - ct)+ S;

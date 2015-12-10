@@ -53,10 +53,10 @@ classdef NestedLogitDemand < Estimate
                 obj.GG = obj.G' * obj.G;
                 if length(obj.nestlist) == 2
                     obj.H = dummyvar(nest2)';
-                    obj.HH = obj.H'*obj.H;
-                    obj.GH =( (obj.G*obj.H') > 0);
-                    obj.GH = obj.G*obj.H';
-                    obj.GH(obj.GH >0)=1;
+                    obj.HH = obj.H' * obj.H;
+                    obj.GH =( (obj.G * obj.H') > 0);
+                    obj.GH = obj.G * obj.H';
+                    obj.GH(obj.GH > 0) = 1;
                 end
             end
         end
@@ -235,7 +235,20 @@ classdef NestedLogitDemand < Estimate
             obj.results.estimateDescription = 'Nested Logit Demand';             
         end
        
-      function name = getPriceName(obj)
+        function [xi, beta] = residuals(obj, theta)
+            % residuals calculates the residuals for a GMM estimation
+            if length(theta) ~= length(obj.sigma) + 1 
+                error('Theta is not of the right length');
+            end
+            obj.alpha = theta(1);
+            obj.sigma = theta(2:end);
+            X0 = obj.X(: , (length(theta) + 1):end);
+            beta = (X0' * X0) \ (X0' * (obj.y - obj.X(:, 1:length(theta)) * theta));
+            beta = [theta; beta];
+            xi = obj.y - obj.X * beta;
+        end
+       
+        function name = getPriceName(obj)
             if obj.settings.ces
                 name = 'lP';
             else

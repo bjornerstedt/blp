@@ -2,10 +2,20 @@ function beta = gmm_funcs(demand)
 % Various GMM estimates
 %display('Simple Estimate')
 %beta = opt1(demand)
+    alpha = [-.3]';
+
 display('Nested Estimate')
-beta = opt2(demand)
+beta = opt2(demand, alpha)
+
 display('Simultaneous Estimate')
-beta = opt3(demand)
+
+market = Market(demand);
+market.var.firm = 'productid';
+market.settings.paneltype = 'none';
+market.var.exog = 'w';
+market.init();
+    
+beta = market.gmm_estimate( alpha)
 
 end
 
@@ -25,14 +35,13 @@ function beta = opt1(demand)
     end
 end
 
-function alpha = opt2(demand)
+function alpha = opt2(demand, alpha)
     % Nested finding of alpha
     W = inv(demand.Z' * demand.Z);
-    alpha = [-.3]';
     options = optimoptions(@fminunc, 'Algorithm','quasi-newton', 'MaxIter',50);
 
     [alpha,fval,exitflag] = fminunc(@(x)objective(x, demand), alpha, options);
-
+    
     function val = objective(alpha, demand)
         X0 = demand.X(: , 2:end);
         beta = (X0' * X0)\ (X0' * (demand.y - demand.X(:, 1) * alpha));
@@ -42,35 +51,3 @@ function alpha = opt2(demand)
     end
 end
 
-function alpha = opt3(demand)
-    % Simultaneous 2SLS estimate of demand and costs over alpha
-    W = inv(demand.Z' * demand.Z);
-    market = Market(demand);
-    market.var.firm = 'productid';
-    market.settings.paneltype = 'none';
-    market.var.exog = 'w';
-    market.init();
-    WC = inv(market.X' * market.X);
-    alpha = [-.3]';
-    options = optimoptions(@fminunc, 'Algorithm', 'quasi-newton', 'MaxIter',50);
-
-    [alpha,fval,exitflag] = fminunc(@(x)objective(x, demand, market), alpha, options);
-
-    function val = objective(alpha, demand, market)
-        % Residuals as function of demand params:
-        X0 = demand.X(: , 2:end);
-        beta = (X0' * X0)\ (X0' * (demand.y - demand.X(:, 1) * alpha));
-        xi = demand.y - demand.X * [alpha; beta];
-        
-        market.D.alpha = alpha;
-        market.findCosts();
-        
-        % Residuals of market estimation
-        gamma = (market.X' * market.X) \ ( market.X' * market.c);
-        eta = market.c -  market.X * gamma;
-        
-        xiZ = xi' * demand.Z;
-        etaZ = eta' * market.X;
-        val = xiZ * W * xiZ' + etaZ * WC * etaZ';
-    end
-end
