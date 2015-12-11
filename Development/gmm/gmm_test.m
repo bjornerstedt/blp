@@ -5,6 +5,7 @@ model = m.model;
 model.markets = 25;
 model.epsilon_sigma = .1;
 model.gamma = 1;
+model.types = 2;
 
 %% Test: Count instruments
 m = SimMarket(model);
@@ -20,7 +21,9 @@ m = SimMarket(model);
 m.model.randproducts = true;
 m.model.endog = true;
 m.demand = NestedLogitDemand;
-%m.demand.settings.paneltype = 'none';
+%m.demand.var.nests = 'type';
+
+m.demand.settings.paneltype = 'fe';
 m.init();
 m.simulateDemand();
 
@@ -34,4 +37,14 @@ m.estDemand.settings.estimateMethod = 'gmm';
 results = m.estimate();
 
 gmm_funcs(m.estDemand);
- 
+
+display('Simultaneous Estimate')
+alpha = [-.3]';
+
+market = Market(m.estDemand);
+market.var.firm = 'productid';
+market.settings.paneltype = 'none';
+market.var.exog = 'w';
+market.init();
+    
+beta = market.gmm_estimate( alpha)

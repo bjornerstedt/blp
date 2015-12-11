@@ -34,6 +34,7 @@ classdef SimMarket < matlab.mixin.Copyable
                 obj.model.endog = false;      % Endog with count instruments or no endog
                 obj.model.markets = 200;
                 obj.model.products = 5;
+                obj.model.types = 1;
                 obj.model.randproducts = true; % Let the number of products be random
                 
                 % p and x mean and sd:
@@ -50,8 +51,10 @@ classdef SimMarket < matlab.mixin.Copyable
                 obj.model.endog_sigma = 0.1; % Degree of corr between x and epsilon
                 obj.model.prob_prod = .8;    % Prob of product existing in market
                 
-                obj.model.beta = [-1; 1; 0];
+                obj.model.alpha = -1;
+                obj.model.sigma = [];
                 obj.model.rc_sigma = 1;
+                obj.model.beta = [ 1; 0];
                 
                 obj.model.optimalIV = true;
                 obj.model.nonlinear = 'constant';
@@ -75,6 +78,7 @@ classdef SimMarket < matlab.mixin.Copyable
             if isempty(obj.demand.var.nests)
                 obj.demand.var.nests = obj.model.nests;
             end
+            
             obj.demand.var.market = 'marketid';
             obj.demand.var.panel = 'productid';
             obj.demand.var.price = 'p';
@@ -89,11 +93,13 @@ classdef SimMarket < matlab.mixin.Copyable
 
             obj.createData();
             obj.simDemand.data = obj.data;
-            obj.simDemand.d = obj.data.d;
+            obj.simDemand.d = obj.data.d; % <<<<<<<<<<< init is required
             
-            obj.simDemand.beta = obj.model.beta;            
-            obj.simDemand.alpha = -obj.model.beta(1);
-            
+            obj.simDemand.beta = [obj.model.alpha; obj.model.beta];            
+            obj.simDemand.alpha = -obj.model.alpha;
+            if isa(obj.demand, 'NestedLogitDemand')
+                obj.simDemand.sigma = obj.model.sigma;
+            end
         end
         
         function createData(obj)
@@ -103,6 +109,12 @@ classdef SimMarket < matlab.mixin.Copyable
                 obj.model.products, 1), n, 1);
             obj.data.productid = repmat((1:obj.model.products)', ...
                 obj.model.markets, 1);
+            if obj.model.types > 1
+                reps = ceil(obj.model.products / obj.model.types);
+                typelist = repmat((1:obj.model.types)', reps, 1);
+                obj.data.type = repmat(typelist(1:obj.model.products), ...
+                    obj.model.markets, 1);
+            end
 
             % epsilon_jt = varepsilon_jt + xi_j
             epsilon =  randn(n, 1) * obj.model.epsilon_sigma + ...
@@ -129,8 +141,11 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.data.x = obj.model.x(2) + obj.data.productid / obj.model.products ...
                 + randn(n, 1) * obj.model.x_sigma(2);    
             obj.data.constant = ones(n, 1);
+            
+            % This should be done in the demand classes:            <<<<<<<<<<<<<<<<
             x0 = [table2array(obj.data(:, 'x')), obj.data.constant];
-            obj.data.d = x0 * obj.model.beta(2:end) + epsilon;
+            obj.data.d = x0 * obj.model.beta + epsilon;
+            
             if obj.model.gamma ~= 0 % Otherwise existing tests fail
                 obj.data.w = randn(n, 1);
             else
@@ -210,10 +225,13 @@ classdef SimMarket < matlab.mixin.Copyable
                    
        function results = estimate(obj)           
             result = obj.estDemand.estimate();
-            if strcmpi(obj.estDemand.settings.paneltype, 'fe')
-                beta = obj.model.beta(1:end-1);
+            if isa(obj.demand, 'NestedLogitDemand')
+                beta = [obj.model.alpha; obj.model.sigma; obj.model.beta];
             else
-                beta = obj.model.beta;
+                beta = [obj.model.alpha; obj.model.beta];
+            end
+            if strcmpi(obj.estDemand.settings.paneltype, 'fe')
+                beta = beta(1:end-1);
             end
             if isa(obj.demand, 'MixedLogitDemand')
                 if obj.model.endog && obj.model.optimalIV

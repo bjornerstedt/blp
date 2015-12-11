@@ -38,7 +38,18 @@ classdef NestedLogitDemand < Estimate
         function initSimulation(obj, market)
             % initSimulation does the per market initialization
             % Invoke init() for general initialization
-            % initSimulation sets obj.d and nesting vectors and matrices
+            if isempty(obj.d)
+            % Sets obj.d and nesting vectors and matrices if necessary. 
+                obj.alpha = obj.beta(1);
+                pars = length(obj.nestlist) + 1;
+                if pars > 1
+                    obj.sigma = obj.beta(2:pars);
+                end
+                % Simulated beta param has alpha and sigma first and
+                % intercept as last parameter
+%                 obj.d = obj.X(:, (pars+1):(length(obj.beta) - 1)) * ...
+%                     obj.beta((pars+1):(end-1)) + obj.beta(end) + obj.xi;
+            end
             obj.sim.selection = obj.dummarket(:, market);
             obj.sim.d  = obj.d(obj.dummarket(:, market) );
             obj.sim.market = market;
@@ -261,9 +272,12 @@ classdef NestedLogitDemand < Estimate
             if ~isempty(obj.var.nests)
                 obj.nestlist = strsplit(strtrim(obj.var.nests));
             end
-            lsnames = {[],{'lsjg'},{'lsjh', 'lshg'}};
-            names.endog = [obj.getPriceName(), lsnames{length(obj.nestlist)+1}, names.endog];
-            
+            if ~isempty(obj.var.quantity) && obj.isvar(obj.var.quantity, obj.data)
+                lsnames = {[],{'lsjg'},{'lsjh', 'lshg'}};
+                names.endog = [obj.getPriceName(), lsnames{length(obj.nestlist)+1}, names.endog];
+            else
+                names.endog = [obj.getPriceName(), names.endog];
+            end
             if isempty(obj.var.market) || isempty(obj.var.price) 
                 error('Demand.var.market and price must be specified in model');
             end

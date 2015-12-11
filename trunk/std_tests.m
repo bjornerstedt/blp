@@ -24,7 +24,24 @@ results = m.estimate()
 testdiff(results{'p','Coef'} , -0.9996)
 testdiff(results{'p','Std_err'} , 0.0049173)
 % Test that result is within 0.1% of true value
-testtrue(results{'p','Coef'} , m.model.beta(1) )
+testtrue(results{'p','Coef'} , results{'p', 'Beta'})
+
+%% Test: NestedLogitDemand - one nest
+m = SimMarket(model);
+m.demand = NestedLogitDemand;
+m.demand.var.nests = 'type';
+m.model.alpha = -2;
+m.model.sigma = 0.5;
+m.model.types = 2;
+
+m.init();
+m.simulateDemand()
+results = m.estimate()
+testdiff(results{'p','Coef'} , -1.9998)
+testdiff(results{'lsjg','Coef'} , 0.49999)
+testdiff(results{'p','Std_err'} , 0.0070622)
+% Test that result is within 0.1% of true value
+testtrue(results{'p','Coef'} , results{'p', 'Beta'})
 
 %% Test: MixedLogitDemand - rc_constant
 m = SimMarket(model);
@@ -37,7 +54,7 @@ results = m.estimate()
 testdiff(results{'p','Coef'} , -1.001)
 testdiff(results{'p','Std_err'} , 0.0050055)
 
-testtrue(results{'p','Coef'} , m.model.beta(1) )
+testtrue(results{'p','Coef'} , results{'p', 'Theta'} )
 
 %% Test: MixedLogitDemand - rc_x
 m = SimMarket(model);
@@ -60,14 +77,15 @@ m.demand = MixedLogitDemand;
 m.demand.settings.ces = true;
 %         m.estDemand.settings.robust = 'false';
 m.model.endog = false;
-m.model.beta = [-4; 1; 4];
+m.model.alpha = -4
+m.model.beta = [ 1; 4];
 m.model.markets = 200;
 m.model.randproducts = false;
 m.model.optimalIV = false;
 m.init();
 results = m.calculateDemand()
-result = m.estimate()
-testtrue1(result{'lP','Coef'} , m.model.beta(1))
+results = m.estimate()
+testtrue1(results{'lP','Coef'} , results{'lP', 'Theta'})
 
 %% Test: Optimal IV
 m = SimMarket(model);
@@ -82,7 +100,7 @@ m.init();
 
 results = m.simulateDemand()
 results = m.estimate()
-testtrue2(results{'p','Coef'} , m.model.beta(1) )
+testtrue2(results{'p','Coef'} , results{'p', 'Theta'} )
 
 %% Test: LSDV/FE
 % Four tests, comparing LSDV/FE for NL/FE
@@ -98,7 +116,8 @@ for d = 1:2
         end
         m.model.endog = false;
         m.model.optimalIV = true;
-        m.model.beta = [-.2; 1; -5];
+        m.model.alpha = -0.2;
+        m.model.beta = [1; -5];
         m.model.x = [5,5];
         m.model.markets = 100;
         m.model.randproducts = false;
@@ -142,7 +161,7 @@ m.init();
 eq1 = m.simulateDemand()
 
 results = m.estimate()
-testtrue2(results{'p','Coef'} , m.model.beta(1) )
+testtrue2(results{'p','Coef'} , results{'p', 'Theta'} )
 
 m.findCosts(m.estDemand)
 
@@ -170,4 +189,4 @@ m.init();
 eq1 = m.simulateDemand()
 
 results = m.estimate()
-testtrue2(results{'p','Coef'} , m.model.beta(1) )
+testtrue2(results{'p','Coef'} , results{'p', 'Theta'} )
