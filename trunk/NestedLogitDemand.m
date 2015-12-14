@@ -251,7 +251,7 @@ classdef NestedLogitDemand < Estimate
             if length(theta) ~= length(obj.sigma) + 1 
                 error('Theta is not of the right length');
             end
-            obj.alpha = theta(1);
+            obj.alpha = -theta(1);
             obj.sigma = theta(2:end);
             X0 = obj.X(: , (length(theta) + 1):end);
             beta = (X0' * X0) \ (X0' * (obj.y - obj.X(:, 1:length(theta)) * theta));

@@ -94,27 +94,6 @@ classdef Market < Estimate % matlab.mixin.Copyable
             end
         end
         
-        function findCosts(obj, varargin)
-            obj.init();
-            if nargin > 1
-                selection = varargin{1};
-                obj.selection = selection;
-            else
-                selection = logical(ones(size(obj.marketid)));
-            end
-            obj.c = zeros(size(obj.marketid));
-            marketid_list = unique(obj.marketid(selection));
-            for i = 1:length(marketid_list)
-                selection = obj.marketid == marketid_list(i); 
-                t = marketid_list(i);
-                obj.initSimulation(t);
-                ct = obj.p(selection) - ...
-                    linsolve( obj.RR .* obj.D.shareJacobian([]), ...
-                    -obj.s(selection) );
-                obj.c(selection) = ct;
-            end
-        end
-
         function exitflag = equilibrium(obj, varargin)
             obj.init();
             if nargin > 1
@@ -203,6 +182,27 @@ classdef Market < Estimate % matlab.mixin.Copyable
 			f = [i,convergence];
 		end 
     
+        function findCosts(obj, varargin)
+            obj.init();
+            if nargin > 1
+                selection = varargin{1};
+                obj.selection = selection;
+            else
+                selection = logical(ones(size(obj.marketid)));
+            end
+            obj.c = zeros(size(obj.marketid));
+            marketid_list = unique(obj.marketid(selection));
+            for i = 1:length(marketid_list)
+                selection = obj.marketid == marketid_list(i);
+                t = marketid_list(i);
+                obj.initSimulation(t);
+                ct = obj.p(selection) - ...
+                    linsolve( obj.RR .* obj.D.shareJacobian([]), ...
+                    -obj.s(selection) );
+                obj.c(selection) = ct;
+            end
+        end
+
         function theta = gmm_estimate(obj, theta)
             % Simultaneous 2SLS estimate of demand and costs over alpha
             
@@ -210,7 +210,7 @@ classdef Market < Estimate % matlab.mixin.Copyable
             W = inv(obj.D.Z' * obj.D.Z);
             options = optimoptions(@fminunc, 'Algorithm', 'quasi-newton', 'MaxIter',50);
             
-            [theta,fval, exitflag] = fminunc(@(x)objective(x, obj), theta, options);
+            [theta] = fminunc(@(x)objective(x, obj), theta, options);
             [~, beta ] = obj.D.residuals(theta);
             [~, gamma ] = obj.residuals();
             theta = [beta; gamma];

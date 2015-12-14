@@ -4,7 +4,6 @@ classdef SimMarket < matlab.mixin.Copyable
 % Simulate data based on model and estimate
 % Products exist with exog probability and count instruments based on the
 % number of products are used to handle endogeneity
-%   $Id: SimMarket.m 142 2015-10-09 13:07:17Z d3687-mb $
     
     properties
         model
@@ -35,6 +34,7 @@ classdef SimMarket < matlab.mixin.Copyable
                 obj.model.markets = 200;
                 obj.model.products = 5;
                 obj.model.types = 1;
+                obj.model.firm = [];
                 obj.model.randproducts = true; % Let the number of products be random
                 
                 % p and x mean and sd:
@@ -57,9 +57,6 @@ classdef SimMarket < matlab.mixin.Copyable
                 obj.model.beta = [ 1; 0];
                 
                 obj.model.optimalIV = true;
-                obj.model.nonlinear = 'constant';
-                obj.model.drawmethod = 'hypercube';
-                obj.model.nests = '';
             end
         end
         
@@ -67,16 +64,9 @@ classdef SimMarket < matlab.mixin.Copyable
         function init(obj)
             % Simulation of dataset
             if isa(obj.demand, 'MixedLogitDemand')
-                if ~isempty(obj.model.drawmethod)
-                    obj.demand.settings.drawmethod = obj.model.drawmethod;
-                end
-                if ~isempty(obj.model.nonlinear)
-                    obj.demand.var.nonlinear = obj.model.nonlinear;
-                end
                 obj.demand.rc_sigma = obj.model.rc_sigma;
-            end
-            if isempty(obj.demand.var.nests)
-                obj.demand.var.nests = obj.model.nests;
+            elseif isa(obj.demand, 'NestedLogitDemand')
+                obj.model.sigma = obj.demand.sigma;
             end
             
             obj.demand.var.market = 'marketid';
@@ -85,8 +75,6 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.demand.var.exog = 'x';
             obj.demand.var.quantity = 'q';
             obj.demand.var.marketsize = 'constant';
-            % Not used in simulation
-            obj.demand.settings.paneltype = 'lsdv';
             
             obj.simDemand = copy(obj.demand);
             obj.estDemand = copy(obj.demand);
@@ -97,12 +85,12 @@ classdef SimMarket < matlab.mixin.Copyable
             
             obj.simDemand.beta = [obj.model.alpha; obj.model.beta];            
             obj.simDemand.alpha = -obj.model.alpha;
-            if isa(obj.demand, 'NestedLogitDemand')
-                obj.simDemand.sigma = obj.model.sigma;
-            end
         end
         
         function createData(obj)
+            % createData creates firm, type, and demand and cost shifters.
+            % Price is created i
+            % Note that demand class is not involved in the creation
             obj.data = table();
             n = obj.model.markets * obj.model.products;    
             obj.data.marketid = reshape(repmat(1:obj.model.markets, ...
@@ -115,32 +103,24 @@ classdef SimMarket < matlab.mixin.Copyable
                 obj.data.type = repmat(typelist(1:obj.model.products), ...
                     obj.model.markets, 1);
             end
+            if ~isempty(obj.model.firm)
+                if length(obj.model.firm) ~= obj.model.products
+                    error('The list of firms does not match the number of products')
+                end
+                obj.data.firm = repmat(obj.model.firm, obj.model.markets, 1);
+            end
 
             % epsilon_jt = varepsilon_jt + xi_j
             epsilon =  randn(n, 1) * obj.model.epsilon_sigma + ...
                 repmat(randn(obj.model.products, 1) * obj.model.sigma_xi, ...
                 obj.model.markets, 1);
- 
-            % Create random price:
-            if obj.model.endog
-                % Instruments a la Nevo:
-                ninstr = 6; 
-                A = 2 + 0.2 * randn(n, ninstr);
-                M = eye(ninstr)*0.2 + ones(ninstr, ninstr)*0.8;
-                inst = A * chol(M);
-                % Keep expected effect of instruments on p to be zero
-                suminst = sum(inst, 2) - mean(sum(inst, 2));
-                obj.data.p = obj.model.x(1) + randn(n, 1) * obj.model.x_sigma(1) ...
-                    + suminst + obj.model.endog_sigma * epsilon;
-            else
-                obj.data.p = obj.model.x(1) + randn(n, 1) * obj.model.x_sigma(1);
-                inst = [];
-            end
-           
+            
             % Create random x var:
             obj.data.x = obj.model.x(2) + obj.data.productid / obj.model.products ...
                 + randn(n, 1) * obj.model.x_sigma(2);    
             obj.data.constant = ones(n, 1);
+            % Create price var to satisfy demand.initAdditional
+            obj.data.p = zeros(n,1);
             
             % This should be done in the demand classes:            <<<<<<<<<<<<<<<<
             x0 = [table2array(obj.data(:, 'x')), obj.data.constant];
@@ -154,8 +134,6 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.data.c = obj.data.constant * obj.model.c ...
                 + obj.model.gamma * obj.data.w ...
                 + randn(n, 1) * obj.model.c_sigma;
-
-            obj.data = [obj.data, array2table(inst)];
             
             % Random selection of products
             if obj.model.randproducts
@@ -167,11 +145,29 @@ classdef SimMarket < matlab.mixin.Copyable
             nprod = accumarray(obj.data.marketid, obj.data.constant);
             obj.data.nprod = nprod(obj.data.marketid,:);
             obj.data.nprod2 = obj.data.nprod .^ 2;  
-            % Add instruments last
+            
         end
         
         % Function can reset data and i
         function mr = calculateDemand(obj)
+            % Create random price:
+            n = size(obj.data, 1);
+            if obj.model.endog
+                % Instruments a la Nevo:
+                ninstr = 6; 
+                A = 2 + 0.2 * randn(n, ninstr);
+                M = eye(ninstr)*0.2 + ones(ninstr, ninstr)*0.8;
+                inst = A * chol(M);
+                % Keep expected effect of instruments on p to be zero
+                suminst = sum(inst, 2) - mean(sum(inst, 2));
+                obj.data.p = obj.model.x(1) + randn(n, 1) * obj.model.x_sigma(1) ...
+                    + suminst + obj.model.endog_sigma * epsilon(1:n);
+            else
+                obj.data.p = obj.model.x(1) + randn(n, 1) * obj.model.x_sigma(1);
+                inst = [];
+            end
+            obj.data = [obj.data, array2table(inst)];
+            
             obj.simDemand.init();
             obj.data.q = obj.simDemand.getDemand(obj.data.p);
             
@@ -188,7 +184,11 @@ classdef SimMarket < matlab.mixin.Copyable
         
         function mr = findCosts(obj, demand)            
             obj.market = Market(demand);
-            obj.market.var.firm = 'productid'; % One product firms
+            if isempty(obj.model.firm)
+                obj.market.var.firm = 'productid'; % One product firms
+            else
+                obj.market.var.firm = 'firm'; % Firm variable has been created
+            end
             obj.market.findCosts();
             mr = obj.means(obj.data, {'sh','c',  'p'}, 'productid') ;
             cr = rowfun(@(x,y)(y-x)/y, mr(:,2:3),'OutputVariableNames','Markup');
@@ -202,7 +202,11 @@ classdef SimMarket < matlab.mixin.Copyable
             else
                 obj.market = Market(obj.simDemand);                
             end
-            obj.market.var.firm = 'productid'; % One product firms
+            if isempty(obj.model.firm)
+                obj.market.var.firm = 'productid'; % One product firms
+            else
+                obj.market.var.firm = 'firm'; % Firm variable has been created
+            end
             % Existence of var.costs name could be alternative to:
             obj.market.c = obj.data.c;
 

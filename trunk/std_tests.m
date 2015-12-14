@@ -1,9 +1,12 @@
 clear
 
 testdiff = @(x,y)assert(abs(x - y)<10e-4, 'Obtained %f instead of %f' ,x, y);
+testSameResults = @(x,y,i)assert(all( abs(x - y) < 10e-6), 'Test %d failed' , i);
 testtrue = @(x,y)assert(abs((x - y)/y)<1e-3);
 testtrue1 = @(x,y)assert(abs((x - y)/y)<1e-2);
 testtrue2 = @(x,y)assert(abs((x - y)/y)<2e-2, ...
+    'Percentage difference is %f', abs((x - y)/y));
+testtrue3 = @(x,y)assert(abs((x - y)/y)<1e-1, ...
     'Percentage difference is %f', abs((x - y)/y));
 
 m = SimMarket();
@@ -13,81 +16,85 @@ model.markets = 100;
 model.randproducts = false;
 model.optimalIV = false;
 
-%% Test: NestedLogitDemand
+%% Test 1: NestedLogitDemand
 m = SimMarket(model);
 m.demand = NestedLogitDemand;
 m.init();
-results = m.simulateDemand()
-testdiff(results{1, 'sh'} , 0.013209)
-testdiff(results{1, 'p'} , 5.0482)
+sresults = m.simulateDemand()
 results = m.estimate()
-testdiff(results{'p','Coef'} , -0.9996)
-testdiff(results{'p','Std_err'} , 0.0049173)
 % Test that result is within 0.1% of true value
 testtrue(results{'p','Coef'} , results{'p', 'Beta'})
 
-%% Test: NestedLogitDemand - one nest
+testVals = [sresults{1, 'sh'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
+correctVals = [0.016950837696100,5.034299380418873,-1.000887008524414,0.004862493783701];
+
+testSameResults(testVals, correctVals, 1);
+%% Test 2: NestedLogitDemand - one nest
 m = SimMarket(model);
 m.demand = NestedLogitDemand;
 m.demand.var.nests = 'type';
 m.model.alpha = -2;
-m.model.sigma = 0.5;
+m.demand.sigma = 0.5;
+
 m.model.types = 2;
 
 m.init();
 m.simulateDemand()
 results = m.estimate()
-testdiff(results{'p','Coef'} , -1.9998)
-testdiff(results{'lsjg','Coef'} , 0.49999)
-testdiff(results{'p','Std_err'} , 0.0070622)
 % Test that result is within 0.1% of true value
-testtrue(results{'p','Coef'} , results{'p', 'Beta'})
+testtrue1(results{'p','Coef'} , results{'p', 'Beta'})
 
-%% Test: MixedLogitDemand - rc_constant
+testVals = [results{'p','Coef'}, results{'lsjg','Coef'}, results{'p','Std_err'}];
+correctVals = [-1.996812484535741,0.501859775169641,0.005921296583241];
+
+testSameResults(testVals, correctVals, 2);
+
+%% Test 3: MixedLogitDemand - rc_constant
 m = SimMarket(model);
 m.demand = MixedLogitDemand;
+m.demand.var.nonlinear = 'constant';
 m.init();
-results = m.simulateDemand()
-testdiff(results{1, 'sh'} , 0.016533)
-testdiff(results{1, 'p'} , 5.0648)
+sresults = m.simulateDemand()
 results = m.estimate()
-testdiff(results{'p','Coef'} , -1.001)
-testdiff(results{'p','Std_err'} , 0.0050055)
 
-testtrue(results{'p','Coef'} , results{'p', 'Theta'} )
+testtrue1(results{'p','Coef'} , results{'p', 'Theta'} )
 
-%% Test: MixedLogitDemand - rc_x
+testVals = [sresults{1, 'sh'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
+correctVals = [0.020117449446861,5.052100057072429,-1.002931362162900,0.004913162002386];
+testSameResults(testVals, correctVals, 3);
+
+%% Test 4: MixedLogitDemand - rc_x
 m = SimMarket(model);
 m.demand = MixedLogitDemand;
-m.model.nonlinear = 'x';
-%m.model.endog = true;
+m.demand.var.nonlinear = 'x';
 m.init();
-results = m.simulateDemand()
-testdiff(results{1, 'sh'} , 0.018867)
-testdiff(results{1, 'p'} , 5.1041)
+sresults = m.simulateDemand()
+
 results = m.estimate()
-testdiff(results{'p','Coef'} , -1.001)
-testdiff(results{'p','Std_err'} , 0.0050055)
+testVals = [sresults{1, 'sh'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
+correctVals = [0.021868951346931,5.086215427553291,-0.999033679194202,0.005165964169027];
+testSameResults(testVals, correctVals, 4);
 
 testtrue(results{'rc_x','Coef'} , m.model.rc_sigma )
 
-%% Test: CES MixedLogitDemand
+%% Test 5: CES MixedLogitDemand
 m = SimMarket(model);
 m.demand = MixedLogitDemand;
 m.demand.settings.ces = true;
 %         m.estDemand.settings.robust = 'false';
 m.model.endog = false;
-m.model.alpha = -4
+m.model.alpha = -4;
 m.model.beta = [ 1; 4];
 m.model.markets = 200;
 m.model.randproducts = false;
 m.model.optimalIV = false;
+m.demand.var.nonlinear = 'constant';
 m.init();
 results = m.calculateDemand()
 results = m.estimate()
 testtrue1(results{'lP','Coef'} , results{'lP', 'Theta'})
 
-%% Test: Optimal IV
+%% Test 6: Optimal IV
 m = SimMarket(model);
 m.demand = MixedLogitDemand;
 m.demand.var.nonlinear = 'x';
@@ -102,7 +109,7 @@ results = m.simulateDemand()
 results = m.estimate()
 testtrue2(results{'p','Coef'} , results{'p', 'Theta'} )
 
-%% Test: LSDV/FE
+%% Test 7: LSDV/FE
 % Four tests, comparing LSDV/FE for NL/FE
 results = cell(2,1);
 for d = 1:2
@@ -113,6 +120,7 @@ for d = 1:2
             m.demand = NestedLogitDemand;
         else
             m.demand = MixedLogitDemand;
+            m.demand.var.nonlinear = 'constant';
         end
         m.model.endog = false;
         m.model.optimalIV = true;
@@ -140,15 +148,16 @@ for d = 1:2
 end
 
 
-%% Test: Nonlinear price, testing findCosts
+%% Test 8: Nonlinear price, testing findCosts
 % Succeeds at the 2% level (to avoid increasing data size)
-model.nonlinear = 'p';
 model.rc_sigma = .1;
-model.drawmethod = 'quadrature';
 
 m = SimMarket(model);
 m.demand = MixedLogitDemand;
+m.demand.settings.drawmethod = 'quadrature';
 
+m.demand.settings.paneltype = 'lsdv';
+m.demand.var.nonlinear = 'p';
 m.model.optimalIV = false;
 m.model.endog = true;
 m.model.randproducts = true;
@@ -161,20 +170,21 @@ m.init();
 eq1 = m.simulateDemand()
 
 results = m.estimate()
-testtrue2(results{'p','Coef'} , results{'p', 'Theta'} )
+testtrue3(results{'p','Coef'} , results{'p', 'Theta'} )
 
 m.findCosts(m.estDemand)
+testtrue2( mean(m.data.c) ,  0.9 )
 
 % Slightly different demand due to draws
 eq2 = m.simulateDemand(m.estDemand)
 max( abs((table2array(eq1) - table2array(eq2)) ./table2array(eq1)))
 
-%% Test: Nonlinear price, testing findCosts
+%% Test 9: Nonlinear price, testing findCosts
 % Succeeds at the 2% level (to avoid increasing data size)
 
 m = SimMarket(model);
 m.demand = MixedLogitDemand;
-m.model.nonlinear = 'p x constant';
+m.demand.var.nonlinear = 'p x constant';
 m.model.rc_sigma = [0.1; 1; 1];
 
 m.model.optimalIV = false;
