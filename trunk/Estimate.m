@@ -8,19 +8,21 @@ classdef Estimate  < matlab.mixin.Copyable
         panelid
         marketid
         results   
-        Xorig % Non-demeaned vars
-        Zorig % Non-demeaned vars
         y
         X
         Z
         beta  % Move to results?
+        settings % Structure with settings, defined in constructor
+        config % Structure with internal settings, defined in constructor
+        var % Structure with variable names
+    end
+    properties (SetAccess = protected, Hidden = true )
+        Xorig % Non-demeaned vars
+        Zorig % Non-demeaned vars
         vars  % vars to display in output      
         dummyvars = []
         period % Cell array used for period / market calcs
         lsdv
-        settings % Structure with settings, defined in constructor
-        config % Structure with internal settings, defined in constructor
-        var % Structure with variable names
     end
     
     methods
@@ -268,7 +270,7 @@ classdef Estimate  < matlab.mixin.Copyable
             obj.settings = SettingsClass({'paneltype','nocons','estimateMethod', 'robust'});
 %            obj.config = SettingsClass({'quietly','nocons','estimateMethod'});
             
-            obj.config.quietly = false;
+            obj.config.quietly = true;
             obj.config.isdemeaned = false; % If data has been demeaned already. Eliminate? !!!
             obj.results.estimateDescription = 'Linear Estimate'; 
             

@@ -5,6 +5,9 @@ classdef NestedLogitDemand < Estimate
     properties
         alpha
         sigma
+        d % Utility without the price effect 
+    end
+    properties (SetAccess = protected, Hidden = true )
         nestlist
         share
         p % Used for CES and simulation
@@ -12,10 +15,6 @@ classdef NestedLogitDemand < Estimate
         ms
         sim % Simulation data
         dummarket 
-        d % Utility without the price effect 
-        xi % Unobservable utility, residual
-    end
-    properties (SetAccess = private )
         G % Group membership, each column a group with 1 if member
         H % Subgroup membership
         GG % Group membership 
@@ -45,10 +44,6 @@ classdef NestedLogitDemand < Estimate
                 if pars > 1
                     obj.sigma = obj.beta(2:pars);
                 end
-                % Simulated beta param has alpha and sigma first and
-                % intercept as last parameter
-%                 obj.d = obj.X(:, (pars+1):(length(obj.beta) - 1)) * ...
-%                     obj.beta((pars+1):(end-1)) + obj.beta(end) + obj.xi;
             end
             obj.sim.selection = obj.dummarket(:, market);
             obj.sim.d  = obj.d(obj.dummarket(:, market) );

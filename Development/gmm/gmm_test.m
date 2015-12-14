@@ -13,6 +13,7 @@ m = SimMarket(model);
 m.model.randproducts = true;
 m.model.endog = true;
 m.demand = NestedLogitDemand;
+m.demand.alpha = 1;
 m.init();
 m.simulateDemand();
 results = m.estimate()
@@ -22,6 +23,7 @@ m = SimMarket(model);
 m.model.randproducts = true;
 m.model.endog = true;
 m.demand = NestedLogitDemand;
+m.demand.alpha = 1;
 %m.demand.var.nests = 'type';
 
 m.demand.settings.paneltype = 'fe';

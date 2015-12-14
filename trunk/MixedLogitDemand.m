@@ -6,6 +6,12 @@ classdef MixedLogitDemand < NestedLogitDemand
     properties
         rc_sigma % Starting and end value
         draws % Random draws (nind, nmkt, k) matrix k = # random params. 
+        x2 % nonlinear parameter vector
+           
+        W
+        xi % Unobservable utility, residual
+    end
+    properties (SetAccess = protected, Hidden = true )
         vars2 % Nonlinear variable names in output (with rc_ prefix)
         nonlinparams = [] % Arrays for RC names and type of RC
         nonlintype = [] % Array for type of RC
@@ -13,11 +19,8 @@ classdef MixedLogitDemand < NestedLogitDemand
         deltaJac % Used to guess new edelta
         isOptimalIV = false
         edelta % Saved between invocations of objective
-        x2 % nonlinear parameter vector
-        
         v
-        iweight % quadrature weights        
-        W
+        iweight % quadrature weights     
         ZWZ
         inv_x1ZWZx1
         estimationMatrix
@@ -192,7 +195,17 @@ classdef MixedLogitDemand < NestedLogitDemand
         function R = estimate(obj, varargin)
             obj.init(varargin{:});
             obj.edelta = exp(obj.share.ls);
-            obj.initEstimation();
+            est = obj.estimation_step(false);
+            if obj.settings.optimalIV
+                R = obj.estimation_step(true);
+                obj.results.estimate1 = est;   
+            else
+                R = est;
+            end
+       end
+        
+        function R = estimation_step(obj, optIV)
+            obj.initEstimation(optIV);
             obj.rc_sigma = obj.minimize({'Display','iter-detailed'});
             delta = log(obj.edelta);
             if isnan(delta)
@@ -406,7 +419,6 @@ classdef MixedLogitDemand < NestedLogitDemand
             % General init, move to estimate? Should NestedLogit have
             % similar code?
             obj.sim.market = market; % HACK to get market based routines to work
-            obj.alpha = - obj.beta(1);
             if isempty(obj.d)
                 % Create starting values for findDelta
                 obj.edelta = obj.findDelta(obj.rc_sigma);
@@ -453,7 +465,7 @@ classdef MixedLogitDemand < NestedLogitDemand
             obj.config.randstream = []; % random stream for estimation in parallel 
             obj.config.guessdelta = true;
             obj.config.hessian = false;
-            obj.config.quietly = false;
+            obj.config.quietly = true;
             obj.results.estimateDescription = 'Random Coefficient Logit Demand'; 
         end      
     end
@@ -516,8 +528,8 @@ classdef MixedLogitDemand < NestedLogitDemand
             xi = del - obj.X * bet;
         end
         
-        function initEstimation(obj)
-            if ~obj.settings.optimalIV
+        function initEstimation(obj, optIV)
+            if ~optIV
                 if isempty(obj.W) && ~isempty(obj.Z) % W can be specified manually
                     obj.W = inv(obj.Z' * obj.Z);
                 end
@@ -533,19 +545,19 @@ classdef MixedLogitDemand < NestedLogitDemand
                 % FE to give the same result as LSDV
                 pHat = obj.Zorig*((obj.Zorig'*obj.Zorig)\obj.Zorig'*obj.Xorig(:, 1));
                 deltaHat = [pHat, obj.Xorig(:, 2:end)] * obj.beta;
-                optimalIV = obj.deltaJacobian(obj.rc_sigma, exp(deltaHat));
+                optInstr = obj.deltaJacobian(obj.rc_sigma, exp(deltaHat));
                 if strcmpi(obj.settings.paneltype, 'fe')
                     da = [];
-                    for i = 1:size(optimalIV ,2)
-                        da = [da, accumarray(obj.panelid, optimalIV(:, i),...
+                    for i = 1:size(optInstr ,2)
+                        da = [da, accumarray(obj.panelid, optInstr(:, i),...
                             [],@mean)];
                     end
                     davt = da(obj.panelid, :);
-                    optimalIV  = (optimalIV  - davt);
+                    optInstr  = (optInstr  - davt);
                 end                
 %                 phatMean = accumarray(obj.panelid, pHat,[],@mean);
 %                 pHat = pHat  - phatMean(obj.panelid, :);
-                obj.Z  = [obj.X(:,2:end), pHat, optimalIV];
+                obj.Z  = [obj.X(:,2:end), pHat, optInstr];
                 xiZ = bsxfun(@times, obj.xi, obj.Z );
                 obj.W = inv(xiZ'*xiZ);
             end

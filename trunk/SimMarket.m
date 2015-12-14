@@ -14,11 +14,6 @@ classdef SimMarket < matlab.mixin.Copyable
         market
     end
     properties 
-        means = @(T,x,ind)array2table(splitapply(@mean, T{:,x}, T.(ind)), ...
-            'VariableNames',x);
-        approx = @(x,y)(abs(x - y) < 10^-4)
-        randdraws = @()RandStream.setGlobalStream(RandStream('mt19937ar','Seed', 999));
-
     end
     
     methods
@@ -31,11 +26,11 @@ classdef SimMarket < matlab.mixin.Copyable
                 obj.model = varargin{1};
             else
                 obj.model.endog = false;      % Endog with count instruments or no endog
-                obj.model.markets = 200;
+                obj.model.markets = 100;
                 obj.model.products = 5;
                 obj.model.types = 1;
                 obj.model.firm = [];
-                obj.model.randproducts = true; % Let the number of products be random
+                obj.model.randproducts = false; % Let the number of products be random
                 
                 % p and x mean and sd:
                 obj.model.x = [5,0];
@@ -51,24 +46,13 @@ classdef SimMarket < matlab.mixin.Copyable
                 obj.model.endog_sigma = 0.1; % Degree of corr between x and epsilon
                 obj.model.prob_prod = .8;    % Prob of product existing in market
                 
-                obj.model.alpha = -1;
-                obj.model.sigma = [];
-                obj.model.rc_sigma = 1;
-                obj.model.beta = [ 1; 0];
-                
-                obj.model.optimalIV = true;
+                obj.model.beta = [ 1; 0];                
             end
         end
         
         % Separate from constructor to allow init from model 
         function init(obj)
             % Simulation of dataset
-            if isa(obj.demand, 'MixedLogitDemand')
-                obj.demand.rc_sigma = obj.model.rc_sigma;
-            elseif isa(obj.demand, 'NestedLogitDemand')
-                obj.model.sigma = obj.demand.sigma;
-            end
-            
             obj.demand.var.market = 'marketid';
             obj.demand.var.panel = 'productid';
             obj.demand.var.price = 'p';
@@ -82,9 +66,7 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.createData();
             obj.simDemand.data = obj.data;
             obj.simDemand.d = obj.data.d; % <<<<<<<<<<< init is required
-            
-            obj.simDemand.beta = [obj.model.alpha; obj.model.beta];            
-            obj.simDemand.alpha = -obj.model.alpha;
+            obj.data.p = [];
         end
         
         function createData(obj)
@@ -128,24 +110,24 @@ classdef SimMarket < matlab.mixin.Copyable
             
             if obj.model.gamma ~= 0 % Otherwise existing tests fail
                 obj.data.w = randn(n, 1);
+                obj.data.c = obj.data.constant * obj.model.c ...
+                    + obj.model.gamma * obj.data.w ...
+                    + randn(n, 1) * obj.model.c_sigma;
             else
-                obj.data.w = zeros(n,1);
+                obj.data.c = obj.data.constant * obj.model.c ...
+                    + randn(n, 1) * obj.model.c_sigma;
             end
-            obj.data.c = obj.data.constant * obj.model.c ...
-                + obj.model.gamma * obj.data.w ...
-                + randn(n, 1) * obj.model.c_sigma;
             
             % Random selection of products
             if obj.model.randproducts
                 % probability prob_prod of a product existing in a period
                 prodsel = logical(binornd(1, obj.model.prob_prod, n, 1));
                 obj.data = obj.data(prodsel, :);
+                % Create count instrument
+                nprod = accumarray(obj.data.marketid, obj.data.constant);
+                obj.data.nprod = nprod(obj.data.marketid,:);
+                obj.data.nprod2 = obj.data.nprod .^ 2;  
             end
-            % Create count instrument
-            nprod = accumarray(obj.data.marketid, obj.data.constant);
-            obj.data.nprod = nprod(obj.data.marketid,:);
-            obj.data.nprod2 = obj.data.nprod .^ 2;  
-            
         end
         
         % Function can reset data and i
@@ -171,7 +153,7 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.simDemand.init();
             obj.data.q = obj.simDemand.getDemand(obj.data.p);
             
-            mr = obj.means(obj.data, {'p', 'q'}, 'productid') ;
+            mr = obj.means({'p', 'q'}, 'productid') ;
             
             display 'Average sum shares'
             disp(mean(accumarray(obj.data.marketid, obj.data.q)))
@@ -190,7 +172,7 @@ classdef SimMarket < matlab.mixin.Copyable
                 obj.market.var.firm = 'firm'; % Firm variable has been created
             end
             obj.market.findCosts();
-            mr = obj.means(obj.data, {'sh','c',  'p'}, 'productid') ;
+            mr = obj.means( {'sh','c',  'p'}, 'productid') ;
             cr = rowfun(@(x,y)(y-x)/y, mr(:,2:3),'OutputVariableNames','Markup');
             mr = [mr,cr];
         end
@@ -216,7 +198,7 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.data.sh = obj.market.s;
             obj.data.q = obj.simDemand.getDemand(obj.data.p);    
             
-            mr = obj.means(obj.data, {'p', 'sh'}, 'productid') ;
+            mr = obj.means({'p', 'sh'}, 'productid') ;
             if obj.model.endog
                 if obj.model.randproducts
                     obj.estDemand.var.instruments = 'nprod nprod2';
@@ -230,25 +212,30 @@ classdef SimMarket < matlab.mixin.Copyable
        function results = estimate(obj)           
             result = obj.estDemand.estimate();
             if isa(obj.demand, 'NestedLogitDemand')
-                beta = [obj.model.alpha; obj.model.sigma; obj.model.beta];
+                beta = [-obj.demand.alpha; obj.demand.sigma; obj.model.beta];
             else
-                beta = [obj.model.alpha; obj.model.beta];
+                beta = [-obj.demand.alpha; obj.model.beta];
             end
             if strcmpi(obj.estDemand.settings.paneltype, 'fe')
                 beta = beta(1:end-1);
             end
             if isa(obj.demand, 'MixedLogitDemand')
-                if obj.model.endog && obj.model.optimalIV
-                    obj.estDemand.settings.optimalIV = true;
-                    result = obj.estDemand.estimate();
-                end
-                truevals = table([beta; obj.model.rc_sigma]);
+                truevals = table([beta; obj.demand.rc_sigma]);
                 truevals.Properties.VariableNames = {'Theta'};
             else
                 truevals = table(beta);
                 truevals.Properties.VariableNames = {'Beta'};
             end
             results = [truevals, result];
+        end
+        
+        function R = means(obj,x,ind)
+            R = array2table(splitapply(@mean, obj.data{:,x}, ...
+                obj.data.(ind)), 'VariableNames',x);
+        end
+        
+        function randdraws(obj)
+            RandStream.setGlobalStream(RandStream('mt19937ar','Seed', 999));
         end
         
         function results = run(obj)

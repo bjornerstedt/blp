@@ -16,11 +16,10 @@ classdef Market < Estimate % matlab.mixin.Copyable
         maxit = 3000
         costfunction = 'loglinear'
         estimation = 'ols'
-        selection
     end
-    properties % (SetAccess = protected )
+    properties (SetAccess = protected, Hidden = true )
+        selection
         s %shares
-        R %ownership vector
         RR %ownership tranformation with conduct
         c1, p1, q1 %Views for bootstrapping
         sel % market class with selection
@@ -87,8 +86,9 @@ classdef Market < Estimate % matlab.mixin.Copyable
         function initSimulation(obj, market_number)
             obj.D.initSimulation(market_number);
             rs = obj.firm(obj.marketid == market_number);
-            obj.R = dummyvar(rs)';
-            obj.RR  = obj.R' * obj.R;
+            %ownership vector:
+            R = dummyvar(rs)';
+            obj.RR  = R' * R;
             if obj.settings.conduct > 0
                 obj.RR(obj.RR == 0) = obj.settings.conduct;
             end
