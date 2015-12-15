@@ -20,7 +20,7 @@
 % the demand constructor:
 
 load example_data;
-demand = NestedLogitDemand(dt);
+demand = NestedLogitDemand(dt1);
 
 %%
 % Here we specify the market and panel id, price, quantity and marketsize
@@ -56,7 +56,7 @@ demand.settings
 % used will depend on what has been specified in demand.var and in
 % demand.settings. 
 
-demand.estimate()
+result = demand.estimate()
 
 %%
 % The method returns a table with the estimate, as well as putting it and
@@ -77,12 +77,12 @@ demand.var.marketsize = 'constant';
 demand.var.exog = 'x';
 demand.var.instruments = 'nprod nprod2';
 
-demand.var.nonlinear = 'constant';
+demand.var.nonlinear = 'x';
 
 %%
 % To estimate, the |estimate()| method is invoked:
 
-demand.estimate()
+result = demand.estimate()
 
 %%
 % The demand class |MixedLogitDemand| has more settings than
@@ -94,8 +94,8 @@ demand.settings
 % We can for example estimate using quadrature, with optimal instruments:
 
 demand.settings.drawmethod = 'quadrature';
-% demand.settings.optimalIV = true;
-demand.estimate()
+demand.settings.optimalIV = true;
+result = demand.estimate()
 
 %% Market class
 % The market class is used to calculate equilibrium prices and quantities,
@@ -111,8 +111,7 @@ market.var.firm = 'productid';
 % prices and quantities, we use the function |findCosts()|:
 
 market.findCosts();
-display('Average costs are given by: ')
-mean(market.c)
+averageCosts = mean(market.c)
 
 %%
 % Having determined costs, one can use the market class (with its
@@ -124,7 +123,7 @@ mean(market.c)
 market2 = copy(market);
 market2.firm(market2.firm == 2 ) = 1;
 market2.equilibrium();
-nlMergerResult = market.compare(market2.p);
+mergerResult = market.compare(market2.p)
 
 %%
 % The |Market| class has a number of settings. Similarly to the demand
@@ -213,7 +212,7 @@ results = m.estimate()
 demand = MixedLogitDemand();
 demand.alpha = 1;
 demand.rc_sigma = 1;
-demand.var.nonlinear = 'constant';
+demand.var.nonlinear = 'x';
 
 %% 
 % The |SimMarket| class has a set of model settings that can be used to
@@ -225,12 +224,11 @@ display(m2.model)
 
 %% 
 % Here we let prices be endogenous. As an alternative to |calculateDemand()| 
-% presented above, here we instead use |simulateDemand()|. Instead of prices being
+% presented above, we instead use |simulateDemand()|. Instead of prices being
 % random, |simulateDemand()| calculates equilibrium values depending on market conditions in each
 % market. Price variability can comes from cost shifters and/or the number of products being set to be 
 % exogenously random. Prices and quantities will depend on the products in
-% the market as well as the ownership structure. By default we have single
-% product firms.
+% the market as well as the ownership structure. 
 
 m2.model.endog = true;
 m2.model.randproducts = true;
@@ -238,18 +236,10 @@ m2.init();
 m2.simulateDemand()
 
 %%
-% The datasets that have been created can be saved for later use, here to 
-% the file |example_data.mat|:
-
-dt = m.data;
-dt2 = m2.data;
-save example_data dt dt2;
-
-%%
 % A minimal nested logit demand specification is as follows:
 
 demand = NestedLogitDemand();
-demand.alpha = 1;
+demand.alpha = 0.5;
 demand.sigma = 0.5;
 demand.var.nests = 'type';
 
@@ -261,4 +251,44 @@ demand.var.nests = 'type';
 m3 = SimMarket();
 m3.demand = demand;
 m3.model.types = 2;
-m3.init()
+
+% By default SimMarket assumes single product firms. We can change this mapping
+% by setting the |model.firms| property. Here we assume that the five
+% products in the model have two owners. 
+
+m3.model.firm = [1,1,1,2,2]';
+
+m3.model.endog = true;
+m3.model.randproducts = true;
+
+m3.model.gamma = 1;
+m3.init();
+m3.simulateDemand()
+dt3 = m3.data;
+
+%%
+% To estimate this model, the nesting variable |type| has to be specified.
+% The same count instruments as above are used.
+
+demand = NestedLogitDemand(dt3);
+
+demand.var.market = 'marketid';
+demand.var.panel = 'productid';
+demand.var.price = 'p';
+demand.var.quantity = 'q';
+demand.var.marketsize = 'constant';
+demand.var.exog = 'x';
+
+demand.var.nests = 'type';
+demand.var.instruments = 'nprod nprod2';
+demand.settings.paneltype = 'lsdv';
+result = demand.estimate()
+
+%%
+% The datasets that have been created can be saved for later use, here to 
+% the file |example_data.mat|:
+
+dt1 = m.data;
+dt2 = m2.data;
+save example_data dt1 dt2 dt3;
+

@@ -28,7 +28,7 @@ classdef SimMarket < matlab.mixin.Copyable
                 obj.model.endog = false;      % Endog with count instruments or no endog
                 obj.model.markets = 100;
                 obj.model.products = 5;
-                obj.model.types = 1;
+                obj.model.types = [];
                 obj.model.firm = [];
                 obj.model.randproducts = false; % Let the number of products be random
                 
@@ -82,7 +82,7 @@ classdef SimMarket < matlab.mixin.Copyable
                 obj.model.products, 1), n, 1);
             obj.data.productid = repmat((1:obj.model.products)', ...
                 obj.model.markets, 1);
-            if obj.model.types > 1
+            if ~isempty(obj.model.types)
                 reps = ceil(obj.model.products / obj.model.types);
                 typelist = repmat((1:obj.model.types)', reps, 1);
                 obj.data.type = repmat(typelist(1:obj.model.products), ...
@@ -205,6 +205,8 @@ classdef SimMarket < matlab.mixin.Copyable
             if obj.model.endog
                 if obj.model.randproducts
                     obj.estDemand.var.instruments = 'nprod nprod2';
+                elseif obj.model.beta ~= 0
+                    obj.estDemand.var.instruments = 'w';
                 else
                     obj.estDemand.var.instruments = 'c';
                 end

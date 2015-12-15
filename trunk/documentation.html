@@ -67,7 +67,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
   </style></head><body><div class="content"><h1>SimMarket Users Manual</h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Demand estimation</a></li><li><a href="#2">NestedLogitDemand estimation</a></li><li><a href="#8">MixedLogitDemand estimation</a></li><li><a href="#12">Market class</a></li><li><a href="#16">SimMarket Monte-Carlo</a></li><li><a href="#24">MixedLogitDemand Monte-Carlo</a></li></ul></div><h2>Demand estimation<a name="1"></a></h2><p>Demand is estimated using the <tt>NestedLogitDemand</tt> and <tt>MixedLogitDemand</tt> classes. The classes have methods to estimate demand of the respective type.</p><p>Data used in estimation is contained in a Matlab table object. Tables in Matlab are very similar to datasets in Stata or data frames in R. They can contain categorical/factor and numerical variables. Reference to variables in the table are by their variable names.</p><p>Demand is estimated using the <tt>NestedLogitDemand</tt> and <tt>MixedLogitDemand</tt> classes.</p><h2>NestedLogitDemand estimation<a name="2"></a></h2><p>We will start by describing estimation of nested logit demand. Although the syntax is a little different than with <i>mergersim</i> in Stata, the required fields are the same. We load a data table <tt>dt</tt>, and provide this table as an input to the demand constructor:</p><pre class="codeinput">load <span class="string">example_data</span>;
-demand = NestedLogitDemand(dt);
+demand = NestedLogitDemand(dt1);
 </pre><p>Here we specify the market and panel id, price, quantity and marketsize (here set to the constant value 1). In addition one can specify a list of exogenous variables to be used in estimation in <tt>demand.var.exog</tt>.</p><pre class="codeinput">demand.var.market = <span class="string">'marketid'</span>;
 demand.var.panel = <span class="string">'productid'</span>;
 demand.var.price = <span class="string">'p'</span>;
@@ -80,16 +80,16 @@ ans =
 
   SettingsClass with properties:
 
-         depvar: []
-          nests: []
-    instruments: []
-       quantity: 'q'
-          price: 'p'
           endog: []
-         market: 'marketid'
-     marketsize: 'constant'
            exog: 'x'
+    instruments: []
           panel: 'productid'
+          price: 'p'
+     marketsize: 'constant'
+         market: 'marketid'
+         depvar: []
+       quantity: 'q'
+          nests: []
 
 </pre><p>In <tt>demand.settings</tt>, various settings are set. Four properties of <tt>NestedLogitDemand</tt>.settings concern estimation. The last one, <tt>demand.settings.ces</tt> is used to select CES Demand rather than the default Unit demand.</p><pre class="codeinput">demand.settings
 </pre><pre class="codeoutput">
@@ -98,10 +98,10 @@ ans =
   SettingsClass with properties:
 
             robust: 'true'
-    estimateMethod: 'gls'
+               ces: 0
          paneltype: 'fe'
             nocons: 0
-               ces: 0
+    estimateMethod: 'gls'
 
 </pre><p>To estimate demand, the <tt>estimate()</tt> method is used. The estimation method used will depend on what has been specified in demand.var and in demand.settings.</p><pre class="codeinput">demand.estimate()
 </pre><pre class="codeoutput">
@@ -124,35 +124,40 @@ demand.var.marketsize = <span class="string">'constant'</span>;
 demand.var.exog = <span class="string">'x'</span>;
 demand.var.instruments = <span class="string">'nprod nprod2'</span>;
 
-demand.var.nonlinear = <span class="string">'constant'</span>;
+demand.var.nonlinear = <span class="string">'x'</span>;
 </pre><p>To estimate, the <tt>estimate()</tt> method is invoked:</p><pre class="codeinput">demand.estimate()
 </pre><pre class="codeoutput">
                                 Norm of      First-order 
  Iteration        f(x)          step          optimality   CG-iterations
-     0          0.0609935                        0.0695                
-     1          0.0609935             10         0.0695           1
-     2          0.0609935            2.5         0.0695           0
-     3         0.00223402          0.625          0.048           0
-     4        8.93025e-05       0.104979         0.0108           1
-     5        5.99777e-08      0.0162175       0.000276           1
-     6        1.88872e-14    0.000435089       1.93e-07           1
+     0           0.169756                         0.482                
+     1         0.00012532       0.818766        0.00854           1
+     2        8.78521e-07      0.0321976       0.000698           1
+     3        8.78521e-07             10       0.000698           1
+     4        8.78521e-07            2.5       0.000698           0
+     5        8.78521e-07          0.625       0.000698           0
+     6        8.78521e-07        0.15625       0.000698           0
+     7        8.78521e-07      0.0390625       0.000698           0
+     8        8.78521e-07     0.00976562       0.000698           0
+     9        7.53071e-10     0.00244141       2.05e-05           0
+    10        3.34321e-15    7.37207e-05       4.77e-08           1
 
-Optimization completed: The first-order optimality measure, 1.929597e-07, 
+Optimization completed: The first-order optimality measure, 4.772195e-08, 
 is less than options.TolFun = 1.000000e-06, and no negative/zero curvature is
 detected in the trust-region model.
 
 Optimization Metric                                       Options
-relative first-order optimality =   1.93e-07     TolFun =   1e-06 (selected)
+relative first-order optimality =   4.77e-08     TolFun =   1e-06 (selected)
 
 
 ans = 
 
-                    Coef      Std_err    t_value 
-                   _______    _______    ________
+                   Coef       Std_err      t_value  
+                __________    _______    ___________
 
-    p              -0.9384     1.7563    -0.53431
-    x               1.0017    0.10281      9.7433
-    rc_constant    0.98595     1.7782     0.55445
+    p              -1.0149     1.8992       -0.53439
+    x               1.0729    0.43673         2.4567
+    constant    -0.0043441     10.731    -0.00040483
+    rc_x           0.90127     2.6807        0.33621
 
 </pre><p>The demand class <tt>MixedLogitDemand</tt> has more settings than <tt>NestedLogitDemand</tt></p><pre class="codeinput">demand.settings
 </pre><pre class="codeoutput">
@@ -160,19 +165,19 @@ ans =
 
   SettingsClass with properties:
 
-         optimalIV: 0
-        drawmethod: 'hypercube'
             robust: 'true'
-    estimateMethod: 'gls'
-      fptolerance2: 1.0000e-14
-              nind: 100
-         quaddraws: 10
-       marketdraws: 0
-           maxiter: 100
-         paneltype: 'fe'
-            nocons: 0
-      fptolerance1: 1.0000e-14
                ces: 0
+         paneltype: 'lsdv'
+            nocons: 0
+           maxiter: 100
+         optimalIV: 0
+    estimateMethod: 'gls'
+         quaddraws: 10
+        drawmethod: 'hypercube'
+              nind: 100
+      fptolerance1: 1.0000e-14
+      fptolerance2: 1.0000e-14
+       marketdraws: 0
 
 </pre><p>We can for example estimate using quadrature, with optimal instruments:</p><pre class="codeinput">demand.settings.drawmethod = <span class="string">'quadrature'</span>;
 demand.settings.optimalIV = true;
@@ -180,76 +185,73 @@ demand.estimate()
 </pre><pre class="codeoutput">
                                 Norm of      First-order 
  Iteration        f(x)          step          optimality   CG-iterations
-     0        1.31731e-05                       0.00414                
-     1        1.37217e-09     0.00631578        4.2e-05           1
-     2        7.91179e-15    6.53435e-05        4.5e-09           1
-
-Optimization completed: The first-order optimality measure, 4.497156e-09, 
-is less than options.TolFun = 1.000000e-06, and no negative/zero curvature is
-detected in the trust-region model.
-
-Optimization Metric                                       Options
-relative first-order optimality =   4.50e-09     TolFun =   1e-06 (selected)
-
-
-                                Norm of      First-order 
- Iteration        f(x)          step          optimality   CG-iterations
-     0             585980                      1.59e+05                
-     1             507437        1.16011       3.21e+04           1
-     2             504537       0.181888            240           1
-     3             504537     0.00134482       9.87e-05           1
+     0        0.000563337                        0.0154                
+     1        0.000563337             10         0.0154           1
+     2        0.000563337            2.5         0.0154           0
+     3        0.000563337          0.625         0.0154           0
+     4        0.000563337        0.15625         0.0154           0
+     5         0.00011803      0.0390625        0.00726           0
+     6        3.32428e-06      0.0267735        0.00124           1
+     7        8.35954e-07     0.00266274       0.000625           1
+     8        7.34423e-08     0.00188139       0.000185           1
 
 Optimization stopped because the relative objective function value is changing
 by less than options.TolFun = 1.000000e-06.
 
 Optimization Metric                                         Options
-relative change objective =   3.20e-07             TolFun =   1e-06 (selected)
+relative change objective =   7.63e-07             TolFun =   1e-06 (selected)
 
-Restarting as fval=504536.8259 is too large
 
                                 Norm of      First-order 
  Iteration        f(x)          step          optimality   CG-iterations
-     0             559792                      1.34e+05                
-     1             505546        0.90723       1.89e+04           1
-     2             504537       0.106683           49.1           1
-     3             504537     0.00027565       8.36e-07           1
+     0            1.54552                           204                
+     1        0.000283664      0.0152576           2.79           1
+     2        3.36409e-09    0.000202427        0.00962           1
+     3         5.4771e-15    7.01313e-07       2.46e-05           1
 
-Optimization completed: The first-order optimality measure, 8.355488e-07, 
-is less than options.TolFun = 1.000000e-06, and no negative/zero curvature is
-detected in the trust-region model.
+Optimization stopped because the relative objective function value is changing
+by less than options.TolFun = 1.000000e-06.
 
-Optimization Metric                                       Options
-relative first-order optimality =   8.36e-07     TolFun =   1e-06 (selected)
+Optimization Metric                                         Options
+relative change objective =   3.36e-09             TolFun =   1e-06 (selected)
 
-Restarting as fval=504536.8259 is too large
-Warning: Matrix is close to singular or badly scaled. Results may be
-inaccurate. RCOND =  1.244484e-16. 
 
 ans = 
 
-                      Coef        Std_err       t_value 
-                   __________    __________    _________
+                  Coef      Std_err     t_value 
+                ________    ________    ________
 
-    p                 -1.4056       0.22735      -6.1828
-    x                  0.5542     0.0060499       91.605
-    rc_constant    4.6863e-12    5.3453e+05    8.767e-18
+    p           -0.94143     0.15283     -6.1601
+    x             1.0276    0.017885      57.459
+    constant    -0.41673     0.75859    -0.54935
+    rc_x         0.98671    0.012061      81.809
 
 </pre><h2>Market class<a name="12"></a></h2><p>The market class is used to calculate equilibrium prices and quantities, based on market structure. The equilibrium depends on the estimated parameters of the demand model specified.</p><pre class="codeinput">market = Market(demand);
 market.var.firm = <span class="string">'productid'</span>;
 </pre><p>Here we specify single product firms (corresponding to the product id). To find the marginal costs that correspond with the estimated demand and prices and quantities, we use the function <tt>findCosts()</tt>:</p><pre class="codeinput">market.findCosts();
-display(<span class="string">'Average costs are given by: '</span>)
-mean(market.c)
-</pre><pre class="codeoutput">Average costs are given by: 
+averageCosts = mean(market.c)
+</pre><pre class="codeoutput">
+averageCosts =
 
-ans =
-
- -643.3871
+    3.8169
 
 </pre><p>Having determined costs, one can use the market class (with its associated demand) to study variations in ownership, costs etc. The simplest way to do this is to make a copy of the <tt>Market</tt> object <tt>market</tt> and compute a new equilibrium with the copy, <tt>market2</tt>. The effects of the change in the market conditions in the two settings can then be compared using <tt>market.compare()</tt>.</p><pre class="codeinput">market2 = copy(market);
 market2.firm(market2.firm == 2 ) = 1;
 market2.equilibrium();
-nlMergerResult = market.compare(market2.p);
+mergerResult = market.compare(market2.p)
 </pre><pre class="codeoutput">Simulation converged for 100 of 100 markets
+
+mergerResult = 
+
+         Costs     Price1    Price2     PriceCh  
+         ______    ______    ______    __________
+
+    1    3.8795    5.0199    5.0457     0.0051661
+    2    3.7725    4.9725    4.9959      0.004923
+    3    3.9793    5.1427    5.1428    1.6414e-05
+    4    3.6475    4.8655    4.8655    1.3632e-05
+    5    3.8027    5.0507    5.0508    1.9026e-05
+
 </pre><p>The <tt>Market</tt> class has a number of settings. Similarly to the demand classes, estimation is possible (see section below). One can also specify <tt>market.settings.conduct</tt> - the degree to which profits of other firms are taken in to consideration in profit maximization.</p><h2>SimMarket Monte-Carlo<a name="16"></a></h2><p>To create a simulated market, the <tt>SimMarket</tt> class is used. It has methods to create price and quantity variables: # from a random price using a specified demand # from a set of products that vary exogenously over time</p><p>In both cases instruments are created.</p><p>The purpose of the <tt>SimMarket</tt> class is to # create a dataset based on a demand model and to # facilitate estimation by creating a new demand object associated with the data.</p><pre class="codeinput">m = SimMarket()
 </pre><pre class="codeoutput">
 m = 
@@ -323,14 +325,14 @@ results =
 </pre><h2>MixedLogitDemand Monte-Carlo<a name="24"></a></h2><p>Now we will create a slightly more complex market with mixed logit demand. A minimal definition of a <tt>MixedLogitDemand</tt> object is as follows:</p><pre class="codeinput">demand = MixedLogitDemand();
 demand.alpha = 1;
 demand.rc_sigma = 1;
-demand.var.nonlinear = <span class="string">'constant'</span>;
+demand.var.nonlinear = <span class="string">'x'</span>;
 </pre><p>The <tt>SimMarket</tt> class has a set of model settings that can be used to customize the simulated market. All model settings have default values:</p><pre class="codeinput">m2 = SimMarket();
 m2.demand = demand;
 display(m2.model)
 </pre><pre class="codeoutput">            endog: 0
           markets: 100
          products: 5
-            types: 1
+            types: []
              firm: []
      randproducts: 0
                 x: [5 0]
@@ -344,7 +346,7 @@ display(m2.model)
         prob_prod: 0.8000
              beta: [2x1 double]
 
-</pre><p>Here we let prices be endogenous. As an alternative to <tt>calculateDemand()</tt> presented above, here we instead use <tt>simulateDemand()</tt>. Instead of prices being random, <tt>simulateDemand()</tt> calculates equilibrium values depending on market conditions in each market. Price variability can comes from cost shifters and/or the number of products being set to be exogenously random. Prices and quantities will depend on the products in the market as well as the ownership structure. By default we have single product firms.</p><pre class="codeinput">m2.model.endog = true;
+</pre><p>Here we let prices be endogenous. As an alternative to <tt>calculateDemand()</tt> presented above, we instead use <tt>simulateDemand()</tt>. Instead of prices being random, <tt>simulateDemand()</tt> calculates equilibrium values depending on market conditions in each market. Price variability can comes from cost shifters and/or the number of products being set to be exogenously random. Prices and quantities will depend on the products in the market as well as the ownership structure.</p><pre class="codeinput">m2.model.endog = true;
 m2.model.randproducts = true;
 m2.init();
 m2.simulateDemand()
@@ -355,23 +357,73 @@ ans =
       p          sh   
     ______    ________
 
-    4.9883    0.022124
-    4.9017    0.030661
-    5.0884    0.023289
-    4.8001    0.044077
-    4.9592    0.044874
+    5.0199    0.023738
+    4.9725    0.032045
+    5.1427    0.027118
+    4.8655    0.044922
+    5.0507     0.04733
 
-</pre><p>The datasets that have been created can be saved for later use, here to the file <tt>example_data.mat</tt>:</p><pre class="codeinput">dt = m.data;
-dt2 = m2.data;
-save <span class="string">example_data</span> <span class="string">dt</span> <span class="string">dt2</span>;
 </pre><p>A minimal nested logit demand specification is as follows:</p><pre class="codeinput">demand = NestedLogitDemand();
-demand.alpha = 1;
+demand.alpha = 0.5;
 demand.sigma = 0.5;
 demand.var.nests = <span class="string">'type'</span>;
 </pre><p>The market created can be specified by modifying the model characteristics. To allow for nests, we can add a categorical variable <tt>type</tt> having 2 distinct values by specifying:</p><pre class="codeinput">m3 = SimMarket();
 m3.demand = demand;
 m3.model.types = 2;
-m3.init()
+
+<span class="comment">% By default SimMarket assumes single product firms. We can change this mapping</span>
+<span class="comment">% by setting the |model.firms| property. Here we assume that the five</span>
+<span class="comment">% products in the model have two owners.</span>
+
+m3.model.firm = [1,1,1,2,2]';
+
+m3.model.endog = true;
+m3.model.randproducts = true;
+
+m3.model.gamma = 1;
+m3.init();
+m3.simulateDemand()
+dt3 = m3.data;
+</pre><pre class="codeoutput">Simulation converged for 100 of 100 markets
+
+ans = 
+
+      p          sh   
+    ______    ________
+
+    5.9386    0.051451
+    5.6168    0.061706
+    5.6646    0.079954
+    5.7958     0.10215
+     5.679    0.097871
+
+</pre><p>To estimate this model, the nesting variable <tt>type</tt> has to be specified. The same count instruments as above are used.</p><pre class="codeinput">demand = NestedLogitDemand(dt3);
+
+demand.var.market = <span class="string">'marketid'</span>;
+demand.var.panel = <span class="string">'productid'</span>;
+demand.var.price = <span class="string">'p'</span>;
+demand.var.quantity = <span class="string">'q'</span>;
+demand.var.marketsize = <span class="string">'constant'</span>;
+demand.var.exog = <span class="string">'x'</span>;
+
+demand.var.nests = <span class="string">'type'</span>;
+demand.var.instruments = <span class="string">'nprod nprod2'</span>;
+demand.settings.paneltype = <span class="string">'lsdv'</span>;
+demand.estimate()
+</pre><pre class="codeoutput">
+ans = 
+
+                 Coef      Std_err     t_value
+                _______    ________    _______
+
+    p           -0.5303    0.062989     -8.419
+    lsjg        0.49929    0.023218     21.504
+    x            1.0075    0.014037     71.775
+    constant    0.05047     0.42625    0.11841
+
+</pre><p>The datasets that have been created can be saved for later use, here to the file <tt>example_data.mat</tt>:</p><pre class="codeinput">dt1 = m.data;
+dt2 = m2.data;
+save <span class="string">example_data</span> <span class="string">dt1</span> <span class="string">dt2</span> <span class="string">dt3</span>;
 </pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% SimMarket Users Manual
@@ -396,7 +448,7 @@ m3.init()
 % the demand constructor:
 
 load example_data;
-demand = NestedLogitDemand(dt);
+demand = NestedLogitDemand(dt1);
 
 %%
 % Here we specify the market and panel id, price, quantity and marketsize
@@ -453,7 +505,7 @@ demand.var.marketsize = 'constant';
 demand.var.exog = 'x';
 demand.var.instruments = 'nprod nprod2';
 
-demand.var.nonlinear = 'constant';
+demand.var.nonlinear = 'x';
 
 %%
 % To estimate, the |estimate()| method is invoked:
@@ -487,8 +539,7 @@ market.var.firm = 'productid';
 % prices and quantities, we use the function |findCosts()|:
 
 market.findCosts();
-display('Average costs are given by: ')
-mean(market.c)
+averageCosts = mean(market.c)
 
 %%
 % Having determined costs, one can use the market class (with its
@@ -500,7 +551,7 @@ mean(market.c)
 market2 = copy(market);
 market2.firm(market2.firm == 2 ) = 1;
 market2.equilibrium();
-nlMergerResult = market.compare(market2.p);
+mergerResult = market.compare(market2.p)
 
 %%
 % The |Market| class has a number of settings. Similarly to the demand
@@ -589,7 +640,7 @@ results = m.estimate()
 demand = MixedLogitDemand();
 demand.alpha = 1;
 demand.rc_sigma = 1;
-demand.var.nonlinear = 'constant';
+demand.var.nonlinear = 'x';
 
 %% 
 % The |SimMarket| class has a set of model settings that can be used to
@@ -601,12 +652,11 @@ display(m2.model)
 
 %% 
 % Here we let prices be endogenous. As an alternative to |calculateDemand()| 
-% presented above, here we instead use |simulateDemand()|. Instead of prices being
+% presented above, we instead use |simulateDemand()|. Instead of prices being
 % random, |simulateDemand()| calculates equilibrium values depending on market conditions in each
 % market. Price variability can comes from cost shifters and/or the number of products being set to be 
 % exogenously random. Prices and quantities will depend on the products in
-% the market as well as the ownership structure. By default we have single
-% product firms.
+% the market as well as the ownership structure. 
 
 m2.model.endog = true;
 m2.model.randproducts = true;
@@ -614,18 +664,10 @@ m2.init();
 m2.simulateDemand()
 
 %%
-% The datasets that have been created can be saved for later use, here to 
-% the file |example_data.mat|:
-
-dt = m.data;
-dt2 = m2.data;
-save example_data dt dt2;
-
-%%
 % A minimal nested logit demand specification is as follows:
 
 demand = NestedLogitDemand();
-demand.alpha = 1;
+demand.alpha = 0.5;
 demand.sigma = 0.5;
 demand.var.nests = 'type';
 
@@ -637,7 +679,47 @@ demand.var.nests = 'type';
 m3 = SimMarket();
 m3.demand = demand;
 m3.model.types = 2;
-m3.init()
+
+% By default SimMarket assumes single product firms. We can change this mapping
+% by setting the |model.firms| property. Here we assume that the five
+% products in the model have two owners. 
+
+m3.model.firm = [1,1,1,2,2]';
+
+m3.model.endog = true;
+m3.model.randproducts = true;
+
+m3.model.gamma = 1;
+m3.init();
+m3.simulateDemand()
+dt3 = m3.data;
+
+%%
+% To estimate this model, the nesting variable |type| has to be specified.
+% The same count instruments as above are used.
+
+demand = NestedLogitDemand(dt3);
+
+demand.var.market = 'marketid';
+demand.var.panel = 'productid';
+demand.var.price = 'p';
+demand.var.quantity = 'q';
+demand.var.marketsize = 'constant';
+demand.var.exog = 'x';
+
+demand.var.nests = 'type';
+demand.var.instruments = 'nprod nprod2';
+demand.settings.paneltype = 'lsdv';
+demand.estimate()
+
+%%
+% The datasets that have been created can be saved for later use, here to 
+% the file |example_data.mat|:
+
+dt1 = m.data;
+dt2 = m2.data;
+save example_data dt1 dt2 dt3;
+
 
 ##### SOURCE END #####
 --></body></html>

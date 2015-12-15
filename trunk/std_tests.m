@@ -50,7 +50,7 @@ results = m.estimate()
 testtrue(results{'p','Coef'} , results{'p', 'Theta'}, 1e-2 )
 
 testVals = [sresults{1, 'sh'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
-correctVals = [0.020117449446861,5.052100057072429,-1.008306669278496,0.004950904330630];
+correctVals = [0.020117449446861,5.052100057072429,-1.008306669278507,0.005101784438227];
 testSameResults(testVals, correctVals, 3);
 
 %% Test 4: MixedLogitDemand - rc_x
@@ -64,7 +64,7 @@ sresults = m.simulateDemand()
 
 results = m.estimate()
 testVals = [sresults{1, 'sh'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
-correctVals = [0.021868951346931,5.086215427553291,-1.008741759875663,0.005336380482199];
+correctVals = [0.021868951346931,5.086215427553291,-1.008741759875677,0.005362773381715];
 testSameResults(testVals, correctVals, 4);
 
 testtrue(results{'rc_x','Coef'} , m.demand.rc_sigma, 1e-1 )
@@ -109,7 +109,7 @@ results = m.simulateDemand()
 results = m.estimate()
 
 testVals = [results{'p','Coef'}, results{'rc_x','Coef'}];
-correctVals = [-0.934171461191589,0.363664431102983];
+correctVals = [-0.926700943042958,0.251569943194395];
 testSameResults(testVals, correctVals, 6);
 
 testtrue(results{'p','Coef'} , results{'p', 'Theta'}, 1e-1 )

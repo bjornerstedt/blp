@@ -447,6 +447,8 @@ classdef MixedLogitDemand < NestedLogitDemand
                 'restartMaxIterations','restartFval', 'test', ...
                 'quadrature','randstream','hessian','guessdelta','quietly'});
             
+            obj.settings.paneltype = 'lsdv';
+
             obj.settings.optimalIV = false;
             obj.settings.drawmethod = 'hypercube';
             obj.settings.marketdraws = false; % Different draws for each market
