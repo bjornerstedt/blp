@@ -1,6 +1,5 @@
 classdef NestedLogitDemand < Estimate
     % Estimation and simulation code for nested logit.
-    %   $Id: NestedLogitDemand.m 141 2015-10-08 14:10:51Z d3687-mb $
     
     properties
         alpha
@@ -271,6 +270,9 @@ classdef NestedLogitDemand < Estimate
                 lsnames = {[],{'lsjg'},{'lsjh', 'lshg'}};
                 names.endog = [obj.getPriceName(), lsnames{length(obj.nestlist)+1}, names.endog];
             else
+                if isempty(obj.alpha)
+                    error('Either quantities or alpha have to be specified')
+                end
                 names.endog = [obj.getPriceName(), names.endog];
             end
             if isempty(obj.var.market) || isempty(obj.var.price) 

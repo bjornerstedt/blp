@@ -1,7 +1,6 @@
 classdef MixedLogitDemand < NestedLogitDemand
     % Random Coefficient demand class
     %   Simulation of shares and estimation of parameters beta and rc_sigma.
-    %   $Id: MixedLogitDemand.m 142 2015-10-09 13:07:17Z d3687-mb $
    
     properties
         rc_sigma % Starting and end value
@@ -460,7 +459,7 @@ classdef MixedLogitDemand < NestedLogitDemand
             
             obj.config.tolerance = 1e-6;
             obj.config.fpmaxit = 1000; % maximum iterations in contraction mapping
-            obj.config.restartMaxIterations = 5; % Max # of restarts if fval is high
+            obj.config.restartMaxIterations = 1; % Max # of restarts if fval is high
             obj.config.restartFval =  10^3; % Restart optimal IV estimation if fval >.
             obj.config.randstream = []; % random stream for estimation in parallel 
             obj.config.guessdelta = true;

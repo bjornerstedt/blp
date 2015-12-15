@@ -9,11 +9,11 @@ classdef SimMarket < matlab.mixin.Copyable
         model
         data
         demand
-        simDemand % Class with settings for data generation
         estDemand % Settings for estimation
-        market
     end
-    properties 
+    properties (SetAccess = protected, Hidden = true )
+        simDemand % Class with settings for data generation
+        market
     end
     
     methods
@@ -62,6 +62,9 @@ classdef SimMarket < matlab.mixin.Copyable
             
             obj.simDemand = copy(obj.demand);
             obj.estDemand = copy(obj.demand);
+            if isa(obj.demand, 'MixedLogitDemand')
+                obj.estDemand.rc_sigma = [];
+            end
 
             obj.createData();
             obj.simDemand.data = obj.data;

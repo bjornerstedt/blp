@@ -1,23 +1,17 @@
 classdef Market < Estimate % matlab.mixin.Copyable
     % MARKET Calculates market equilibrium
     %   Based on ownership structure and conduct.
-    % $Id: Market.m 134 2015-09-28 19:32:21Z d3687-mb $
     
     properties
-        %Varnames
         firm
         q %quantities
         p %prices
         p0 %Initial prices
         c %Costs
-        D % Demand class
-        
-        dampen = 1
-        maxit = 3000
-        costfunction = 'loglinear'
-        estimation = 'ols'
+        D % Demand class        
     end
     properties (SetAccess = protected, Hidden = true )
+        maxit = 3000
         selection
         s %shares
         RR %ownership tranformation with conduct
@@ -36,7 +30,10 @@ classdef Market < Estimate % matlab.mixin.Copyable
             obj.D.init();
             % Set unless new firm has been set for example as post merger
             % ownership.
-            if isempty(obj.firm) 
+            if isempty(obj.var.firm) 
+                error('var.firm has to be specified');
+            end
+            if isempty(obj.firm)
                 obj.firm = obj.D.data{:, obj.var.firm};
             end
 
@@ -360,7 +357,9 @@ classdef Market < Estimate % matlab.mixin.Copyable
                 'endog','instruments'};
             obj.var = SettingsClass([varsEstimate, {'firm'}]);
             obj.settings.addprop('conduct');
-            obj.settings.conduct = 0;     
+            obj.settings.addprop('dampen');
+            obj.settings.conduct = 0;  
+            obj.settings.dampen = 1;
         end      
         
         function newmarket = clone(obj)

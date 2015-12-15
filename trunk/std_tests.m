@@ -50,7 +50,7 @@ results = m.estimate()
 testtrue(results{'p','Coef'} , results{'p', 'Theta'}, 1e-2 )
 
 testVals = [sresults{1, 'sh'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
-correctVals = [0.020117449446861,5.052100057072429,-1.002931362162900,0.004913162002386];
+correctVals = [0.020117449446861,5.052100057072429,-1.008306669278496,0.004950904330630];
 testSameResults(testVals, correctVals, 3);
 
 %% Test 4: MixedLogitDemand - rc_x
@@ -64,10 +64,10 @@ sresults = m.simulateDemand()
 
 results = m.estimate()
 testVals = [sresults{1, 'sh'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
-correctVals = [0.021868951346931,5.086215427553291,-0.999033679194202,0.005165964169027];
+correctVals = [0.021868951346931,5.086215427553291,-1.008741759875663,0.005336380482199];
 testSameResults(testVals, correctVals, 4);
 
-testtrue(results{'rc_x','Coef'} , m.demand.rc_sigma, 1e-3 )
+testtrue(results{'rc_x','Coef'} , m.demand.rc_sigma, 1e-1 )
 
 %% Test 5: CES MixedLogitDemand
 m = SimMarket();
@@ -84,7 +84,12 @@ m.demand.var.nonlinear = 'constant';
 m.init();
 results = m.calculateDemand()
 results = m.estimate()
-testtrue(results{'lP','Coef'} , results{'lP', 'Theta'}, 1e-2)
+
+testVals = [results{'lP','Coef'}, results{'rc_constant','Coef'}];
+correctVals = [-3.929836828254639,0.760600817538613];
+testSameResults(testVals, correctVals, 5);
+
+testtrue(results{'lP','Coef'} , results{'lP', 'Theta'}, 2e-2)
 
 %% Test 6: Optimal IV
 m = SimMarket();
@@ -102,6 +107,11 @@ m.demand.settings.optimalIV = true;
 
 results = m.simulateDemand()
 results = m.estimate()
+
+testVals = [results{'p','Coef'}, results{'rc_x','Coef'}];
+correctVals = [-0.934171461191589,0.363664431102983];
+testSameResults(testVals, correctVals, 6);
+
 testtrue(results{'p','Coef'} , results{'p', 'Theta'}, 1e-1 )
 
 %% Test 7: LSDV/FE
@@ -180,11 +190,11 @@ max( abs((table2array(eq1) - table2array(eq2)) ./table2array(eq1)))
 
 m = SimMarket();
 m.demand = MixedLogitDemand;
-m.demand.var.nonlinear = 'p x constant';
+m.demand.var.nonlinear = 'p constant';
 m.demand.alpha = 1;
-m.demand.rc_sigma = [0.1; 1; 1];
+m.demand.rc_sigma = [0.1; 1];
 
-m.model.optimalIV = false;
+m.demand.settings.optimalIV = false;
 
 m.model.endog = false;
 m.model.randproducts = false;
@@ -197,4 +207,4 @@ m.init();
 eq1 = m.simulateDemand()
 
 results = m.estimate()
-testtrue(results{'p','Coef'} , results{'p', 'Theta'}, 1e-1 )
+testtrue(results{'p','Coef'} , results{'p', 'Theta'}, 2e-2 )

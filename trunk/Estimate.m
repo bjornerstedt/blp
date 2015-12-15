@@ -1,7 +1,6 @@
 classdef Estimate  < matlab.mixin.Copyable 
     % Basic table and logit functionality
     %   Subclassed by NestedLogit and MixedLogit
-    %   $Id: Estimate.m 142 2015-10-09 13:07:17Z d3687-mb $
     
     properties
         data % Data table used by init
@@ -15,10 +14,10 @@ classdef Estimate  < matlab.mixin.Copyable
         settings % Structure with settings, defined in constructor
         config % Structure with internal settings, defined in constructor
         var % Structure with variable names
-    end
-    properties (SetAccess = protected, Hidden = true )
         Xorig % Non-demeaned vars
         Zorig % Non-demeaned vars
+    end
+    properties (SetAccess = protected, Hidden = true )
         vars  % vars to display in output      
         dummyvars = []
         period % Cell array used for period / market calcs
@@ -60,6 +59,9 @@ classdef Estimate  < matlab.mixin.Copyable
            
             % Handle panel
             if ~strcmpi(obj.settings.paneltype, 'none')
+                if isempty(obj.var.panel) || ~obj.isvar(obj.var.panel, obj.data)
+                    error('var.panel has to be specified')
+                end
                 T = obj.data(:, [obj.var.panel, varlist] );
                 panel = strsplit(strtrim(obj.var.panel));
                 obj.panelid =  T{:, panel }; % Panelid should be created better
