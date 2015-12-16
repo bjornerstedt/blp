@@ -127,8 +127,8 @@ classdef NestedLogitDemand < Estimate
             S = obj.share.s;	
         end
 
-		% Calculate quantities and market shares
         function tab = quantity(obj, P)
+		% QUANTITY calculates quantities and market shares
             tableCols = {'Product', 'Price', 'Quantity', 'MarketSh', 'Share'};
             s = obj.shares(P);
             if obj.settings.ces
@@ -142,7 +142,7 @@ classdef NestedLogitDemand < Estimate
         end
                 
         function sj = shareJacobian(obj, P)
-            % shareJacobian([P], [market_number])
+            % shareJacobian([P])
             % When P is empty shareJacobian is on actual prices and shares
             % Restrict shares to market t:
             if isempty(P)

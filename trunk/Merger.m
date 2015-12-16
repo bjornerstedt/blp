@@ -2,7 +2,6 @@ classdef Merger < handle
     %MERGER Utility class to reduce coding of a merger
     %   Merger(demand) to create
     %   merger.merge(buyer, seller) to merge
-    %   $Id: Merger.m 111 2015-04-30 11:18:10Z d3687-mb $
     
     properties
         demand

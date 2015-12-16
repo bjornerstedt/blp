@@ -1,7 +1,6 @@
 classdef Sampling
     %SAMPLING Various sampling methods
     %   General methods with static invocation
-    %   $Id: Sampling.m 114 2015-05-20 19:51:02Z d3687-mb $
     
     methods(Static)
         function w = draw(method, N, draws, varargin)

@@ -1,5 +1,5 @@
 function J = jacobian(func, x0)
-    % Numerical jacobian, optionally used in MixedLogitDemand
+    % Numerical jacobian, optionally used in Market
     % From: http://fabcol.free.fr/pdf/lectnotes4.pdf
     % [df]=numgrad(func,x0,method,param)
     %

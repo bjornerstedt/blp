@@ -1,0 +1,7 @@
+To install:
+
+1) Unpack zip file in preferred folder.
+2) Add the trunk subfolder to the Matlab path by
+    - Selecting 'Set Path' under the 'Home' tab in the command window.
+    - Choose the 'Add Folder...' button and locate the trunk subfolder.
+3) Run the stest script by writing stest on the command line.

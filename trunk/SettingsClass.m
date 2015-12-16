@@ -7,11 +7,7 @@ classdef SettingsClass < dynamicprops & matlab.mixin.Copyable
     %   A common problem with using a struct of settings that can be set by
     %   the user is that the set of properties is not fixed. Misspelling a
     %   property leads to a new field being created.
-    %   $Id: SettingsClass.m 140 2015-10-07 13:06:18Z d3687-mb $
    
-    properties
-    end
-    
     methods
         function setParameters(obj, setnames)
             if ischar(setnames)

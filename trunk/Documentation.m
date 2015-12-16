@@ -5,7 +5,7 @@
 % |MixedLogitDemand| classes. The classes have methods to estimate demand of
 % the respective type. 
 %
-% Data used in estimation is contained in a Matlab table object. Tables
+% Data used in estimation is contained in a Matlab  <matlab:doc('table') table>  object. Tables
 % in Matlab are very similar to datasets in Stata or data frames in R. They
 % can contain categorical/factor and numerical variables. Reference to
 % variables in the table are by their variable names. 
@@ -16,7 +16,7 @@
 %% NestedLogitDemand estimation
 % We will start by describing estimation of nested logit demand. Although the
 % syntax is a little different than with _mergersim_ in Stata, the required fields are
-% the same. We load a data table |dt|, and provide this table as an input to
+% the same. We load data including table |dt1|, and provide this table as an input to
 % the demand constructor:
 
 load example_data;
@@ -64,7 +64,8 @@ result = demand.estimate()
 
 %% MixedLogitDemand estimation
 % Estimation of mixed logit is rather similar to nested logit. There are
-% more parameters that one can specify, however
+% more parameters that one can specify, however. In the following example,
+% we use count instruments to identify an endogenous price variable.
 
 load example_data;
 demand = MixedLogitDemand(dt2);
@@ -143,13 +144,13 @@ mergerResult = market.compare(market2.p)
 % # create a dataset based on a demand model and to 
 % # facilitate estimation by creating a new demand object associated with the data. 
 
-m = SimMarket()
+m1 = SimMarket()
 
 %%
-% The |SimMarket| object m contains a structure of settings m.model. In
-% addition to the associated demand object it creates a new demand object *m.estDemand*
+% The |SimMarket| object |m1| contains a structure of settings |m1.model|. In
+% addition to the associated demand object it creates a new demand object |m.estDemand|
 % that is used for estimation. The dataset created by |SimMarket| is stored
-% in m.data.
+% in |m.data|.
 
 %% 
 % A demand model can be created by using one of the classes
@@ -169,14 +170,14 @@ demand.alpha = 1;
 %%
 % To create the dataset the method |init()| can be used. Invoking
 % this method, changes the |SimMarket| object we have created. The object
-% |m| now contains a dataset |m.data|.
+% |m| now contains a dataset |m1.data|.
 
-m.demand = demand;
-m.init()
-m
+m1.demand = demand;
+m1.init()
+m1
 
 %%
-% By default |m.init()| ceates a market with 5 products and 100 markets, in long 
+% By default |m1.init()| ceates a market with 5 products and 100 markets, in long 
 % format as a Matlab table. 
 % The first 10 observations of the dataset are shown below. It contains a 
 % market and product identifiers, a constant, costs |c|, a demand characteristic |x| and
@@ -185,17 +186,17 @@ m
 % specific shock, the latter uncorrelated with observables (random
 % effects).
 
-m.data(1:10,:)
+m1.data(1:10,:)
 
 %%
 % To add random prices and the corresponding demand the method |calculateDemand()| 
-% is used. Using the demand specification in |m.demand|, quantities are calculated 
+% is used. Using the demand specification in |m1.demand|, quantities are calculated 
 % based on prices and product characteristics |d|. The total
 % share of the product including the outside good is shown below, as are
 % the average prices and quantities by product. (By default market size is
 % set to 1 in all markets).
 
-sresults = m.calculateDemand()
+sresults = m1.calculateDemand()
 
 %%
 % Demand can be estimated using the estimate() method. With the standard
@@ -203,7 +204,7 @@ sresults = m.calculateDemand()
 % effects. The results shown have true values in the first column and the
 % estimated values in the other columns. 
 
-results = m.estimate()
+results = m1.estimate()
 
 %% MixedLogitDemand Monte-Carlo
 % Now we will create a slightly more complex market with mixed logit demand. 
@@ -261,6 +262,9 @@ m3.model.firm = [1,1,1,2,2]';
 m3.model.endog = true;
 m3.model.randproducts = true;
 
+%%
+% We add a cost shifter |w| by specifying the |model.gamma| parameter.
+
 m3.model.gamma = 1;
 m3.init();
 m3.simulateDemand()
@@ -268,7 +272,8 @@ dt3 = m3.data;
 
 %%
 % To estimate this model, the nesting variable |type| has to be specified.
-% The same count instruments as above are used.
+% The same count instruments as above are used. Note that the 2SLS FE panel
+% estimate will have price and log group shares as endogenous variables.
 
 demand = NestedLogitDemand(dt3);
 
@@ -284,11 +289,23 @@ demand.var.instruments = 'nprod nprod2';
 demand.settings.paneltype = 'lsdv';
 result = demand.estimate()
 
+%% 
+% The cost equation can be estimated. The default intercept in generated data is 4 and slope
+% (the |gamma| variable) has been set to 1 in the creation of the dataset.
+
+market = Market(demand);
+market.var.firm = 'firm';
+market.findCosts();
+market.var.depvar = 'c';
+market.var.exog = 'w';
+market.settings.paneltype = 'none';
+costEstimate = market.estimate()
+
 %%
 % The datasets that have been created can be saved for later use, here to 
 % the file |example_data.mat|:
 
-dt1 = m.data;
+dt1 = m1.data;
 dt2 = m2.data;
 save example_data dt1 dt2 dt3;
 

@@ -260,7 +260,9 @@ classdef Market < Estimate % matlab.mixin.Copyable
         end
         
         function res = summary(obj, varargin)
+            % SUMMARY creates summary by varargin variable
             tableCols = {'Firm', 'Product', 'Costs'};
+            % Get table of p, q and shares from demand (why?):
             demres = obj.D.quantity(obj.p);
             res = table(obj.firm, demres.Product, obj.c, 'VariableNames',tableCols);
             demres.Product = [];

@@ -273,7 +273,6 @@ classdef Estimate  < matlab.mixin.Copyable
 %            obj.config = SettingsClass({'quietly','nocons','estimateMethod'});
             
             obj.config.quietly = true;
-            obj.config.isdemeaned = false; % If data has been demeaned already. Eliminate? !!!
             obj.results.estimateDescription = 'Linear Estimate'; 
             
             obj.settings.paneltype = 'fe';

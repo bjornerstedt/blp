@@ -1,7 +1,6 @@
 classdef MixedLogitDemandMarket2  < matlab.mixin.Copyable
     % Market calculations in Mixed Logit
-    %   Used by MixedLogitDemand
-    %   $Id: MixedLogitDemandMarket.m 140 2015-10-07 13:06:18Z d3687-mb $
+    %   Used by MixedLogitDemand2
     
     properties
         selection

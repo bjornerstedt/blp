@@ -30,7 +30,6 @@ function [job, diary]  = batchrun(func, data, testdata, varargin)
 %   after each test. Parameters passed are the test struct, the cell array of
 %   results and the test number. Can be used for tabulation or other
 %   processing.
-%   $Id: batchrun.m 111 2015-04-30 11:18:10Z d3687-mb $
 
 p = inputParser;
 p.addRequired('func', @(x)isa(x, 'function_handle'));
