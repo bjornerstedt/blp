@@ -102,9 +102,9 @@ result = demand.estimate()
 % The market class is used to calculate equilibrium prices and quantities,
 % based on market structure. The equilibrium depends on the estimated
 % parameters of the demand model specified. 
-
+demand2 = copy(demand);
 market = Market(demand);
-market.var.firm = 'productid';
+market.var.firm = 'firm';
 
 %%
 % Here we specify single product firms (corresponding to the product id).
@@ -124,7 +124,33 @@ averageCosts = mean(market.c)
 market2 = copy(market);
 market2.firm(market2.firm == 2 ) = 1;
 market2.equilibrium();
-mergerResult = market.compare(market2.p)
+mergerResult = compare(market, market2)
+
+%%
+% Cost calculation and equilibrium simulation can be performed on a
+% selection rather than the whole dataset. To do this, a selection vector
+% is provided. In this example we restrict our attention to market 1 by
+% specifying |findCosts(dt2.marketid == 1)|. As costs have not been
+% calculated for other markets, both |market2.equilibrium()| and |compare|
+% calculate only for this market. 
+
+market = Market(demand2);
+market.var.firm = 'firm';
+market.findCosts(dt2.marketid == 1);
+market2 = copy(market);
+market2.firm(market2.firm == 2 ) = 1;
+market2.equilibrium();
+mergerResult2 = compare(market, market2)
+
+%%
+%One can also explicitly restrict 
+% equilibrium calculation to some markets. In this case calculations will
+% only be on these markets, provided that costs have been calculated for
+% them. Comparisons can be restricted to a subset of markets by providing
+% the restriction with the |'Selection'| option.
+%
+%   market2.equilibrium(dt2.marketid == 1);
+%   mergerResult2 = compare(market, market2, 'Selection', dt2.marketid == 1)
 
 %%
 % The |Market| class has a number of settings. Similarly to the demand
@@ -229,10 +255,14 @@ display(m2.model)
 % random, |simulateDemand()| calculates equilibrium values depending on market conditions in each
 % market. Price variability can comes from cost shifters and/or the number of products being set to be 
 % exogenously random. Prices and quantities will depend on the products in
-% the market as well as the ownership structure. 
+% the market as well as the ownership structure. Here we set ownership of
+% the five products explicitly with the |m2.model.firm| setting. Note that
+% as |m2.model.randproducts = true| is specified, not all five products
+% will actually exist in all markets.
 
 m2.model.endog = true;
 m2.model.randproducts = true;
+m2.model.firm = [1,1,2,2,3];
 m2.init();
 m2.simulateDemand()
 
@@ -296,9 +326,9 @@ result = demand.estimate()
 market = Market(demand);
 market.var.firm = 'firm';
 market.findCosts();
-market.var.depvar = 'c';
+market.y = market.c;
 market.var.exog = 'w';
-market.settings.paneltype = 'none';
+market.var.panel = 'productid';
 costEstimate = market.estimate()
 
 %%
@@ -309,3 +339,13 @@ dt1 = m1.data;
 dt2 = m2.data;
 save example_data dt1 dt2 dt3;
 
+%% Estimation
+% SimMarket demand and market classes all inherit the linear estimation 
+% functionality of the |Estimate| class. This class can be used for
+% estimation not directly related to demand or market estimation. 
+
+est = Estimate(dt3);
+est.settings.paneltype = 'none';
+est.var.exog = 'w';
+est.var.depvar = 'c';
+est.estimate()

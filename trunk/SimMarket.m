@@ -89,6 +89,7 @@ classdef SimMarket < matlab.mixin.Copyable
                     obj.model.markets, 1);
             end
             if ~isempty(obj.model.firm)
+                obj.model.firm = reshape(obj.model.firm, length(obj.model.firm),1);
                 if length(obj.model.firm) ~= obj.model.products
                     error('The list of firms does not match the number of products')
                 end

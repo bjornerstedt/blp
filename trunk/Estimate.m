@@ -30,14 +30,13 @@ classdef Estimate  < matlab.mixin.Copyable
             % Additional initialisation in subclasses
         end
         
-       function init(obj, varargin)
+       function selection = init(obj, varargin)
             % INIT: Initialize estimation of logit, with selection as
             % optional argument. Create a always true selection to reset.
-            if nargin > 1
-                selection = varargin{1};
-            else
-                selection = [];
-            end
+            args = inputParser;
+            args.addParameter('selection', [],  @islogical );
+            args.parse(varargin{:});
+            selection = args.Results.selection;
             if ~isempty(obj.var.instruments)
                 names.instruments = strsplit(strtrim(obj.var.instruments));
             else
@@ -269,13 +268,15 @@ classdef Estimate  < matlab.mixin.Copyable
             end
             obj.var = SettingsClass({'market','panel','depvar','exog', ...
                 'endog','instruments'});
-            obj.settings = SettingsClass({'paneltype','nocons','estimateMethod', 'robust'});
+            obj.settings = SettingsClass({'paneltype', 'nocons', ...
+                'estimateMethod', 'robust', 'weights'});
 %            obj.config = SettingsClass({'quietly','nocons','estimateMethod'});
             
             obj.config.quietly = true;
             obj.results.estimateDescription = 'Linear Estimate'; 
             
             obj.settings.paneltype = 'fe';
+            obj.settings.weights = [];
             obj.settings.nocons = false;   
             obj.settings.estimateMethod = 'ols';
             obj.settings.robust = 'true';
@@ -309,14 +310,59 @@ classdef Estimate  < matlab.mixin.Copyable
             cpObj.settings = copy(obj.settings);
 %             cpObj.config = copy(obj.config);
         end
-        %                 isvar = @(x,y)any(strcmp(x, y.Properties.VariableNames))
-
+        
+        function tab = summarise(obj, fun, tab, varargin)
+            % summarise calculates weighted or unweighted mean or sum of table by named columns.
+            % The syntax is the same as varfun, but summarise does not change col names
+            % or add row names or a GroupCount to the table.
+            % If a 'weights' variable the @mean function calculates the weighted mean.
+            args = inputParser;
+            %     args.addRequired('fun', @isfun);
+            args.addRequired('tab', @istable);
+            args.addParameter('InputVariables',{},  @(x)(iscell(x)|| ischar(x)) );
+            args.addParameter('GroupingVariables',{},  @(x)(iscell(x)|| ischar(x)) );
+            args.addParameter('weights', [], @ischar );
+            args.parse(tab, varargin{:});
+            if isempty(args.Results.weights)
+                weights = [];
+            elseif strcmpi(args.Results.weights, 'none')
+                weights = [];
+            else
+                weights = tab{:, args.Results.weights};
+            end
+            if isempty(args.Results.InputVariables)
+                tableCols = tab.Properties.VariableNames;
+            else
+                tableCols = [{args.Results.GroupingVariables}, {args.Results.InputVariables}];
+                tableCols = [tableCols{:}];
+            end
+            if ~isempty(weights) && isequal(fun,@mean)
+                [cat, ~, groups] = unique(tab{:, args.Results.GroupingVariables});
+                inputvars = {args.Results.InputVariables};
+                inputvars = vertcat(inputvars{:});
+                res = [];
+                wtac = accumarray(groups, weights, [], @sum);
+                for i = 1:length(inputvars)
+                    col = accumarray(groups, tab.(inputvars{i}) .* weights, [], @sum);
+                    res = [res, col ./ wtac];
+                end
+                tab =  array2table([cat,res]);
+            else
+                tab = varfun(fun, tab, varargin{:});
+                if ~isempty(args.Results.GroupingVariables)
+                    tab(:,'GroupCount') = [];
+                end
+                tab.Properties.RowNames = {};
+            end
+            tab.Properties.VariableNames = tableCols;
+        end
     end
     
     methods(Static)
         function v = isvar(x,y)
             v = any(strcmp(x, y.Properties.VariableNames));
         end
+        
     end
 end
 

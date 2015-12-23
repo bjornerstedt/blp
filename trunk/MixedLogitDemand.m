@@ -194,18 +194,18 @@ classdef MixedLogitDemand < NestedLogitDemand
         function R = estimate(obj, varargin)
             obj.init(varargin{:});
             obj.edelta = exp(obj.share.ls);
-            est = obj.estimation_step(false);
+            est = obj.estimation_step(false, varargin{:});
             if obj.settings.optimalIV
-                R = obj.estimation_step(true);
+                R = obj.estimation_step(true, varargin{:});
                 obj.results.estimate1 = est;   
             else
                 R = est;
             end
        end
         
-        function R = estimation_step(obj, optIV)
+        function R = estimation_step(obj, optIV, varargin)
             obj.initEstimation(optIV);
-            obj.rc_sigma = obj.minimize({'Display','iter-detailed'});
+            obj.rc_sigma = obj.minimize([{'Display','iter-detailed'}, varargin]);
             delta = log(obj.edelta);
             if isnan(delta)
                 error('delta is NaN');
@@ -283,14 +283,8 @@ classdef MixedLogitDemand < NestedLogitDemand
                       
 %% Init %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
         function init(obj, varargin)
-            % init(data, selection) - both arguments optional
-            if nargin > 1 
-                selection = varargin{1};
-                init@NestedLogitDemand(obj, selection);
-            else
-                selection = [];
-                init@NestedLogitDemand(obj);
-            end
+            % init(data, selection) - both arguments optional    
+            selection = init@NestedLogitDemand(obj, varargin{:});
             obj.nonlinparams = [];
             obj.nonlintype = [];
             nonlin = {obj.var.nonlinear, obj.var.nonlinearlogs, ...

@@ -58,3 +58,4 @@ mean(market.c)
 
 market.findCosts()
 mean(market.c)
+market.summary()

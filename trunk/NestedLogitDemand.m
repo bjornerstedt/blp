@@ -308,8 +308,13 @@ classdef NestedLogitDemand < Estimate
                 if ~isempty(selection)
                     obj.share = obj.generateShares(T); 
                 end
+                % This is not clean. Should be added to (renamed) shares struct
+                if obj.settings.ces
+                    obj.settings.weights = obj.p .* obj.q;
+                else
+                    obj.settings.weights = obj.q;
+                end
             end
-            % This is not clean. Should be added to (renamed) shares struct
             if obj.settings.ces
                 obj.data.lP = log(obj.data{:,obj.var.price});
             end
