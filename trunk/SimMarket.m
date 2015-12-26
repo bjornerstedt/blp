@@ -14,6 +14,7 @@ classdef SimMarket < matlab.mixin.Copyable
     properties (SetAccess = protected, Hidden = true )
         simDemand % Class with settings for data generation
         market
+        epsilon
     end
     
     methods
@@ -26,15 +27,17 @@ classdef SimMarket < matlab.mixin.Copyable
                 obj.model = varargin{1};
             else
                 obj.model.endog = false;      % Endog with count instruments or no endog
+                obj.model.randproducts = false; % Let the number of products be random
+                obj.model.simulatePrices = true; % Simulate price
                 obj.model.markets = 100;
                 obj.model.products = 5;
                 obj.model.types = [];
                 obj.model.firm = [];
-                obj.model.randproducts = false; % Let the number of products be random
                 
                 % p and x mean and sd:
-                obj.model.x = [5,0];
-                obj.model.x_sigma = [1,1];
+                obj.model.beta = [ 1, 0];                
+                obj.model.x = [5, 0];
+                obj.model.x_sigma = [1, 1];
                 obj.model.c = 4;
                 obj.model.c_sigma = 1;
                 obj.model.gamma = 0;
@@ -45,12 +48,18 @@ classdef SimMarket < matlab.mixin.Copyable
                 
                 obj.model.endog_sigma = 0.1; % Degree of corr between x and epsilon
                 obj.model.prob_prod = .8;    % Prob of product existing in market
-                
-                obj.model.beta = [ 1; 0];                
             end
         end
         
-        % Separate from constructor to allow init from model 
+        function rt = create(obj)
+            obj.init();
+            if obj.model.simulatePrices % && obj.model.endog
+                rt = obj.simulateDemand();
+            else
+                rt = obj.calculateDemand();
+            end
+        end
+        
         function init(obj)
             % Simulation of dataset
             obj.demand.var.market = 'marketid';
@@ -65,6 +74,7 @@ classdef SimMarket < matlab.mixin.Copyable
             if isa(obj.demand, 'MixedLogitDemand')
                 obj.estDemand.rc_sigma = [];
             end
+            obj.model.beta = reshape(obj.model.beta, 1, length(obj.model.beta));
 
             obj.createData();
             obj.simDemand.data = obj.data;
@@ -97,20 +107,19 @@ classdef SimMarket < matlab.mixin.Copyable
             end
 
             % epsilon_jt = varepsilon_jt + xi_j
-            epsilon =  randn(n, 1) * obj.model.epsilon_sigma + ...
+            obj.epsilon =  randn(n, 1) * obj.model.epsilon_sigma + ...
                 repmat(randn(obj.model.products, 1) * obj.model.sigma_xi, ...
                 obj.model.markets, 1);
             
             % Create random x var:
-            obj.data.x = obj.model.x(2) + obj.data.productid / obj.model.products ...
-                + randn(n, 1) * obj.model.x_sigma(2);    
+            obj.data.x = obj.model.x(2) + randn(n, 1) * obj.model.x_sigma(2);    
             obj.data.constant = ones(n, 1);
             % Create price var to satisfy demand.initAdditional
             obj.data.p = zeros(n,1);
             
             % This should be done in the demand classes:            <<<<<<<<<<<<<<<<
             x0 = [table2array(obj.data(:, 'x')), obj.data.constant];
-            obj.data.d = x0 * obj.model.beta + epsilon;
+            obj.data.d = x0 * obj.model.beta' + obj.epsilon;
             
             if obj.model.gamma ~= 0 % Otherwise existing tests fail
                 obj.data.w = randn(n, 1);
@@ -147,7 +156,7 @@ classdef SimMarket < matlab.mixin.Copyable
                 % Keep expected effect of instruments on p to be zero
                 suminst = sum(inst, 2) - mean(sum(inst, 2));
                 obj.data.p = obj.model.x(1) + randn(n, 1) * obj.model.x_sigma(1) ...
-                    + suminst + obj.model.endog_sigma * epsilon(1:n);
+                    + suminst + obj.model.endog_sigma * obj.epsilon(1:n);
             else
                 obj.data.p = obj.model.x(1) + randn(n, 1) * obj.model.x_sigma(1);
                 inst = [];
@@ -202,11 +211,11 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.data.sh = obj.market.s;
             obj.data.q = obj.simDemand.getDemand(obj.data.p);    
             
-            mr = obj.means({'p', 'sh'}, 'productid') ;
+            mr = obj.means({'p', 'q'}, 'productid') ;
             if obj.model.endog
                 if obj.model.randproducts
                     obj.estDemand.var.instruments = 'nprod nprod2';
-                elseif obj.model.beta ~= 0
+                elseif obj.model.gamma ~= 0
                     obj.estDemand.var.instruments = 'w';
                 else
                     obj.estDemand.var.instruments = 'c';
@@ -218,9 +227,9 @@ classdef SimMarket < matlab.mixin.Copyable
        function results = estimate(obj)           
             result = obj.estDemand.estimate();
             if isa(obj.demand, 'NestedLogitDemand')
-                beta = [-obj.demand.alpha; obj.demand.sigma; obj.model.beta];
+                beta = [-obj.demand.alpha; obj.demand.sigma; obj.model.beta'];
             else
-                beta = [-obj.demand.alpha; obj.model.beta];
+                beta = [-obj.demand.alpha; obj.model.beta'];
             end
             if strcmpi(obj.estDemand.settings.paneltype, 'fe')
                 beta = beta(1:end-1);
@@ -241,7 +250,7 @@ classdef SimMarket < matlab.mixin.Copyable
         end
         
         function randdraws(obj)
-            RandStream.setGlobalStream(RandStream('mt19937ar','Seed', 999));
+            RandStream.setGlobalStream(RandStream('mt19937ar','Seed', 9));
         end
         
         function results = run(obj)

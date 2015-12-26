@@ -181,11 +181,13 @@ classdef MixedLogitDemand < NestedLogitDemand
                         g = 2* obj.deltaJac'* obj.ZWZ * xi;
                     end
                 else
-                    xiX =  xi' * obj.X;
-                    f = xiX * xiX';
+%                     xiX =  xi' * obj.X;
+%                     f = xiX * xiX';
+                    f = xi' * xi;
                     if nargout > 1
-                        obj.deltaJac = obj.deltaJacobian(rc_sigma, obj.edelta);
-                        g = 2*obj.deltaJac'* obj.X * xiX';
+                         obj.deltaJac = obj.deltaJacobian(rc_sigma, obj.edelta);
+%                         g = 2*obj.deltaJac'* obj.X * xiX';
+                        g = 2*obj.deltaJac' * xi;
                     end
                 end
             end
@@ -453,7 +455,7 @@ classdef MixedLogitDemand < NestedLogitDemand
             obj.settings.fptolerance2 = 1e-14; % high tol for last iterations
             obj.settings.ces = false;
             
-            obj.config.tolerance = 1e-6;
+            obj.config.tolerance = 1e-9;
             obj.config.fpmaxit = 1000; % maximum iterations in contraction mapping
             obj.config.restartMaxIterations = 1; % Max # of restarts if fval is high
             obj.config.restartFval =  10^3; % Restart optimal IV estimation if fval >.
