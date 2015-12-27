@@ -80,6 +80,9 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.simDemand.data = obj.data;
             obj.simDemand.d = obj.data.d; % <<<<<<<<<<< init is required
             obj.data.p = [];
+            if isempty(obj.market)
+                obj.market = Market();
+            end
         end
         
         function createData(obj)
@@ -178,7 +181,7 @@ classdef SimMarket < matlab.mixin.Copyable
         end
         
         function mr = findCosts(obj, demand)            
-            obj.market = Market(demand);
+            obj.market.demand = demand;
             if isempty(obj.model.firm)
                 obj.market.var.firm = 'productid'; % One product firms
             else
@@ -193,9 +196,9 @@ classdef SimMarket < matlab.mixin.Copyable
         function mr = simulateDemand(obj, varargin)
             obj.simDemand.init();
             if nargin > 1
-                obj.market = Market(varargin{1});
+                obj.market.demand = varargin{1};
             else
-                obj.market = Market(obj.simDemand);                
+                obj.market.demand = obj.simDemand;                
             end
             if isempty(obj.model.firm)
                 obj.market.var.firm = 'productid'; % One product firms

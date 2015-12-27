@@ -25,9 +25,71 @@ classdef Estimate  < matlab.mixin.Copyable
     end
     
     methods
-
-        function names = initAdditional(obj, names, selection)
-            % Additional initialisation in subclasses
+        function R = estimate(obj, varargin)
+            obj.init(varargin{:});
+            switch obj.settings.estimateMethod
+                case 'ols'
+                    [beta, varcovar] = obj.ols();
+                case 'gls' % Change name to 2sls Make default if obj.Z~=[]
+                    [beta, varcovar] = obj.gls();
+                case 'gmm'
+                    [beta, varcovar] = obj.gmm();
+                otherwise
+                    error(['estimateMethod: ', obj.settings.estimateMethod, ...
+                        ' is not defined']);
+            end
+            obj.beta = beta;
+            if strcmpi(obj.settings.paneltype, 'lsdv')
+            varsel = 1:length(obj.vars );
+                varcovar = varcovar(varsel, varsel) ;
+                beta = beta(varsel, :);
+                obj.results.betadummies = obj.beta(length(obj.vars)+1:end);
+            end
+            obj.results.other = [];
+            R = obj.createResults(beta, varcovar, obj.vars);            
+            obj.createVarcovar(varcovar);
+        end
+   
+        % Set settings or config parameters with struct or cell array of
+        % struct
+        function fexist = set(obj, prefstruct)
+            fexist = true;
+            if iscell(prefstruct)
+                for i = 1:length(prefstruct)
+                    fexist = fexist && obj.set(prefstruct{i});
+                end
+            else
+                names = fieldnames(prefstruct)
+                for i = 1:length(names)
+                    if isfield(obj.settings, names{i}) 
+                        obj.settings.(names{i}) = prefstruct.(names{i});
+                    elseif isfield(obj.config, names{i}) 
+                        obj.config.(names{i}) = prefstruct.(names{i});
+                    else
+                        fexist = false;
+                    end            
+                end 
+            end
+        end
+        
+        function obj = Estimate(varargin) 
+            if nargin > 0
+                obj.data = varargin{1};
+            end
+            obj.var = SettingsClass({'market','panel','depvar','exog', ...
+                'endog','instruments'});
+            obj.settings = SettingsClass({'paneltype', 'nocons', ...
+                'estimateMethod', 'robust', 'weights'});
+%            obj.config = SettingsClass({'quietly','nocons','estimateMethod'});
+            
+            obj.config.quietly = true;
+            obj.results.estimateDescription = 'Linear Estimate'; 
+            
+            obj.settings.paneltype = 'fe';
+            obj.settings.weights = [];
+            obj.settings.nocons = false;   
+            obj.settings.estimateMethod = 'ols';
+            obj.settings.robust = true;
         end
         
        function selection = init(obj, varargin)
@@ -119,6 +181,14 @@ classdef Estimate  < matlab.mixin.Copyable
             end
         end
         
+    end
+    
+    methods(Access = protected, Hidden = true)
+        
+        function names = initAdditional(obj, names, selection)
+            % Additional initialisation in subclasses
+        end
+               
         function f = addDummy(obj, name)
             dummy = array2table(dummyvar(obj.data{:,{name}}));
             dummy.Properties.VariableNames = ...
@@ -149,7 +219,7 @@ classdef Estimate  < matlab.mixin.Copyable
 %                     fieldnames(obj.results.other);
 %             end
         end
-            
+                 
         function R = createResults(obj, beta, varcovar, varnames)
             se = sqrt(  diag(varcovar) );  
             tvalue = beta ./ se;
@@ -161,32 +231,7 @@ classdef Estimate  < matlab.mixin.Copyable
             obj.resultTables();
         end
         
-        function R = estimate(obj, varargin)
-            obj.init(varargin{:});
-            switch obj.settings.estimateMethod
-                case 'ols'
-                    [beta, varcovar] = obj.ols();
-                case 'gls' % Change name to 2sls Make default if obj.Z~=[]
-                    [beta, varcovar] = obj.gls();
-                case 'gmm'
-                    [beta, varcovar] = obj.gmm();
-                otherwise
-                    error(['estimateMethod: ', obj.settings.estimateMethod, ...
-                        ' is not defined']);
-            end
-            obj.beta = beta;
-            if strcmpi(obj.settings.paneltype, 'lsdv')
-            varsel = 1:length(obj.vars );
-                varcovar = varcovar(varsel, varsel) ;
-                beta = beta(varsel, :);
-                obj.results.betadummies = obj.beta(length(obj.vars)+1:end);
-            end
-            obj.results.other = [];
-            R = obj.createResults(beta, varcovar, obj.vars);            
-            obj.createVarcovar(varcovar);
-        end
-        
-        % Put beta and varcovar in obj only in estimate()
+       % Put beta and varcovar in obj only in estimate()
         function [beta, varcovar] = ols(obj)
             invXX = inv(obj.X'*obj.X);
             beta = invXX * (obj.X'*obj.y);
@@ -239,49 +284,7 @@ classdef Estimate  < matlab.mixin.Copyable
             xi = y - X*beta;
             varcovar = inv(X'*mid*X);
         end
-
-        % Set settings or config parameters with struct or cell array of
-        % struct
-        function fexist = set(obj, prefstruct)
-            fexist = true;
-            if iscell(prefstruct)
-                for i = 1:length(prefstruct)
-                    fexist = fexist && obj.set(prefstruct{i});
-                end
-            else
-                names = fieldnames(prefstruct)
-                for i = 1:length(names)
-                    if isfield(obj.settings, names{i}) 
-                        obj.settings.(names{i}) = prefstruct.(names{i});
-                    elseif isfield(obj.config, names{i}) 
-                        obj.config.(names{i}) = prefstruct.(names{i});
-                    else
-                        fexist = false;
-                    end            
-                end 
-            end
-        end
-        
-        function obj = Estimate(varargin) 
-            if nargin > 0
-                obj.data = varargin{1};
-            end
-            obj.var = SettingsClass({'market','panel','depvar','exog', ...
-                'endog','instruments'});
-            obj.settings = SettingsClass({'paneltype', 'nocons', ...
-                'estimateMethod', 'robust', 'weights'});
-%            obj.config = SettingsClass({'quietly','nocons','estimateMethod'});
-            
-            obj.config.quietly = true;
-            obj.results.estimateDescription = 'Linear Estimate'; 
-            
-            obj.settings.paneltype = 'fe';
-            obj.settings.weights = [];
-            obj.settings.nocons = false;   
-            obj.settings.estimateMethod = 'ols';
-            obj.settings.robust = true;
-        end
-         
+       
         function f  = demean(obj, T, vars, indexvars )
         %DEMEAN Subtract average value of vars
         %   The index variables are the variables averages are taken over.
@@ -298,9 +301,7 @@ classdef Estimate  < matlab.mixin.Copyable
             B.Properties.VariableNames = vars;
             f = B;
         end
-    end
-    
-    methods(Access = protected)
+        
         % Override copyElement method:
         function cpObj = copyElement(obj)
             % Make a shallow copy of all properties

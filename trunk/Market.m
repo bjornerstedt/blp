@@ -8,7 +8,7 @@ classdef Market < Estimate % matlab.mixin.Copyable
         p %prices
         p0 %Initial prices
         c %Costs
-        D % Demand class        
+        demand % Demand class        
     end
     properties (SetAccess = protected, Hidden = true )
         maxit = 3000
@@ -25,39 +25,42 @@ classdef Market < Estimate % matlab.mixin.Copyable
             args.addParameter('selection', [],  @islogical );
             args.parse(varargin{:});
             selection = args.Results.selection;
-            obj.D.init(); % init selection??
+            if isempty(obj.demand)
+                error('Demand object must be specified')
+            end
+            obj.demand.init(); % init selection??
             % Set unless new firm has been set for example as post merger
             % ownership.
             if isempty(obj.var.firm) 
                 error('var.firm has to be specified');
             end
             if isempty(obj.firm)
-                obj.firm = obj.D.data{:, obj.var.firm};
+                obj.firm = obj.demand.data{:, obj.var.firm};
             end
 
             % Market 'inherits' variables from Demand, to avoid unnecessary
             % specification
-            obj.data = obj.D.data;
+            obj.data = obj.demand.data;
             % This is for cost estimation:
             if ~isempty(obj.var.exog)
                 init@Estimate(obj);
             end
             % Use weighting of averages as in demand
-            obj.settings.weights = obj.D.settings.weights;
+            obj.settings.weights = obj.demand.settings.weights;
             % Can probably join these in a table directly, for sim
-            obj.p = obj.D.p;
-            obj.q = obj.D.q; 
+            obj.p = obj.demand.p;
+            obj.q = obj.demand.q; 
             % With simulated demand, obj.share has not been set
-            if ~isempty(obj.D.share)
-                obj.p0 = obj.D.p;
-                obj.s = obj.D.share.s;   % alt: obj.D.actualDemand()
+            if ~isempty(obj.demand.share)
+                obj.p0 = obj.demand.p;
+                obj.s = obj.demand.share.s;   % alt: obj.demand.actualDemand()
             else
                 obj.p0 = obj.c;                
             end
-            obj.marketid = obj.D.marketid;
-            obj.panelid = obj.D.panelid;            
+            obj.marketid = obj.demand.marketid;
+            obj.panelid = obj.demand.panelid;            
             if ~isempty(selection) 
-                if isempty(obj.D.selection)  
+                if isempty(obj.demand.selection)  
                     % Rather ugly code to handle both data creation AND 
                     if ~isempty(obj.q) 
                         obj.q = obj.q(selection,:);
@@ -71,7 +74,7 @@ classdef Market < Estimate % matlab.mixin.Copyable
                     if ~isempty(obj.c)
                         obj.c = obj.c(selection,:);
                     end
-                    obj.s = obj.D.share.s(selection,:);
+                    obj.s = obj.demand.share.s(selection,:);
                 end
                 if length(obj.firm) ~= length(obj.s)
                     obj.firm = obj.firm(selection,:);
@@ -80,7 +83,7 @@ classdef Market < Estimate % matlab.mixin.Copyable
         end
         
         function initSimulation(obj, market_number)
-            obj.D.initSimulation(market_number);
+            obj.demand.initSimulation(market_number);
             rs = obj.firm(obj.marketid == market_number);
             %ownership vector:
             R = dummyvar(rs)';
@@ -116,7 +119,7 @@ classdef Market < Estimate % matlab.mixin.Copyable
                 %                     exitflag = 0;
                 %                 end
                 obj.p(selection) = pt;
-                obj.s(selection) = obj.D.shares(pt);
+                obj.s(selection) = obj.demand.shares(pt);
                 obj.results.equilibrium = (exitflag > 0);
                 if exitflag == 1
                     convcount = convcount+1;
@@ -160,7 +163,7 @@ classdef Market < Estimate % matlab.mixin.Copyable
 				warning( 'Max number of iterations exceeded.' );
 				convergence = 0;
 			end 
-			S = obj.D.shares( P ); %This function should be called demand
+			S = obj.demand.shares( P ); %This function should be called demand
 			diff = dot(S, S);
 			if diff < sensitivity 
 				warning('Converging to small shares.' );
@@ -192,7 +195,7 @@ classdef Market < Estimate % matlab.mixin.Copyable
                 t = marketid_list(i);
                 obj.initSimulation(t);
                 ct = obj.p(selection) - ...
-                    linsolve( obj.RR .* obj.D.shareJacobian([]), ...
+                    linsolve( obj.RR .* obj.demand.shareJacobian([]), ...
                     -obj.s(selection) );
                 obj.c(selection) = ct;
             end
@@ -202,21 +205,21 @@ classdef Market < Estimate % matlab.mixin.Copyable
             % Simultaneous 2SLS estimate of demand and costs over alpha
             
             WC = inv(obj.X' * obj.X);
-            W = inv(obj.D.Z' * obj.D.Z);
+            W = inv(obj.demand.Z' * obj.demand.Z);
             options = optimoptions(@fminunc, 'Algorithm', 'quasi-newton', 'MaxIter',50);
             
             [theta] = fminunc(@(x)objective(x, obj), theta, options);
-            [~, beta ] = obj.D.residuals(theta);
+            [~, beta ] = obj.demand.residuals(theta);
             [~, gamma ] = obj.residuals();
             theta = [beta; gamma];
             
             function val = objective(theta, obj)
                 % Residuals as function of demand params:
-                xi = obj.D.residuals(theta);
+                xi = obj.demand.residuals(theta);
                 obj.findCosts();
                 eta = obj.residuals();
                 
-                xiZ = xi' * obj.D.Z;
+                xiZ = xi' * obj.demand.Z;
                 etaZ = eta' * obj.X;
                 val = xiZ * W * xiZ' + etaZ * WC * etaZ';
             end
@@ -228,20 +231,20 @@ classdef Market < Estimate % matlab.mixin.Copyable
         end
         
 		function f = foc(obj,  P, ct)
-			S = obj.D.shares( P );
-			f = ( obj.RR .* obj.D.shareJacobian( P )) * (P - ct) + S;
+			S = obj.demand.shares( P );
+			f = ( obj.RR .* obj.demand.shareJacobian( P )) * (P - ct) + S;
 		end 
 
 		function f = focNum(obj,  P)
-			S = obj.D.shares( P );
-            func = @(p)(obj.D.shares(p));
+			S = obj.demand.shares( P );
+            func = @(p)(obj.demand.shares(p));
             jac = jacobian(func, P);
 			f = ( obj.RR .* jac ) * (P - obj.c) + S;
 		end 
 
 		function f = margins(obj,  P)
-			S = obj.D.shares( P );
-			f = linsolve( (-obj.RR) .* (obj.D.shareJacobian( S , P)) , S );
+			S = obj.demand.shares( P );
+			f = linsolve( (-obj.RR) .* (obj.demand.shareJacobian( S , P)) , S );
         end 
 
 		function R = estimateCosts(obj)
@@ -426,7 +429,7 @@ classdef Market < Estimate % matlab.mixin.Copyable
         function obj = Market(varargin)
             obj = obj@Estimate();
             if nargin > 0
-                obj.D = copy(varargin{1});
+                obj.demand = copy(varargin{1});
             end
             varsEstimate = {'market','panel','depvar','exog', ...
                 'endog','instruments'};

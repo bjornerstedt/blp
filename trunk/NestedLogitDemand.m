@@ -260,8 +260,12 @@ classdef NestedLogitDemand < Estimate
                 name = obj.var.price;
             end
         end
-                
-        % Invoked from init@Estimate to create some logit specific params
+                    
+    end
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    methods (Access = protected, Hidden = true )
+       % Invoked from init@Estimate to create some logit specific params
         function names = initAdditional(obj, names, selection)
             if ~isempty(obj.var.nests)
                 obj.nestlist = strsplit(strtrim(obj.var.nests));
@@ -319,7 +323,7 @@ classdef NestedLogitDemand < Estimate
                 obj.data.lP = log(obj.data{:,obj.var.price});
             end
         end
-       
+        
         function resultTables(obj)
             resultTables@Estimate(obj);            
             if ~obj.config.quietly
@@ -330,11 +334,8 @@ classdef NestedLogitDemand < Estimate
                 fprintf('  Mean: %0.3f Min: %0.3f Max: %0.3f \n', ...
                     mean(s0), min(s0), max(s0));
             end            
-        end        
-    end
-    
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-    methods % (Access = protected)
+        end
+        
         function S = generateShares(obj, T )
             if obj.settings.ces
                 Q = obj.q .* obj.p;

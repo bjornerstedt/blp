@@ -5,12 +5,11 @@ classdef MixedLogitDemand < NestedLogitDemand
     properties
         rc_sigma % Starting and end value
         draws % Random draws (nind, nmkt, k) matrix k = # random params. 
-        x2 % nonlinear parameter vector
-           
-        W
-        xi % Unobservable utility, residual
     end
     properties (SetAccess = protected, Hidden = true )
+        W
+        x2 % nonlinear parameter vector
+        xi % Unobservable utility, residual
         vars2 % Nonlinear variable names in output (with rc_ prefix)
         nonlinparams = [] % Arrays for RC names and type of RC
         nonlintype = [] % Array for type of RC
