@@ -441,7 +441,7 @@ classdef MixedLogitDemand < NestedLogitDemand
                 'marketdraws','nind','quaddraws','maxiter','fptolerance1','fptolerance2'});
             obj.config = SettingsClass({'tolerance','fpmaxit', ...
                 'restartMaxIterations','restartFval', 'test', ...
-                'quadrature','randstream','hessian','guessdelta','quietly'});
+                'randstream','hessian','guessdelta','quietly'});
             
             obj.settings.paneltype = 'lsdv';
 

@@ -25,7 +25,9 @@ demand = NestedLogitDemand(dt1);
 %%
 % Here we specify the market and panel id, price, quantity and marketsize
 % (here set to the constant value 1). In addition one can specify a list of
-% exogenous variables to be used in estimation in |demand.var.exog|. 
+% exogenous variables to be used in estimation in |demand.var.exog|. A list
+% of variables is specified as a string with variable names separated by
+% spaces.
 
 demand.var.market = 'marketid';
 demand.var.panel = 'productid';
@@ -35,19 +37,18 @@ demand.var.marketsize = 'constant';
 demand.var.exog = 'x';
 
 %%
-% Properties can be defined in any order. To specify several exogenous
-% variables, specify them in a string separated by spaces.
-%
 % There are a number of parameters that can be set in |NestedLogitDemand|
-% The most important characteristics are |demand.var| and |demand.settings|. In
-% |demand.var|, various variable names in the dataset are specified.
+% The most important characteristics are set in |demand.var| and |demand.settings|. In
+% |demand.var|, various variable names in the dataset are specified. One
+% can list the contents of the structure:
 
 demand.var
 
 %%
-% In |demand.settings|, various settings are set. Four properties
+% In |demand.settings|, other demand settings are set. Four properties
 % of |NestedLogitDemand|.settings concern estimation. The last one,
-% |demand.settings.ces| is used to select CES Demand rather than the default Unit demand.
+% |demand.settings.ces| is used to select CES Demand rather than the default,
+% Unit demand.
 
 demand.settings
 
@@ -101,7 +102,8 @@ result = demand.estimate()
 %% Market class
 % The market class is used to calculate equilibrium prices and quantities,
 % based on market structure. The equilibrium depends on the estimated
-% parameters of the demand model specified. 
+% parameters of the demand model specified.
+
 demand2 = copy(demand);
 market = Market(demand);
 market.var.firm = 'firm';
@@ -143,7 +145,7 @@ market2.equilibrium();
 mergerResult2 = compare(market, market2)
 
 %%
-%One can also explicitly restrict 
+% One can also explicitly restrict 
 % equilibrium calculation to some markets. In this case calculations will
 % only be on these markets, provided that costs have been calculated for
 % them. Comparisons can be restricted to a subset of markets by providing
@@ -173,10 +175,8 @@ mergerResult2 = compare(market, market2)
 m1 = SimMarket()
 
 %%
-% The |SimMarket| object |m1| contains a structure of settings |m1.model|. In
-% addition to the associated demand object it creates a new demand object |m.estDemand|
-% that is used for estimation. The dataset created by |SimMarket| is stored
-% in |m.data|.
+% The |SimMarket| object |m1| contains a structure of settings |m1.model|. 
+% The dataset created by |SimMarket| is stored in |m.data|.
 
 %% 
 % A demand model can be created by using one of the classes
@@ -193,17 +193,17 @@ demand.alpha = 1;
 % To create a simulated dataset with 100 observations based on the demand
 % object, a |SimMarket| object is created, and the demand object is attached
 
-%%
-% To create the dataset the method |init()| can be used. Invoking
-% this method, changes the |SimMarket| object we have created. The object
-% |m| now contains a dataset |m1.data|.
-
 m1.demand = demand;
-m1.init()
-m1
 
 %%
-% By default |m1.init()| ceates a market with 5 products and 100 markets, in long 
+% To create the dataset the method |create()| is used. Invoking
+% this method, changes the |SimMarket| object we have created. 
+
+sresults = m1.create()
+
+%%
+% The object |m| now contains a dataset |m1.data|.
+% By default |m1.create()| ceates a market with 5 products and 100 markets, in long 
 % format as a Matlab table. 
 % The first 10 observations of the dataset are shown below. It contains a 
 % market and product identifiers, a constant, costs |c|, a demand characteristic |x| and
@@ -212,23 +212,31 @@ m1
 % specific shock, the latter uncorrelated with observables (random
 % effects).
 
-m1.data(1:10,:)
-
 %%
-% To add random prices and the corresponding demand the method |calculateDemand()| 
-% is used. Using the demand specification in |m1.demand|, quantities are calculated 
+% Using the demand specification in |m1.demand|, quantities are calculated 
 % based on prices and product characteristics |d|. The total
 % share of the product including the outside good is shown below, as are
 % the average prices and quantities by product. (By default market size is
 % set to 1 in all markets).
 
-sresults = m1.calculateDemand()
+m1.data(1:10,:)
 
 %%
+% Once |m1.create()| has been run, a data table has been created for the
+% market that can be used in estimation.
+
+dt1 = m1.data;
+
+%%
+% |SimMarket| has an |estimate()| method that can be used to estimate
+% demand based on the data created. It estimates the demand based on a copy
+% of the demand object that has specified. 
+%
 % Demand can be estimated using the estimate() method. With the standard
 % configuration used here, this gives an OLS panel estimate, using fixed
 % effects. The results shown have true values in the first column and the
-% estimated values in the other columns. 
+% estimated values in the other columns. This is useful in testing
+% estimation methods.
 
 results = m1.estimate()
 
@@ -250,9 +258,9 @@ m2.demand = demand;
 display(m2.model)
 
 %% 
-% Here we let prices be endogenous. As an alternative to |calculateDemand()| 
-% presented above, we instead use |simulateDemand()|. Instead of prices being
-% random, |simulateDemand()| calculates equilibrium values depending on market conditions in each
+% In contrast with the previous example, here we let prices be endogenous. 
+% Instead of prices being exogenously random, |create()| calculates 
+% equilibrium values depending on market conditions in each
 % market. Price variability can comes from cost shifters and/or the number of products being set to be 
 % exogenously random. Prices and quantities will depend on the products in
 % the market as well as the ownership structure. Here we set ownership of
@@ -263,11 +271,16 @@ display(m2.model)
 m2.model.endog = true;
 m2.model.randproducts = true;
 m2.model.firm = [1,1,2,2,3];
-m2.init();
-m2.simulateDemand()
+m2.create();
 
 %%
-% A minimal nested logit demand specification is as follows:
+% The data table created is as above stored in |m2.data|. 
+
+dt2 = m2.data;
+
+%% Nested logit Monte-Carlo
+% A minimal nested logit demand specification with the nesting variable
+% |type| is created as follows:
 
 demand = NestedLogitDemand();
 demand.alpha = 0.5;
@@ -283,21 +296,32 @@ m3 = SimMarket();
 m3.demand = demand;
 m3.model.types = 2;
 
+%%
+% Prices in |SimMarket| are by default determined by
+% equilibrium conditions, with variation coming from changes in costs
+% and/or the number of products in the market. 
+%
+% Alternatively, one can let prices be set randomly, with or without
+% correlation with the error term. In this setup, quantities are calculated
+% based on prices that are randomly generated. With endogeneity, a set of
+% valid instruments inst1-inst6 are also generated.
+
+m3.model.simulatePrices = false; 
+
+%%
 % By default SimMarket assumes single product firms. We can change this mapping
 % by setting the |model.firms| property. Here we assume that the five
 % products in the model have two owners. 
 
-m3.model.firm = [1,1,1,2,2]';
+m3.model.firm = [1,1,1,2,2];
 
 m3.model.endog = true;
-m3.model.randproducts = true;
 
 %%
 % We add a cost shifter |w| by specifying the |model.gamma| parameter.
 
 m3.model.gamma = 1;
-m3.init();
-m3.simulateDemand()
+m3.create();
 dt3 = m3.data;
 
 %%
@@ -315,7 +339,7 @@ demand.var.marketsize = 'constant';
 demand.var.exog = 'x';
 
 demand.var.nests = 'type';
-demand.var.instruments = 'nprod nprod2';
+demand.var.instruments = 'inst1 inst2 inst3 inst4 inst5 inst6';
 demand.settings.paneltype = 'lsdv';
 result = demand.estimate()
 
@@ -335,17 +359,5 @@ costEstimate = market.estimate()
 % The datasets that have been created can be saved for later use, here to 
 % the file |example_data.mat|:
 
-dt1 = m1.data;
-dt2 = m2.data;
 save example_data dt1 dt2 dt3;
 
-%% Estimation
-% SimMarket demand and market classes all inherit the linear estimation 
-% functionality of the |Estimate| class. This class can be used for
-% estimation not directly related to demand or market estimation. 
-
-est = Estimate(dt3);
-est.settings.paneltype = 'none';
-est.var.exog = 'w';
-est.var.depvar = 'c';
-est.estimate()

@@ -9,11 +9,11 @@ classdef SimMarket < matlab.mixin.Copyable
         model
         data
         demand
-        estDemand % Settings for estimation
+        market
     end
     properties (SetAccess = protected, Hidden = true )
         simDemand % Class with settings for data generation
-        market
+        estDemand % Settings for estimation
         epsilon
     end
     
@@ -252,18 +252,6 @@ classdef SimMarket < matlab.mixin.Copyable
         function randdraws(obj)
             RandStream.setGlobalStream(RandStream('mt19937ar','Seed', 9));
         end
-        
-        function results = run(obj)
-            obj.createData();
-            obj.initDemand();
-            obj.simulateDemand();
-            if obj.est.findCosts
-                obj.findCosts();
-            else
-                results = obj.estimate();
-            end
-        end
     end
-    
 end
 

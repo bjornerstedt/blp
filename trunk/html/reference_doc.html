@@ -1,0 +1,618 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>SimMarket Reference</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-12-27"><meta name="DC.source" content="reference_doc.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>SimMarket Reference</h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Estimate class</a></li><li><a href="#4">NestedLogitDemand class</a></li><li><a href="#7">MixedLogitDemand class</a></li><li><a href="#12">Market class</a></li><li><a href="#15">SimMarket class</a></li></ul></div><h2>Estimate class<a name="1"></a></h2><p>SimMarket demand and market classes all inherit the linear estimation functionality of the <tt>Estimate</tt> class. This class can be used for estimation not directly related to demand or market estimation.</p><pre class="codeinput">load <span class="string">example_data</span>;
+est = Estimate(dt3)
+est.var
+</pre><pre class="codeoutput">
+est = 
+
+  Estimate with properties:
+
+        data: [500x17 table]
+     panelid: []
+    marketid: []
+     results: [1x1 struct]
+           y: []
+           X: []
+           Z: []
+        beta: []
+    settings: [1x1 SettingsClass]
+      config: [1x1 struct]
+         var: [1x1 SettingsClass]
+       Xorig: []
+       Zorig: []
+
+
+ans = 
+
+  SettingsClass with properties:
+
+          panel: []
+         market: []
+           exog: []
+    instruments: []
+          endog: []
+         depvar: []
+
+</pre><pre class="language-matlab">Estimate <span class="string">with</span> <span class="string">properties:</span>
+</pre><pre>       data: []
+    panelid: [x]
+   marketid: [x]
+    results: [1x1 struct]
+          y: []
+          X: []
+          Z: []
+       beta: []
+   settings: [1x1 SettingsClass]
+     config: [1x1 struct]
+        var: [1x1 SettingsClass]
+      Xorig: [x]
+      Zorig: [x]</pre><p>est.var:          market: []           panel: []          depvar: []            exog: []           endog: []     instruments: []</p><pre class="codeinput">est.settings
+</pre><pre class="codeoutput">
+ans = 
+
+  SettingsClass with properties:
+
+         paneltype: 'fe'
+            robust: 1
+    estimateMethod: 'ols'
+            nocons: 0
+           weights: []
+
+</pre><p>est.settings             robust: 'true'          paneltype: 'fe'/'lsdv'/'none'             nocons: 0            weights: []     estimateMethod: 'ols'/'2sls'/'gmm'</p><p>est.results     estimateDescription: 'Linear Estimate'                   other: [x]                  params: [1x1 struct]                estimate: [2x3 table]                     var: [6x2 table]                settings: [5x2 table]</p><pre>   est.settings.paneltype = 'none';
+   est.var.exog = 'w';
+   est.var.depvar = 'c';
+   est.estimate()</pre><h2>NestedLogitDemand class<a name="4"></a></h2><pre class="codeinput">demand = NestedLogitDemand(dt1)
+demand.var
+
+<span class="comment">%   NestedLogitDemand with properties:</span>
+<span class="comment">%</span>
+<span class="comment">%        alpha: []</span>
+<span class="comment">%        sigma: []</span>
+<span class="comment">%            d: []</span>
+<span class="comment">%         data: [500x9 table]</span>
+<span class="comment">%</span>
+<span class="comment">%   demand.var:</span>
+<span class="comment">%</span>
+<span class="comment">%           price: []</span>
+<span class="comment">%           nests: []</span>
+<span class="comment">%        quantity: []</span>
+<span class="comment">%      marketsize: []</span>
+</pre><pre class="codeoutput">
+demand = 
+
+  NestedLogitDemand with properties:
+
+       alpha: []
+       sigma: []
+           d: []
+        data: [500x9 table]
+     panelid: []
+    marketid: []
+     results: [1x1 struct]
+           y: []
+           X: []
+           Z: []
+        beta: []
+    settings: [1x1 SettingsClass]
+      config: [1x1 struct]
+         var: [1x1 SettingsClass]
+       Xorig: []
+       Zorig: []
+
+
+ans = 
+
+  SettingsClass with properties:
+
+       quantity: []
+          panel: []
+         market: []
+     marketsize: []
+           exog: []
+    instruments: []
+          price: []
+          endog: []
+          nests: []
+         depvar: []
+
+</pre><p>Settings</p><pre>              ces: 0</pre><pre class="codeinput">demand.settings
+</pre><pre class="codeoutput">
+ans = 
+
+  SettingsClass with properties:
+
+         paneltype: 'fe'
+               ces: 0
+            robust: 1
+    estimateMethod: 'gls'
+            nocons: 0
+           weights: []
+
+</pre><p>Methods</p><h2>MixedLogitDemand class<a name="7"></a></h2><pre class="codeinput">demand = MixedLogitDemand(dt1)
+demand.var
+</pre><pre class="codeoutput">
+demand = 
+
+  MixedLogitDemand with properties:
+
+    rc_sigma: []
+       draws: []
+          x2: []
+           W: []
+          xi: []
+       alpha: []
+       sigma: []
+           d: []
+        data: [500x9 table]
+     panelid: []
+    marketid: []
+     results: [1x1 struct]
+           y: []
+           X: []
+           Z: []
+        beta: []
+    settings: [1x1 SettingsClass]
+      config: [1x1 SettingsClass]
+         var: [1x1 SettingsClass]
+       Xorig: []
+       Zorig: []
+
+
+ans = 
+
+  SettingsClass with properties:
+
+               quantity: []
+          nonlinearlogs: []
+                  panel: []
+                 market: []
+             marketsize: []
+                   exog: []
+            instruments: []
+                  price: []
+                  endog: []
+              nonlinear: []
+                  nests: []
+                 depvar: []
+    nonlineartriangular: []
+
+</pre><pre>MixedLogitDemand with properties:</pre><pre>   rc_sigma: []
+      draws: []
+         x2: [x]
+          W: []
+         xi: [x]</pre><p>Settings</p><pre class="language-matlab">SettingsClass <span class="string">with</span> <span class="string">properties:</span>
+</pre><pre>          maxiter: 100
+     fptolerance1: 1.0000e-14
+        quaddraws: 10
+        optimalIV: 0
+      marketdraws: 0
+     fptolerance2: 1.0000e-14
+       drawmethod: 'hypercube'
+              ces: 0
+             nind: 100</pre><pre class="codeinput">demand.settings
+demand.config
+</pre><pre class="codeoutput">
+ans = 
+
+  SettingsClass with properties:
+
+         quaddraws: 10
+      fptolerance2: 1.0000e-14
+         optimalIV: 0
+         paneltype: 'lsdv'
+              nind: 100
+       marketdraws: 0
+           maxiter: 100
+               ces: 0
+            robust: 1
+        drawmethod: 'hypercube'
+    estimateMethod: 'gls'
+            nocons: 0
+           weights: []
+      fptolerance1: 1.0000e-14
+
+
+ans = 
+
+  SettingsClass with properties:
+
+                    test: []
+               tolerance: 1.0000e-09
+             restartFval: 1000
+              guessdelta: 1
+                 fpmaxit: 1000
+                 quietly: 1
+                 hessian: 0
+    restartMaxIterations: 1
+              randstream: []
+
+</pre><p>demand.config</p><pre>                hessian: 0
+                   test: []
+                fpmaxit: 1000
+              tolerance: 1.0000e-09
+             randstream: []
+            restartFval: 1000
+             guessdelta: 1
+                quietly: 1
+   restartMaxIterations: 1</pre><p>Methods</p><h2>Market class<a name="12"></a></h2><pre>       firm: []
+          q: []
+          p: []
+         p0: []
+          c: []</pre><pre class="codeinput">market = Market()
+market.var
+</pre><pre class="codeoutput">
+market = 
+
+  Market with properties:
+
+        firm: []
+           q: []
+           p: []
+          p0: []
+           c: []
+           D: []
+        data: []
+     panelid: []
+    marketid: []
+     results: [1x1 struct]
+           y: []
+           X: []
+           Z: []
+        beta: []
+    settings: [1x1 SettingsClass]
+      config: [1x1 struct]
+         var: [1x1 SettingsClass]
+       Xorig: []
+       Zorig: []
+
+
+ans = 
+
+  SettingsClass with properties:
+
+           firm: []
+          panel: []
+         market: []
+           exog: []
+    instruments: []
+          endog: []
+         depvar: []
+
+</pre><p>Settings</p><pre>             dampen: 1
+            conduct: 0
+   weightedAverages: 1
+            weights: []
+        valueShares: 0</pre><pre class="codeinput">market.settings
+</pre><pre class="codeoutput">
+ans = 
+
+  SettingsClass with properties:
+
+           paneltype: 'fe'
+              robust: 1
+              dampen: 1
+             conduct: 0
+      estimateMethod: 'ols'
+    weightedAverages: 1
+              nocons: 0
+             weights: []
+         valueShares: 0
+
+</pre><p>Methods</p><h2>SimMarket class<a name="15"></a></h2><p>In addition to the associated demand object it creates a new demand object <tt>m.estDemand</tt> that is used for estimation.</p><pre class="codeinput">m = SimMarket()
+</pre><pre class="codeoutput">
+m = 
+
+  SimMarket with properties:
+
+     model: [1x1 struct]
+      data: []
+    demand: []
+    market: []
+
+</pre><p>m.model</p><pre>            endog: 0
+     randproducts: 0
+   simulatePrices: 1
+          markets: 100
+         products: 5
+            types: []
+             firm: []
+             beta: [1 0]
+                x: [5 0]
+          x_sigma: [1 1]
+                c: 4
+          c_sigma: 1
+            gamma: 0
+    epsilon_sigma: 0.1000
+         sigma_xi: 0.1000
+      endog_sigma: 0.1000
+        prob_prod: 0.8000</pre><pre class="codeinput">m.model
+</pre><pre class="codeoutput">
+ans = 
+
+             endog: 0
+      randproducts: 0
+    simulatePrices: 1
+           markets: 100
+          products: 5
+             types: []
+              firm: []
+              beta: [1 0]
+                 x: [5 0]
+           x_sigma: [1 1]
+                 c: 4
+           c_sigma: 1
+             gamma: 0
+     epsilon_sigma: 0.1000
+          sigma_xi: 0.1000
+       endog_sigma: 0.1000
+         prob_prod: 0.8000
+
+</pre><p>Methods</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% SimMarket Reference
+
+%% Estimate class
+% SimMarket demand and market classes all inherit the linear estimation 
+% functionality of the |Estimate| class. This class can be used for
+% estimation not directly related to demand or market estimation. 
+
+load example_data;
+est = Estimate(dt3)
+est.var
+
+%%
+%   Estimate with properties:
+% 
+%         data: []
+%      panelid: [x]
+%     marketid: [x]
+%      results: [1x1 struct]
+%            y: []
+%            X: []
+%            Z: []
+%         beta: []
+%     settings: [1x1 SettingsClass]
+%       config: [1x1 struct]
+%          var: [1x1 SettingsClass]
+%        Xorig: [x]
+%        Zorig: [x]
+%        
+% est.var:
+%          market: []
+%           panel: []
+%          depvar: []
+%            exog: []
+%           endog: []
+%     instruments: []
+    
+est.settings
+
+%%
+% est.settings
+%             robust: 'true'
+%          paneltype: 'fe'/'lsdv'/'none'
+%             nocons: 0
+%            weights: []
+%     estimateMethod: 'ols'/'2sls'/'gmm'
+%
+% est.results
+%     estimateDescription: 'Linear Estimate'
+%                   other: [x]
+%                  params: [1x1 struct]
+%                estimate: [2x3 table]
+%                     var: [6x2 table]
+%                settings: [5x2 table]
+%                
+%     est.settings.paneltype = 'none';
+%     est.var.exog = 'w';
+%     est.var.depvar = 'c';
+%     est.estimate()
+
+    %% NestedLogitDemand class
+%
+
+demand = NestedLogitDemand(dt1)
+demand.var
+
+%   NestedLogitDemand with properties:
+% 
+%        alpha: []
+%        sigma: []
+%            d: []
+%         data: [500x9 table]
+% 
+%   demand.var:
+% 
+%           price: []
+%           nests: []
+%        quantity: []
+%      marketsize: []
+%% 
+% Settings
+% 
+%                ces: 0
+
+demand.settings
+
+%% 
+% Methods
+
+%% MixedLogitDemand class
+%
+
+demand = MixedLogitDemand(dt1)
+demand.var
+
+%%
+%  MixedLogitDemand with properties:
+% 
+%     rc_sigma: []
+%        draws: []
+%           x2: [x]
+%            W: []
+%           xi: [x]
+%        
+%% 
+% Settings
+% 
+%   SettingsClass with properties:
+% 
+%            maxiter: 100
+%       fptolerance1: 1.0000e-14
+%          quaddraws: 10
+%          optimalIV: 0
+%        marketdraws: 0
+%       fptolerance2: 1.0000e-14
+%         drawmethod: 'hypercube'
+%                ces: 0
+%               nind: 100
+
+demand.settings
+demand.config
+
+%%
+% demand.config
+% 
+%                  hessian: 0
+%                     test: []
+%                  fpmaxit: 1000
+%                tolerance: 1.0000e-09
+%               randstream: []
+%              restartFval: 1000
+%               guessdelta: 1
+%                  quietly: 1
+%     restartMaxIterations: 1
+
+%% 
+% Methods
+
+
+%% Market class
+% 
+%         firm: []
+%            q: []
+%            p: []
+%           p0: []
+%            c: []
+           
+market = Market()
+market.var
+
+%% 
+% Settings
+% 
+%               dampen: 1
+%              conduct: 0
+%     weightedAverages: 1
+%              weights: []
+%          valueShares: 0
+
+market.settings
+
+%% 
+% Methods
+
+
+%% SimMarket class
+% In addition to the associated demand object it creates a new demand object |m.estDemand|
+% that is used for estimation. 
+
+m = SimMarket()
+
+
+%% 
+% m.model
+%
+%              endog: 0
+%       randproducts: 0
+%     simulatePrices: 1
+%            markets: 100
+%           products: 5
+%              types: []
+%               firm: []
+%               beta: [1 0]
+%                  x: [5 0]
+%            x_sigma: [1 1]
+%                  c: 4
+%            c_sigma: 1
+%              gamma: 0
+%      epsilon_sigma: 0.1000
+%           sigma_xi: 0.1000
+%        endog_sigma: 0.1000
+%          prob_prod: 0.8000
+         
+m.model
+
+%% 
+% Methods
+
+
+##### SOURCE END #####
+--></body></html>

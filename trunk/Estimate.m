@@ -279,7 +279,7 @@ classdef Estimate  < matlab.mixin.Copyable
             obj.settings.weights = [];
             obj.settings.nocons = false;   
             obj.settings.estimateMethod = 'ols';
-            obj.settings.robust = 'true';
+            obj.settings.robust = true;
         end
          
         function f  = demean(obj, T, vars, indexvars )
