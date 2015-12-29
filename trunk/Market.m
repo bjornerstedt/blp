@@ -272,60 +272,53 @@ classdef Market < Estimate % matlab.mixin.Copyable
             res = qu ./ qbar;
         end
         
-        function res = summary(obj, varargin)
-            % SUMMARY(group_vars) creates summary by varargin variable
-            % Mean over markets of: p, c, Lerner index and market share.
+        function markettab = summary(obj, varargin)
+            % SUMMARY(options) creates summary by varargin variable
+            % Weighted or unweighted means over markets of: p, c and Lerner index.
             % Within group, means can be unweighted or weighted by quantity
             % or by value. Without group_vars, reporting is at the product level.
             % Output is as a table.
-            res = array2table([obj.marketid, obj.p, obj.c]);
-            % Calculate market shares by quantity or value
-       
-            res.m = obj.getMarketShares();
-            res.Properties.VariableNames = {'Price', 'Costs', 'MarketSh', 'Market'};
-            res.Lerner = (res.Price - res.Costs) ./ res.Price ;
-            if nargin > 1
-                groupvar = varargin{1};
-                [~,~, sortcols] = unique(obj.data(:, varargin));
-                res.(varargin{1}) = sortcols;
+            args = inputParser;
+            args.addParameter('selection',[], @islogical);
+            args.addParameter('GroupingVariables', 'Firm', @ischar);
+            args.addParameter('weights', [], @ischar);
+            args.parse(varargin{:});
+            if ~strcmpi(args.Results.GroupingVariables, 'Firm')
+                varnames = {args.Results.GroupingVariables, obj.var.market};
+                var = obj.data{:, varnames};
             else
-                groupvar = 'Firm';
-                res.Firm = obj.firm;
+                varnames = {'Firm', obj.demand.var.market};
+                var = [obj.firm, obj.marketid];
             end
-            if obj.settings.weightedAverages
-                res.Price = res.Price .* res.MarketSh ;
-                res.Costs = res.Costs .* res.MarketSh ;
-                res = varfun(@sum, res, 'GroupingVariables', [{groupvar}, 'Market']);
-                res.GroupCount = [];
-                res.Properties.VariableNames = {groupvar, 'Market', 'Price', 'Costs', 'MarketSh', 'Lerner'};
-                res.Price = res.Price ./ res.MarketSh ;
-                res.Costs = res.Costs ./ res.MarketSh ;
-                res.Market = [];
+            
+            %%%%%% Specific code
+            res = array2table([var, obj.p, obj.c]);
+            res.Lerner = (obj.p - obj.c) ./ obj.p ;
+            tableCols = {'Price', 'Costs', 'Lerner'};
+            
+            if isempty(args.Results.selection)
+                selection = ~isnan(obj.c);
+            else
+                selection = args.Results.selection & ~isnan(obj.c);
             end
-            res = varfun(@mean, res, 'GroupingVariables', groupvar);
-            res.GroupCount = [];
-            res.Properties.VariableNames = {groupvar,  'Price', 'Costs', 'MarketSh', 'Lerner'};
-%             res.MarketSh = [];
+            res.Properties.VariableNames = [varnames, tableCols];
+            %%%%%% End specific code
+            
+            % weights can be set manually
+            if ~obj.settings.weightedAverages
+                weights = [];
+            else
+                weights = obj.getMarketShares(args.Results.weights);
+            end
+            if ~all(selection)
+                res = res(selection, :);
+                weights = weights(selection, :);
+            end
+            x = Estimate.means(res, tableCols, varnames, weights);
+            markettab = Estimate.means(x, tableCols, args.Results.GroupingVariables);
         end
-
-        function tab = compareAll(obj, other)
-            tableCols = {'Firm', 'Product'};
-            obj1 = obj.summary();
-            obj2 = other.summary();
-            firstCols = obj1(:,tableCols);
-            obj1(:,tableCols) = [];
-            obj2(:,tableCols) = [];
-            varnames = obj1.Properties.VariableNames;
-            obj1 = table2array(obj1);
-            obj2 = table2array(obj2);
-            diff = array2table((obj2 - obj1) ./ obj1);
-            diff.Properties.VariableNames = ...
-                cellfun(@(x) {sprintf('%sCh', x)}, varnames );
-            diff.QuantityCh = []; % Same as market share change
-            tab = [firstCols, diff];
-        end
-                   
-        function [pricetab, apc] = compare(obj, obj2, varargin)
+                     
+        function [pricetab] = compare(obj, obj2, varargin)
             args = inputParser;
   %          args.addRequired('obj2', @(x)isa(x, 'NestedLogitDemand'));
             args.addParameter('selection',[], @islogical);
@@ -339,35 +332,32 @@ classdef Market < Estimate % matlab.mixin.Copyable
                 varnames = {'Firm', obj.demand.var.market};
                 var = [obj.firm, obj.marketid];
             end
+            
+            %%%%%% Specific code
             if isempty(args.Results.selection)
                 selection = ~isnan(obj2.p);
             else
                 selection = args.Results.selection & ~isnan(obj2.p);
             end
-            tableCols = [varnames, {'Costs', 'Price1', 'Price2', 'PriceCh'}];
-            if all(selection)
-                priceChange = (obj2.p - obj.p ) ./ obj.p;
-                res = array2table([var, obj.c, obj.p,  obj2.p, ...
-                    priceChange]);
-                res.Properties.VariableNames = tableCols;
-                apc = priceChange' * obj.s / sum(obj.s); 
-            else
-                p2 = obj2.p(selection);
-                po = obj.p(selection);
-                co = obj.c(selection);
-                var = var(selection);
-                priceChange = (p2 - po ) ./ po;
-                res = table(var, co, po,  p2, ...
-                    priceChange, 'VariableNames',tableCols);            
-            end
+            tableCols = {'Costs', 'Price1', 'Price2', 'PriceCh'};
+            priceChange = (obj2.p - obj.p ) ./ obj.p;
+            res = array2table([var, obj.c, obj.p,  obj2.p, priceChange]);            
+%                 apc = priceChange' * obj.s / sum(obj.s); 
+            res.Properties.VariableNames = [varnames, tableCols];
+            %%%%%% End specific code
+            
             % weights can be set manually
             if ~obj.settings.weightedAverages
                 weights = [];
             else
                 weights = obj.getMarketShares(args.Results.weights);
             end
-            x = Estimate.means(res, tableCols(3:end), varnames, weights);
-            pricetab = Estimate.means(x, tableCols(3:end), args.Results.GroupingVariables);
+            if ~all(selection)
+                res = res(selection, :);
+                weights = weights(selection, :);
+            end
+            x = Estimate.means(res, tableCols, varnames, weights);
+            pricetab = Estimate.means(x, tableCols, args.Results.GroupingVariables);
             % Shares
 %             varname = 'firm';
 %             tab = market.T(:,{varname});
