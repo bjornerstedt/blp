@@ -247,9 +247,9 @@ classdef SimMarket < matlab.mixin.Copyable
             results = [truevals, result];
         end
         
-        function R = means(obj,x,ind)
-            R = array2table(splitapply(@mean, obj.data{:,x}, ...
-                obj.data.(ind)), 'VariableNames',x);
+        function R = means(obj, cols, index)
+            R = array2table(splitapply(@mean, obj.data{:, cols}, ...
+                obj.data.(index)), 'VariableNames', cols);
         end
         
         function randdraws(obj)

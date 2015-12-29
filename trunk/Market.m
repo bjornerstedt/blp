@@ -11,7 +11,6 @@ classdef Market < Estimate % matlab.mixin.Copyable
         demand % Demand class        
     end
     properties (SetAccess = protected, Hidden = true )
-        maxit = 3000
         s %shares
         RR %ownership tranformation with conduct
         c1, p1, q1 %Views for bootstrapping
@@ -101,7 +100,7 @@ classdef Market < Estimate % matlab.mixin.Copyable
                 selection = logical(ones(size(obj.marketid)));
             end
             selection = selection & ~isnan(obj.c);
-            options = optimoptions(@fsolve,'MaxFunEvals',obj.maxit,'Display', 'off');
+            options = optimoptions(@fsolve,'MaxFunEvals',obj.settings.maxit,'Display', 'off');
             obj.p = nan(size(obj.marketid));
             obj.s = nan(size(obj.marketid));
             marketid_list = unique(obj.marketid(selection));
@@ -157,7 +156,7 @@ classdef Market < Estimate % matlab.mixin.Copyable
 					warning( 'Negative prices in price vector' );
 					break;
 				end 			
-				P = obj.dampen*Pn + (1 - obj.dampen)*P;
+				P = obj.settings.dampen * Pn + (1 - obj.settings.dampen) * P;
 			end 
 			if i >= maxit 
 				warning( 'Max number of iterations exceeded.' );
@@ -260,6 +259,19 @@ classdef Market < Estimate % matlab.mixin.Copyable
             R = obj.estimate();
         end
         
+        function res = getMarketShares(obj, varargin)
+            if nargin > 1 && ~isempty(varargin{1})
+                qu = varargin{1};
+            elseif obj.settings.valueShares % Note that valueShares should be true for ces.
+                qu = obj.q * obj.p;
+            else
+                qu = obj.q;
+            end
+            qbar = accumarray(obj.marketid, qu, [], @sum);
+            qbar = qbar(obj.marketid, :);
+            res = qu ./ qbar;
+        end
+        
         function res = summary(obj, varargin)
             % SUMMARY(group_vars) creates summary by varargin variable
             % Mean over markets of: p, c, Lerner index and market share.
@@ -268,14 +280,8 @@ classdef Market < Estimate % matlab.mixin.Copyable
             % Output is as a table.
             res = array2table([obj.marketid, obj.p, obj.c]);
             % Calculate market shares by quantity or value
-            if obj.settings.valueShares % Note that valueShares should be true for ces.
-                qu = obj.q * obj.p;
-            else
-                qu = obj.q;
-            end
-            qbar = accumarray(obj.panelid, qu, [], @sum);
-            qbar = qbar(obj.panelid, :);
-            res.m = qu ./ qbar;
+       
+            res.m = obj.getMarketShares();
             res.Properties.VariableNames = {'Price', 'Costs', 'MarketSh', 'Market'};
             res.Lerner = (res.Price - res.Costs) ./ res.Price ;
             if nargin > 1
@@ -299,7 +305,7 @@ classdef Market < Estimate % matlab.mixin.Copyable
             res = varfun(@mean, res, 'GroupingVariables', groupvar);
             res.GroupCount = [];
             res.Properties.VariableNames = {groupvar,  'Price', 'Costs', 'MarketSh', 'Lerner'};
-            res.MarketSh = [];
+%             res.MarketSh = [];
         end
 
         function tab = compareAll(obj, other)
@@ -318,58 +324,8 @@ classdef Market < Estimate % matlab.mixin.Copyable
             diff.QuantityCh = []; % Same as market share change
             tab = [firstCols, diff];
         end
-                
-        function [pricetab, apc, varargout] = compare(obj, obj2, varargin)
-            args = inputParser;
-  %          args.addRequired('obj2', @(x)isa(x, 'NestedLogitDemand'));
-            args.addParameter('selection',[], @islogical);
-            args.addParameter('groupvar', 'Firm', @ischar);
-            args.parse(varargin{:});
-            if ~strcmpi(args.Results.groupvar, 'Firm')
-                varname = args.Results.groupvar;
-                var = obj.data{:, varname};
-            else
-                varname = {'Firm'};
-                var = obj.firm;
-            end
-            if isempty(args.Results.selection)
-                selection = ~isnan(obj2.p);
-            else
-                selection = args.Results.selection & ~isnan(obj2.p);
-            end
-            tableCols = [varname, {'Costs', 'Price1', 'Price2', 'PriceCh'}];
-            if all(selection)
-                priceChange = (obj2.p - obj.p ) ./ obj.p;
-                res = table(var, obj.c, obj.p,  obj2.p, ...
-                    priceChange, 'VariableNames', tableCols);
-                apc = priceChange' * obj.s / sum(obj.s); 
-            else
-                p2 = obj2.p(selection);
-                po = obj.p(selection);
-                co = obj.c(selection);
-                var = var(selection);
-                priceChange = (p2 - po ) ./ po;
-                res = table(var, co, po,  p2, ...
-                    priceChange, 'VariableNames',tableCols);            
-            end
-            pricetab = varfun(@mean, res, 'GroupingVariables', varname);
-            pricetab(:,'GroupCount') = [];
-            pricetab.Properties.VariableNames = tableCols;
-            pricetab(:,varname) = [];
-            % Shares
-%             varname = 'firm';
-%             tab = market.T(:,{varname});
-%             tab = [tab, array2table([ market.summary().MarketSh,  market2.summary().MarketSh, ...
-%                 market2.summary().MarketSh - market.summary().MarketSh])];
-%             tab =  varfun(@sum, tab, 'GroupingVariables', varname);
-%             tab(:, {varname, 'GroupCount'}) = [];
-            
-            if nargout == 3
-                varargout{1} = priceChange;
-            end
-        end
-        
-        function [pricetab, apc, varargout] = compare2(obj, obj2, varargin)
+                   
+        function [pricetab, apc] = compare(obj, obj2, varargin)
             args = inputParser;
   %          args.addRequired('obj2', @(x)isa(x, 'NestedLogitDemand'));
             args.addParameter('selection',[], @islogical);
@@ -380,7 +336,7 @@ classdef Market < Estimate % matlab.mixin.Copyable
                 varnames = {args.Results.GroupingVariables, obj.var.market};
                 var = obj.data{:, varnames};
             else
-                varnames = {'Firm', obj.var.market};
+                varnames = {'Firm', obj.demand.var.market};
                 var = [obj.firm, obj.marketid];
             end
             if isempty(args.Results.selection)
@@ -391,8 +347,9 @@ classdef Market < Estimate % matlab.mixin.Copyable
             tableCols = [varnames, {'Costs', 'Price1', 'Price2', 'PriceCh'}];
             if all(selection)
                 priceChange = (obj2.p - obj.p ) ./ obj.p;
-                res = table(var, obj.c, obj.p,  obj2.p, ...
-                    priceChange, 'VariableNames', tableCols);
+                res = array2table([var, obj.c, obj.p,  obj2.p, ...
+                    priceChange]);
+                res.Properties.VariableNames = tableCols;
                 apc = priceChange' * obj.s / sum(obj.s); 
             else
                 p2 = obj2.p(selection);
@@ -403,16 +360,14 @@ classdef Market < Estimate % matlab.mixin.Copyable
                 res = table(var, co, po,  p2, ...
                     priceChange, 'VariableNames',tableCols);            
             end
-            if isempty(arg.Results.weights)
-                weights = obj.settings.weights;
+            % weights can be set manually
+            if ~obj.settings.weightedAverages
+                weights = [];
             else
-                weights = arg.Results.weight;
+                weights = obj.getMarketShares(args.Results.weights);
             end
-            res.(weights) = obj.data.(weights);
-            pricetab = obj.summarise(@mean, res, 'GroupingVariables', ...
-                varnames, 'InputVariables', tableCols(2:end), ...
-                'weights', weights);
-            
+            x = Estimate.means(res, tableCols(3:end), varnames, weights);
+            pricetab = Estimate.means(x, tableCols(3:end), args.Results.GroupingVariables);
             % Shares
 %             varname = 'firm';
 %             tab = market.T(:,{varname});
@@ -420,10 +375,6 @@ classdef Market < Estimate % matlab.mixin.Copyable
 %                 market2.summary().MarketSh - market.summary().MarketSh])];
 %             tab =  varfun(@sum, tab, 'GroupingVariables', varname);
 %             tab(:, {varname, 'GroupCount'}) = [];
-            
-            if nargout == 3
-                varargout{1} = priceChange;
-            end
         end
         
         function obj = Market(varargin)
@@ -434,9 +385,10 @@ classdef Market < Estimate % matlab.mixin.Copyable
             varsEstimate = {'market','panel','depvar','exog', ...
                 'endog','instruments'};
             obj.var = SettingsClass([varsEstimate, {'firm'}]);
-            obj.settings.setParameters({'conduct', 'dampen', ...
+            obj.settings.setParameters({'conduct', 'dampen', 'maxit', ...
                 'weightedAverages', 'valueShares'});
             obj.settings.conduct = 0;  
+            obj.settings.maxit = 3000;
             obj.settings.dampen = 1;
             obj.settings.weightedAverages = true;
             obj.settings.valueShares = false;

@@ -312,6 +312,7 @@ classdef Estimate  < matlab.mixin.Copyable
 %             cpObj.config = copy(obj.config);
         end
         
+
         function tab = summarise(obj, fun, tab, varargin)
             % summarise calculates weighted or unweighted mean or sum of table by named columns.
             % The syntax is the same as varfun, but summarise does not change col names
@@ -364,6 +365,27 @@ classdef Estimate  < matlab.mixin.Copyable
             v = any(strcmp(x, y.Properties.VariableNames));
         end
         
+        function R = means(data, cols, index, varargin)
+        % means calculates means of cols over index. With optional weight
+        % variable, weighted means are calculated. Weights can either be
+        % specified as the variable name in the table data or as a vector.
+            [cats, ~, rowIdx] = unique(data( : , index), 'rows');
+            if ~isempty(varargin) && ~isempty(varargin{1}) 
+                if ischar(varargin{1})
+                    wt0 = data.(varargin{1});
+                else
+                    wt0 = varargin{1};
+                end
+                wt = accumarray(rowIdx, wt0);
+                wt = wt0 ./ wt(rowIdx,:);
+                R = array2table(splitapply(@(x)sum(x,1), bsxfun(@times, data{:, cols}, ...
+                    wt), rowIdx), 'VariableNames', cols);
+            else
+                R = array2table(splitapply(@(x)mean(x,1), data{:, cols}, ...
+                    rowIdx), 'VariableNames', cols);
+            end
+            R = [cats, R];
+        end
     end
 end
 

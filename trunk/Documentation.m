@@ -127,6 +127,7 @@ market2 = copy(market);
 market2.firm(market2.firm == 2 ) = 1;
 market2.equilibrium();
 mergerResult = compare(market, market2)
+% mergerResult = compareOld(market, market2)
 
 %%
 % Cost calculation and equilibrium simulation can be performed on a
