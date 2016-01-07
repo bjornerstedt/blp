@@ -236,9 +236,10 @@ m = SimMarket()
 %               firm: [] - Vector of ownership for each producty
 %               beta: [1 0] - 
 %                  x: [5 0] - Expected value for p and other demand shifters
-%            x_sigma: [1 1] - Variance
+%              x_vcv: [1 1] - Variance, can be specified as a matrix for
+%                             multicollinearity
 %                  c: 4 - Costs
-%            c_sigma: 1
+%              c_vcv: 1
 %              gamma: 0 - Cost shifter parameter
 %      epsilon_sigma: 0.1 - Sd of individual unobservables
 %           sigma_xi: 0.1 - Sd of panel unobservables

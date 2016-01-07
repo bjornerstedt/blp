@@ -19,7 +19,7 @@ results = m.estimate()
 testtrue(results{'p','Coef'} , results{'p', 'Beta'}, 1e-2)
 
 testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
-correctVals = [0.012851335425658,5.201998556464783,-1.002853220422230,0.004537307509000];
+correctVals = [0.022769720687512,4.895422144428684,-1.000390188323463,0.004938388080890];
 
 testSameResults(testVals, correctVals, 1);
 %% Test 2: NestedLogitDemand - one nest
@@ -39,7 +39,7 @@ results = m.estimate()
 testtrue(results{'p','Coef'} , results{'p', 'Beta'}, 1e-2)
 
 testVals = [results{'p','Coef'}, results{'lsjg','Coef'}, results{'p','Std_err'}];
-correctVals = [-2.003006191822202,0.499958011734008,0.006830329622917];
+correctVals = [-1.995650385534655,0.502068400039377,0.006222691020318];
 
 testSameResults(testVals, correctVals, 2);
 
@@ -61,7 +61,7 @@ assert(abs(m.estDemand.results.rc_sigma0 - m.estDemand.rc_sigma) > 0.5)
 testtrue(results{'p','Coef'} , results{'p', 'Theta'}, 1e-2 )
 
 testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
-correctVals = [0.016785830391304,5.223475579061942,-1.001934217196106,0.004867296895755];
+correctVals = [0.027528441329171,4.922947217451795,-1.001769146394760,0.005015988697898];
 testSameResults(testVals, correctVals, 3);
 
 %% Test 4: MixedLogitDemand - rc_x
@@ -76,7 +76,7 @@ display(m.model)
 
 results = m.estimate()
 testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
-correctVals = [0.017205956573730,5.252125999940534,-1.003194332212289,0.004661671210179];
+correctVals = [0.028966904126857,4.961760272683717,-1.001534413344814,0.005151635757488];
 testSameResults(testVals, correctVals, 4);
 
 %testtrue(results{'rc_x','Coef'} , m.demand.rc_sigma, 1e-1 )
@@ -101,7 +101,7 @@ display(m.model)
 
 results = m.estimate()
 testVals = [results{'lP', 'Coef'}, results{'rc_constant', 'Coef'}];
-correctVals = [-3.993081383179611,1.000792980033876];
+correctVals = [-4.005833090434905,0.980403597281313];
 testSameResults(testVals, correctVals, 5);
 
 testtrue(results{'lP', 'Coef'} , results{'lP', 'Theta'}, 2e-2)
@@ -124,7 +124,7 @@ display(m.model)
 results = m.estimate()
 
 testVals = [results{'p','Coef'}, results{'rc_x','Coef'}];
-correctVals = [-0.661577893863166,0.961761518545162];
+correctVals = [-0.969984767147493,1.044593651632106];
 testSameResults(testVals, correctVals, 6);
 
 testtrue(results{'rc_x','Coef'} , results{'rc_x', 'Theta'}, 1e-1 )
@@ -169,7 +169,7 @@ end
 
 
 %% Test 8: Nonlinear price, testing findCosts
-% Succeeds at the 2% level (to avoid increasing data size)
+% Should be improved
 display '**********************  Test 8  *************************'
 
 m = SimMarket();
@@ -183,21 +183,21 @@ m.demand.var.nonlinear = 'p';
 
 m.model.endog = true;
 m.model.randproducts = true;
-m.model.markets = 100;
+m.model.markets = 200;
 m.model.products = 10;
-m.model.x_sigma = [.2, 1];
+m.model.x_vcv = [.2, 1];
 m.model.c = 0.9;
 m.create();
 display(m.model)
 
 results = m.estimate()
-testtrue(results{'p','Coef'} , results{'p', 'Theta'}, 1e-1 )
+testtrue(results{'p','Coef'} , results{'p', 'Theta'}, 2e-1 )
 
-m.findCosts(m.estDemand)
+m.findCosts()
 testtrue( mean(m.data.c) ,  0.9, 1e-1 )
 
 %% Test 9: Nonlinear price, testing findCosts
-% Succeeds at the 2% level (to avoid increasing data size)
+% Succeeds at the 1% level
 display '**********************  Test 9  *************************'
 
 m = SimMarket();
@@ -210,12 +210,12 @@ m.demand.settings.optimalIV = false;
 
 m.model.endog = false;
 m.model.randproducts = false;
-m.model.markets = 100;
+m.model.markets = 200;
 m.model.products = 10;
-m.model.x_sigma = [.2, 1];
+m.model.x_vcv = [.2, 1];
 m.model.c = 0.9;
 m.create();
 display(m.model)
 
 results = m.estimate()
-testtrue(results{'p','Coef'} , results{'p', 'Theta'}, 2e-2 )
+testtrue(results{'p','Coef'} , results{'p', 'Theta'}, 1e-2 )
