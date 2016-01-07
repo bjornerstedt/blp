@@ -463,7 +463,8 @@ classdef MixedLogitDemand < NestedLogitDemand
             obj.config.hessian = false;
             obj.config.quietly = true;
             obj.results.estimateDescription = 'Random Coefficient Logit Demand'; 
-        end      
+        end  
+        
     end
 
 %% Basic %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
@@ -571,6 +572,7 @@ classdef MixedLogitDemand < NestedLogitDemand
                 obj.inv_x1ZWZx1 = inv(obj.X'*obj.X);
             end
         end
+        
     end
 end
 

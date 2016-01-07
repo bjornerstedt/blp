@@ -9,26 +9,26 @@ load example_data;
 est = Estimate(dt3);
 
 %%
-%   Estimate with properties:
+% The Estimate class has the following properties
 % 
-% *    settings: A structure with different estimation settings
-% *     config: Contains less common settings
-% *        var: A structure with variable names used in estimation
-% *       data: The Matlab table with data useed in estimation. Can be
-% specified in the constructor as above.
+%    settings: A structure with different estimation settings
+%     config: Contains less common settings
+%        var: A structure with variable names used in estimation
+%       data: The Matlab table with data useed in estimation. Can be
+%             specified in the constructor as above.
 %
 % In estimating, Estimate creates the following fields
 % 
-% *    results: A structure with results (coefficients, standare errors, other statistics) 
-% *          y: []
-% *          X: []
-% *          Z: []
-% *       beta: []
+%   results: A structure with results (coefficients, standare errors, other statistics) 
+%         y: []
+%         X: []
+%         Z: []
+%      beta: []
 %
-% *    panelid: []
-% *   marketid: []
-% *      Xorig: [x]
-% *      Zorig: [x]
+%   panelid: []
+%  marketid: []
+%     Xorig: [x]
+%     Zorig: [x]
 
 est
 
@@ -47,7 +47,7 @@ est.var
 %%
 % The est.settings structure has the following fields
 %
-%             robust: 1 - robust estimation true_/false
+%             robust: 1 - robust estimation true/false
 %          paneltype: 'none' - panel estimate: 'fe'/'lsdv'/'none'
 %             nocons: 0 Do not include constant in estimation true/false
 %     estimateMethod: 'ols'/'2sls'/'gmm'
@@ -69,25 +69,36 @@ est.var
 
 est.settings
 
+%%
+% Methods
+%
+% Estimation is done with the |estimate()| method. The mehod used depends
+% on the type of object that estimation is performed on. In the |Estimate|
+% class, the method can be set to OLS, 2SLS or GMM in settings. 
+
+methods(Estimate)
+
 %% NestedLogitDemand class
 %
+% The demand classes extend |Estimate| to allow estimation of demand
+% systems. 
 
 demand = NestedLogitDemand(dt1)
 demand.var
 
 %%
-%   NestedLogitDemand has the following additional properties:
+% NestedLogitDemand has the following additional properties:
 % 
-% *       alpha: The calibrated or estimated alpha parameter
-% *       sigma: A vector with sigmas
-% *  d: A vector with utility shifters, used in Monte Carlo estimation
+%      alpha: The calibrated or estimated alpha parameter
+%      sigma: A vector with sigmas
+%          d: A vector with utility shifters, used in Monte Carlo estimation
 % 
 %  Additional variables are specified in demand.var:
 % 
-% *          price: Variable name of price variable
-% *          nests: Name(s) of nesting variables
-% *       quantity: Quantity variable
-% * marketsize: Name of variable in dataset containing market size per market
+%         price: Variable name of price variable
+%         nests: Name(s) of nesting variables
+%      quantity: Quantity variable
+%    marketsize: Name of variable in dataset containing market size per market
 %
 %
 % There is also an additional setting in NestedLogitDemand beyond those of
@@ -99,6 +110,11 @@ demand.settings
 
 %% 
 % Methods
+%
+% The method |NestedLogitDemand.estimate()| performs a linear panel
+% estimate based on the settings.
+
+methods(NestedLogitDemand)
 
 %% MixedLogitDemand class
 %
@@ -107,30 +123,30 @@ demand = MixedLogitDemand(dt1)
 demand.var
 
 %%
-%  MixedLogitDemand with properties:
+% MixedLogitDemand with properties:
 % 
-% *    rc_sigma: The calibrated or estimated nonlinear parameters
+%    rc_sigma: The calibrated or estimated nonlinear parameters
 %        
 %% 
 % Settings
 % 
-%   SettingsClass with properties:
+% MixedLogitDemand.settings has properties:
 % 
-% *               ces: 0 - CES or Unit logit demand
-% *           maxiter: 100 - Maximum number of iterations in optimization
-% *         optimalIV: 0 - Optimal instruments true/false
-% *        drawmethod: 'hypercube' - Sampling method:
-% *        'hypercube'/'quadrature'/'halton'/'random'
-% *              nind: 100 - Number of simulated individuals
-% *       marketdraws: 0 - Different random draws for each market true/false
-% *         quaddraws: 10 - Quadrature accuracy level
-% *      fptolerance1: 1.0000e-14
-% *      fptolerance2: 1.0000e-14
+%              ces: 0 - CES or Unit logit demand
+%          maxiter: 100 - Maximum number of iterations in optimization
+%        optimalIV: 0 - Optimal instruments true/false
+%       drawmethod: 'hypercube' - Sampling method:
+%       'hypercube'/'quadrature'/'halton'/'random'
+%             nind: 100 - Number of simulated individuals
+%      marketdraws: 0 - Different random draws for each market true/false
+%        quaddraws: 10 - Quadrature accuracy level
+%     fptolerance1: 1.0000e-14
+%     fptolerance2: 1.0000e-14
 
 demand.settings
 
 %%
-% demand.config
+% MixedLogitDemand.config
 % 
 %                  hessian: 0
 %                     test: []
@@ -146,17 +162,23 @@ demand.config
 
 %% 
 % Methods
+%
+% The method |MixedLogitDemand.estimate()| performs a BLP
+% estimate based on the settings specified in the demand object.
 
+methods(MixedLogitDemand)
 
 %% Market class
 % 
-% The |Market| class is associated with a demand class either in its
+% The |Market| class is used to calculate costs or to 
+% associated with a demand class either in its
 % constructor or by setting |Market.demand|
 %
-% * p: Equilibrium calculated price
-% * q: Equilibrium calculated quantity
-% * p0: Initial guess for equilibrium price
-% * c: Costs calculated from market prices and quantities and demand estimate
+% demand: Demand object (|NestedLogitDemand| or |MixedLogitDemand|)
+%      p: Equilibrium calculated price
+%      q: Equilibrium calculated quantity
+%     p0: Initial guess for equilibrium price
+%      c: Costs calculated from market prices and quantities and demand estimate
 % 
 % The |Market| class obtains data and various settings from the associated
 % demand class. List these... It has the settings and var structures allowing estimation of costs. 
@@ -167,16 +189,25 @@ market.var
 %% 
 % The Market class has the following settings, set in Market.settings
 % 
-% * dampen: 1 - Dampening in fixed point iterations
-% * maxit: 1000 - Maximum number of iterations in calculating equilibrium
-% * conduct: 0 - Conduct parameter in [0,1] interval
-% * weightedAverages: 1 - Calculate weighted averages true/false
-% * valueShares: 0 (1 for CES) - Use value shares as weights
+%           dampen: 1 - Dampening in fixed point iterations
+%            maxit: 1000 - Maximum number of iterations in calculating equilibrium
+%          conduct: 0 - Conduct parameter in [0,1] interval
+% weightedAverages: 1 - Calculate weighted averages true/false
+%      valueShares: 0 (1 for CES) - Use value shares as weights
 
 market.settings
 
 %% 
 % Methods
+%
+% Market.findCosts() calculates costs based on a demand specification
+% Prices and quantities used are copied from the demand specification
+% 
+% |Market.equilibrium()| calculates a market equilibrium based on a demand
+% specification, costs, and a specification of ownership and conduct (using
+% |Market.var.firm| and |Market.settings.conduct|. 
+
+methods(Market)
 
 
 %% SimMarket class
@@ -218,4 +249,11 @@ m.model
 
 %% 
 % Methods
+% 
+% * SimMarket - Create a new simulation object, optionally with demand spec       
+% * create - Creates market - should return dataset.
+% * estimate -  Estimate and compare, used in testing framework
+% * findCosts - Calculate costs, used in testing framework
+
+methods(SimMarket)
 

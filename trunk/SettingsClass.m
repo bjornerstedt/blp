@@ -49,22 +49,31 @@ classdef SettingsClass < dynamicprops & matlab.mixin.Copyable
             tab = table(names, values);
         end
                 
-        function obj = SettingsClass(setnames)
-            obj.setParameters(setnames);
+        function obj = SettingsClass(input)
+            if isstruct(input)
+                names = fieldnames(input);
+                obj.setParameters(names);
+                obj.init(input);
+            else
+                obj.setParameters(input);
+            end
         end
+        
     end
     methods(Access = protected)
-        % Override copyElement method:
         function cpObj = copyElement(obj)
-            % Make a shallow copy of all properties
+        % Override copyElement method
+        
+            % Make a shallow copy of all properties:
             cpObj = copyElement@matlab.mixin.Copyable(obj);
-            % Make a deep copy of the DeepCp object
+            % Make a deep copy of the DeepCp object:
             names = fieldnames(obj);
             for i = 1:length(names)
                 cpObj.addprop(names{i});
                 cpObj.(names{i}) = obj.(names{i});
             end
         end
+        
     end
 end
 

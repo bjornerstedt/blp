@@ -253,6 +253,10 @@ classdef NestedLogitDemand < Estimate
             xi = obj.y - obj.X * beta;
         end
        
+    end
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    methods (Access = protected, Hidden = true )
         function name = getPriceName(obj)
             if obj.settings.ces
                 name = 'lP';
@@ -261,12 +265,8 @@ classdef NestedLogitDemand < Estimate
             end
         end
                     
-    end
-    
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-    methods (Access = protected, Hidden = true )
+       function names = initAdditional(obj, names, selection)
        % Invoked from init@Estimate to create some logit specific params
-        function names = initAdditional(obj, names, selection)
             if ~isempty(obj.var.nests)
                 obj.nestlist = strsplit(strtrim(obj.var.nests));
             end
@@ -378,7 +378,8 @@ classdef NestedLogitDemand < Estimate
             sp = obj.shares(obj.p, 1); % Compute predicted shares
             e = obj.share.s - sp;
             sd = sqrt(e'*e ./(size(obj.X,1)-length(obj.vars2)-length(obj.vars2)));
-        end         
+        end   
+        
     end
 end
 
