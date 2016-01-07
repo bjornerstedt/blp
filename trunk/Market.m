@@ -44,8 +44,10 @@ classdef Market < Estimate % matlab.mixin.Copyable
             if ~isempty(obj.var.exog)
                 init@Estimate(obj);
             end
-            % Use weighting of averages as in demand
-            obj.settings.weights = obj.demand.settings.weights;
+            % Use weighting of averages as in demand unless set by user
+            if isempty(obj.settings.valueShares)
+                obj.settings.valueShares = obj.demand.useValueShares();
+            end
             % Can probably join these in a table directly, for sim
             obj.p = obj.demand.p;
             obj.q = obj.demand.q; 

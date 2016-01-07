@@ -210,7 +210,7 @@ classdef NestedLogitDemand < Estimate
             end
         end
         
-        function [elas] = groupElasticities(obj, P,  group)
+        function [elas] = groupElasticities(obj, P, group)
             group = obj.data{:, group};
             if iscategorical(group)
                 [names,~,group] = unique(group);
@@ -221,7 +221,7 @@ classdef NestedLogitDemand < Estimate
             A = dummyvar(group)';
             s = obj.shares(P);
             D = obj.shareJacobian(P)';
-            elas = A*diag(P)* D * A' * diag( 1 ./(A*s) ) ;
+            elas = A * diag(P) * D * A' * diag( 1 ./(A*s) ) ;
             elas = array2table(elas);
             if ~isempty(names)
                 elas.Properties.RowNames = names;
@@ -312,20 +312,21 @@ classdef NestedLogitDemand < Estimate
                 if ~isempty(selection)
                     obj.share = obj.generateShares(T); 
                 end
-                % This is not clean. Should be added to (renamed) shares struct
-                if obj.settings.ces
-                    obj.settings.weights = obj.p .* obj.q;
-                else
-                    obj.settings.weights = obj.q;
-                end
             end
             if obj.settings.ces
                 obj.data.lP = log(obj.data{:,obj.var.price});
             end
         end
         
+        function wa = useValueShares(obj)
+            wa = obj.settings.ces;
+        end
+        
         function resultTables(obj)
-            resultTables@Estimate(obj);            
+            resultTables@Estimate(obj);  
+            ts = obj.dummarket' * obj.share.s;
+            obj.results.totalShares = sprintf('  Mean: %0.3f Min: %0.3f Max: %0.3f \n', ...
+                mean(ts), min(ts), max(ts));
             if ~obj.config.quietly
                 disp(['Estimate of: ', obj.results.estimateDescription])
                 disp(obj.results.estimate);
@@ -333,7 +334,7 @@ classdef NestedLogitDemand < Estimate
                 disp('Share of outside good');
                 fprintf('  Mean: %0.3f Min: %0.3f Max: %0.3f \n', ...
                     mean(s0), min(s0), max(s0));
-            end            
+            end
         end
         
         function S = generateShares(obj, T )

@@ -79,14 +79,13 @@ classdef Estimate  < matlab.mixin.Copyable
             obj.var = SettingsClass({'market','panel','depvar','exog', ...
                 'endog','instruments'});
             obj.settings = SettingsClass({'paneltype', 'nocons', ...
-                'estimateMethod', 'robust', 'weights'});
+                'estimateMethod', 'robust'});
 %            obj.config = SettingsClass({'quietly','nocons','estimateMethod'});
             
             obj.config.quietly = true;
             obj.results.estimateDescription = 'Linear Estimate'; 
             
             obj.settings.paneltype = 'fe';
-            obj.settings.weights = [];
             obj.settings.nocons = false;   
             obj.settings.estimateMethod = 'ols';
             obj.settings.robust = true;
