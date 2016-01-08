@@ -12,7 +12,7 @@ T.firmname = T.firm;
 T.firm = double(T.firm);
 T.year2 = T.year .^ 2;
 
-demand = NestedLogitDemand(T);
+demand = NLDemand(T);
 demand.var.nests = 'segment domestic';
 demand.var.quantity = 'qu';
 demand.var.marketsize = 'MSIZE';
@@ -38,14 +38,14 @@ market.settings.weightedAverages = false;
 
 market.findCosts(selection);
 display Costs:
-disp(sum(market.c))
+disp(sum(market.c(selection)))
 
 market2 = copy(market);
 market2.firm(market2.firm == 15 ) = 26; % Buyer(26) seller(15)
 
 market2.equilibrium(selection);
 disp 'Sum new prices:'
-disp(sum(market2.p))
+disp(sum(market2.p(selection)))
 
 result = market.compare(market2);
 

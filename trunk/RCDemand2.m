@@ -1,4 +1,4 @@
-classdef MixedLogitDemand2 < MixedLogitDemand   
+classdef RCDemand2 < RCDemand   
     properties
 
     end
@@ -97,8 +97,8 @@ classdef MixedLogitDemand2 < MixedLogitDemand
             [rc_sigma,fval,exitflag,output,grad,hessian] = fminunc(func, obj.rc_sigma, options);
         end
         
-        function obj = MixedLogitDemand2(varargin)
-            obj = obj@MixedLogitDemand(varargin{:});
+        function obj = RCDemand2(varargin)
+            obj = obj@RCDemand(varargin{:});
         end
 %             obj.var.setParameters({'nonlinear','nonlinearlogs','nonlineartriangular'});
 %             obj.settings.setParameters({'optimalIV','drawmethod',... 
@@ -109,7 +109,7 @@ classdef MixedLogitDemand2 < MixedLogitDemand
 %         end      
 
         function initPeriods(obj)
-            md = MixedLogitDemandMarket2(obj);
+            md = RCDemandMarket2(obj);
             obj.period = cell(max(obj.marketid), 1);
             for t = 1:max(obj.marketid)
                 newmarket = copy(md);

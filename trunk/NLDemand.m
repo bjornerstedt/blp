@@ -1,4 +1,4 @@
-classdef NestedLogitDemand < Estimate
+classdef NLDemand < Estimate
     % Estimation and simulation code for nested logit.
     
     properties
@@ -229,7 +229,7 @@ classdef NestedLogitDemand < Estimate
             end
         end
         
-        function obj = NestedLogitDemand(varargin)
+        function obj = NLDemand(varargin)
             obj = obj@Estimate(varargin{:});
             obj.var.setParameters({'quantity','price','nests','marketsize'});
             obj.settings.setParameters({'ces'});

@@ -16,7 +16,7 @@ pk.branded = +(pk.brand =='Alvedon')+(pk.brand =='Ipren')+(pk.brand =='Treo');
 pk.fizzy = +(pk.form =='fizzytablet');
 
 % Define demand
-demand = MixedLogitDemand(pk);
+demand = RCDemand(pk);
 demand.var.quantity = 'Xtablets';
 demand.var.marketsize = 'BL';
 demand.var.market = 'time';

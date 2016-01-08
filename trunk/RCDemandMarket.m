@@ -1,6 +1,6 @@
-classdef MixedLogitDemandMarket  < matlab.mixin.Copyable 
+classdef RCDemandMarket  < matlab.mixin.Copyable 
     % Market calculations in Mixed Logit
-    %   Used by MixedLogitDemand 
+    %   Used by RCDemand 
     
     properties
         selection 
@@ -20,7 +20,7 @@ classdef MixedLogitDemandMarket  < matlab.mixin.Copyable
     end
     
     methods         
-        function obj = MixedLogitDemandMarket(demand)
+        function obj = RCDemandMarket(demand)
             % Copy config as a struct to avoid deep copy problems with
             % copy() function. Note that one could keep the common config
             % object, since all instances have same config. 

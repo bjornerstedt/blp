@@ -87,15 +87,15 @@ est.results.settings
 % class, the method can be set to OLS, 2SLS or GMM in settings. 
 methods(Estimate)
 
-%% NestedLogitDemand class
+%% NLDemand class
 %
 % The demand classes extend |Estimate| to allow estimation of demand
 % systems. 
-demand = NestedLogitDemand(dt1)
+demand = NLDemand(dt1)
 demand.var
 
 %%
-% NestedLogitDemand has the following additional properties:
+% NLDemand has the following additional properties:
 % 
 %      alpha: The calibrated or estimated alpha parameter
 %      sigma: A vector with sigmas
@@ -109,7 +109,7 @@ demand.var
 %    marketsize: Name of variable in dataset containing market size per market
 %
 %
-% There is also an additional setting in NestedLogitDemand beyond those of
+% There is also an additional setting in NLDemand beyond those of
 % Estimate:
 % 
 % * ces: 0 - Use CES logit rather than unit demand true/false
@@ -118,24 +118,24 @@ demand.settings
 %% 
 % *Methods*
 %
-% The method |NestedLogitDemand.estimate()| performs a linear panel
+% The method |NLDemand.estimate()| performs a linear panel
 % estimate based on the settings.
-methods(NestedLogitDemand)
+methods(NLDemand)
 
-%% MixedLogitDemand class
+%% RCDemand class
 %
-demand = MixedLogitDemand(dt1)
+demand = RCDemand(dt1)
 demand.var
 
 %%
-% MixedLogitDemand with properties:
+% RCDemand with properties:
 % 
 %    rc_sigma: The calibrated or estimated nonlinear parameters
 %        
 %% 
 % Settings
 % 
-% MixedLogitDemand.settings has properties:
+% RCDemand.settings has properties:
 % 
 %              ces: 0 - CES or Unit logit demand
 %          maxiter: 100 - Maximum number of iterations in optimization
@@ -150,7 +150,7 @@ demand.var
 demand.settings
 
 %%
-% MixedLogitDemand.config
+% RCDemand.config
 % 
 %                  hessian: 0
 %                     test: []
@@ -166,9 +166,9 @@ demand.config
 %% 
 % *Methods*
 %
-% The method |MixedLogitDemand.estimate()| performs a BLP
+% The method |RCDemand.estimate()| performs a BLP
 % estimate based on the settings specified in the demand object.
-methods(MixedLogitDemand)
+methods(RCDemand)
 
 %% Market class
 % 
@@ -176,7 +176,7 @@ methods(MixedLogitDemand)
 % associated with a demand class either in its
 % constructor or by setting |Market.demand|
 %
-% demand: Demand object (|NestedLogitDemand| or |MixedLogitDemand|)
+% demand: Demand object (|NLDemand| or |RCDemand|)
 %      p: Equilibrium calculated price
 %      q: Equilibrium calculated quantity
 %     p0: Initial guess for equilibrium price

@@ -9,12 +9,12 @@ classdef NLpkTest < matlab.unittest.TestCase
             
             if ces == true
                 pk.Xtablets = pk.Xtablets*10e-7;
-                demand = NestedLogitDemand(pk);
+                demand = NLDemand(pk);
                 demand.settings.ces = true;
                 demand.var.marketsize = 'BL_CES';
                 demand.var.price = 'Ptablets';
             else
-                demand = NestedLogitDemand(pk);
+                demand = NLDemand(pk);
                 demand.var.marketsize = 'BL_Unit';
                 demand.var.price = 'Ptablets_Real';
             end

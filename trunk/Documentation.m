@@ -1,8 +1,8 @@
 %% SimMarket 0.2 Users Guide
 
 %% Demand estimation
-% Demand is estimated using the |NestedLogitDemand| and
-% |MixedLogitDemand| classes. The classes have methods to estimate demand of
+% Demand is estimated using the |NLDemand| and
+% |RCDemand| classes. The classes have methods to estimate demand of
 % the respective type. 
 %
 % Data used in estimation is contained in a Matlab  <matlab:doc('table') table>  object. Tables
@@ -10,17 +10,17 @@
 % can contain categorical/factor and numerical variables. Reference to
 % variables in the table are by their variable names. 
 %
-% Demand is estimated using the |NestedLogitDemand| and |MixedLogitDemand|
+% Demand is estimated using the |NLDemand| and |RCDemand|
 % classes.
 
-%% NestedLogitDemand estimation
+%% NLDemand estimation
 % We will start by describing estimation of nested logit demand. Although the
 % syntax is a little different than with _mergersim_ in Stata, the required fields are
 % the same. We load data including table |dt1|, and provide this table as an input to
 % the demand constructor:
 
 load example_data;
-demand = NestedLogitDemand(dt1);
+demand = NLDemand(dt1);
 
 %%
 % Here we specify the market and panel id, price, quantity and marketsize
@@ -37,7 +37,7 @@ demand.var.marketsize = 'constant';
 demand.var.exog = 'x';
 
 %%
-% There are a number of parameters that can be set in |NestedLogitDemand|
+% There are a number of parameters that can be set in |NLDemand|
 % The most important characteristics are set in |demand.var| and |demand.settings|. In
 % |demand.var|, various variable names in the dataset are specified. One
 % can list the contents of the structure:
@@ -46,7 +46,7 @@ demand.var
 
 %%
 % In |demand.settings|, other demand settings are set. Four properties
-% of |NestedLogitDemand|.settings concern estimation. The last one,
+% of |NLDemand|.settings concern estimation. The last one,
 % |demand.settings.ces| is used to select CES Demand rather than the default,
 % Unit demand.
 
@@ -63,13 +63,13 @@ result = demand.estimate()
 % The method returns a table with the estimate, as well as putting it and
 % various other information in a demand.results structure.
 
-%% MixedLogitDemand estimation
+%% RCDemand estimation
 % Estimation of mixed logit is rather similar to nested logit. There are
 % more parameters that one can specify, however. In the following example,
 % we use count instruments to identify an endogenous price variable.
 
 load example_data;
-demand = MixedLogitDemand(dt2);
+demand = RCDemand(dt2);
 
 demand.var.market = 'marketid';
 demand.var.panel = 'productid';
@@ -87,8 +87,8 @@ demand.var.nonlinear = 'x';
 result = demand.estimate()
 
 %%
-% The demand class |MixedLogitDemand| has more settings than
-% |NestedLogitDemand|
+% The demand class |RCDemand| has more settings than
+% |NLDemand|
 
 demand.settings
 
@@ -183,10 +183,10 @@ m1 = SimMarket()
 
 %% 
 % A demand model can be created by using one of the classes
-% |NestedLogitDemand| or |MixedLogitDemand|. The demand object is created as
+% |NLDemand| or |RCDemand|. The demand object is created as
 % follows:
 
-demand = NestedLogitDemand();
+demand = NLDemand();
 demand.alpha = 1;
 
 %%
@@ -243,11 +243,11 @@ dt1 = m1.data;
 
 results = m1.estimate()
 
-%% MixedLogitDemand Monte-Carlo
+%% RCDemand Monte-Carlo
 % Now we will create a slightly more complex market with mixed logit demand. 
-% A minimal definition of a |MixedLogitDemand| object is as follows:
+% A minimal definition of a |RCDemand| object is as follows:
 
-demand = MixedLogitDemand();
+demand = RCDemand();
 demand.alpha = 1;
 demand.rc_sigma = 1;
 demand.var.nonlinear = 'x';
@@ -285,7 +285,7 @@ dt2 = m2.data;
 % A minimal nested logit demand specification with the nesting variable
 % |type| is created as follows:
 
-demand = NestedLogitDemand();
+demand = NLDemand();
 demand.alpha = 0.5;
 demand.sigma = 0.5;
 demand.var.nests = 'type';
@@ -332,7 +332,7 @@ dt3 = m3.data;
 % The same count instruments as above are used. Note that the 2SLS FE panel
 % estimate will have price and log group shares as endogenous variables.
 
-demand = NestedLogitDemand(dt3);
+demand = NLDemand(dt3);
 
 demand.var.market = 'marketid';
 demand.var.panel = 'productid';

@@ -1,4 +1,4 @@
-classdef MixedLogitDemand < NestedLogitDemand
+classdef RCDemand < NLDemand
     % Random Coefficient demand class
     %   Simulation of shares and estimation of parameters beta and rc_sigma.
    
@@ -285,7 +285,7 @@ classdef MixedLogitDemand < NestedLogitDemand
 %% Init %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
         function init(obj, varargin)
             % init(data, selection) - both arguments optional    
-            selection = init@NestedLogitDemand(obj, varargin{:});
+            selection = init@NLDemand(obj, varargin{:});
             obj.nonlinparams = [];
             obj.nonlintype = [];
             nonlin = {obj.var.nonlinear, obj.var.nonlinearlogs, ...
@@ -336,7 +336,7 @@ classdef MixedLogitDemand < NestedLogitDemand
         end
         
         function initPeriods(obj)
-            md = MixedLogitDemandMarket(obj);
+            md = RCDemandMarket(obj);
             obj.period = cell(max(obj.marketid), 1);
             for t = 1:max(obj.marketid)
                 newmarket = copy(md);
@@ -424,7 +424,7 @@ classdef MixedLogitDemand < NestedLogitDemand
         end
                                   
         function demand = pack(obj, filename)
-            demand = MixedLogitDemand;
+            demand = RCDemand;
             demand.settings = obj.settings;
             demand.var = obj.var;
             demand.config = obj.config;
@@ -433,8 +433,8 @@ classdef MixedLogitDemand < NestedLogitDemand
             demand.rc_sigma = obj.rc_sigma;
         end
         
-        function obj = MixedLogitDemand(varargin)
-            obj = obj@NestedLogitDemand(varargin{:});
+        function obj = RCDemand(varargin)
+            obj = obj@NLDemand(varargin{:});
             obj.var.setParameters({'nonlinear','nonlinearlogs','nonlineartriangular'});
             obj.settings.setParameters({'optimalIV','drawmethod',... 
                 'marketdraws','nind','quaddraws','maxiter','fptolerance1','fptolerance2'});

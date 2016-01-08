@@ -7,10 +7,10 @@ testtrue = @(x,y,z)true;
 testSameResults = @(x,y,i)assert(all( abs(x - y) < 10e-6), 'Test %d failed' , i);
 testtrue = @(x,y,z)assert(abs((x - y)/y)<z, 'Percentage diff is %f', abs((x - y)/y));
 
-%% Test 1: NestedLogitDemand
+%% Test 1: NLDemand
 display '**********************  Test 1  *************************'
 m = SimMarket();
-m.demand = NestedLogitDemand;
+m.demand = NLDemand;
 m.demand.alpha = 1;
 sresults = m.create();
 display(m.model)
@@ -23,10 +23,10 @@ correctVals = [0.022769720687512,4.895422144428684,-1.000390188323463,0.00493838
 
 testSameResults(testVals, correctVals, 1);
 
-%% Test 2: NestedLogitDemand - one nest
+%% Test 2: NLDemand - one nest
 display '**********************  Test 2  *************************'
 m = SimMarket();
-m.demand = NestedLogitDemand;
+m.demand = NLDemand;
 m.demand.var.nests = 'type';
 m.demand.alpha = 2;
 m.demand.sigma = 0.5;
@@ -44,10 +44,10 @@ correctVals = [-1.995650385534655,0.502068400039377,0.006222691020318];
 
 testSameResults(testVals, correctVals, 2);
 
-%% Test 2b: NestedLogitDemand - two level nests
+%% Test 2b: NLDemand - two level nests
 display '**********************  Test 2b *************************'
 m = SimMarket();
-m.demand = NestedLogitDemand;
+m.demand = NLDemand;
 m.demand.var.nests = 'type1 type2';
 m.demand.alpha = 2;
 m.demand.sigma = [0.6, 0.3];
@@ -66,11 +66,11 @@ correctVals = [-1.995280968011216,0.602548086049320,0.005338793317819];
 
 testSameResults(testVals, correctVals, 2);
 
-%% Test 3: MixedLogitDemand - rc_constant
+%% Test 3: RCDemand - rc_constant
 % Estimate without instruments, with exogeneous p.
 display '**********************  Test 3  *************************'
 m = SimMarket();
-m.demand = MixedLogitDemand;
+m.demand = RCDemand;
 m.demand.alpha = 1;
 m.demand.rc_sigma = 1;
 m.demand.var.nonlinear = 'constant';
@@ -87,10 +87,10 @@ testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p'
 correctVals = [0.027528441329171,4.922947217451795,-1.001769146394760,0.005015988697898];
 testSameResults(testVals, correctVals, 3);
 
-%% Test 4: MixedLogitDemand - rc_x
+%% Test 4: RCDemand - rc_x
 display '**********************  Test 4  *************************'
 m = SimMarket();
-m.demand = MixedLogitDemand;
+m.demand = RCDemand;
 m.demand.alpha = 1;
 m.demand.rc_sigma = 1;
 m.demand.var.nonlinear = 'x';
@@ -104,10 +104,10 @@ testSameResults(testVals, correctVals, 4);
 
 %testtrue(results{'rc_x','Coef'} , m.demand.rc_sigma, 1e-1 )
 
-%% Test 5: CES MixedLogitDemand
+%% Test 5: CES RCDemand
 display '**********************  Test 5  *************************'
 m = SimMarket();
-m.demand = MixedLogitDemand;
+m.demand = RCDemand;
 m.demand.settings.ces = true;
 %         m.estDemand.settings.robust = 'false';
 m.model.endog = false;
@@ -132,7 +132,7 @@ testtrue(results{'lP', 'Coef'} , results{'lP', 'Theta'}, 2e-2)
 %% Test 6: Optimal IV
 display '**********************  Test 6  *************************'
 m = SimMarket();
-m.demand = MixedLogitDemand;
+m.demand = RCDemand;
 m.demand.var.nonlinear = 'x';
 m.demand.alpha = 1;
 m.demand.rc_sigma = 1;
@@ -161,9 +161,9 @@ for d = 1:2
     for i = 1:2
         m = SimMarket();
        if d == 1
-            m.demand = NestedLogitDemand;
+            m.demand = NLDemand;
         else
-            m.demand = MixedLogitDemand;
+            m.demand = RCDemand;
             m.demand.var.nonlinear = 'constant';
             m.demand.rc_sigma = 1;
         end
@@ -196,7 +196,7 @@ end
 display '**********************  Test 8  *************************'
 
 m = SimMarket();
-m.demand = MixedLogitDemand;
+m.demand = RCDemand;
 m.demand.settings.drawmethod = 'quadrature';
 m.demand.alpha = 1;
 m.demand.rc_sigma = .1;
@@ -224,7 +224,7 @@ testtrue( mean(m.data.c) ,  0.9, 1e-1 )
 display '**********************  Test 9  *************************'
 
 m = SimMarket();
-m.demand = MixedLogitDemand;
+m.demand = RCDemand;
 m.demand.var.nonlinear = 'p constant';
 m.demand.alpha = 1;
 m.demand.rc_sigma = [0.1; 1];
