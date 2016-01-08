@@ -16,7 +16,7 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
         d
         nonlinprice 
         alpha
-        rc_sigma
+        sigma
     end
     
     methods         
@@ -27,7 +27,7 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
             obj.config = demand.config.getProperties();
             obj.nind = demand.settings.nind;
             obj.alpha = demand.alpha;
-            obj.rc_sigma = demand.rc_sigma;
+            obj.sigma = demand.sigma;
             obj.config.ces = demand.settings.ces;
             obj.iweight = demand.iweight;
             obj.nonlinprice = strcmp(demand.var.price, demand.nonlinparams);    
@@ -58,7 +58,7 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
             end
             [S, si] = obj.shares(P);
             if any(obj.nonlinprice) 
-                theta_p = obj.rc_sigma(obj.nonlinprice);
+                theta_p = obj.sigma(obj.nonlinprice);
                 % obj.sim.v is the same for all products
                 dUi = obj.iweight .* (- obj.alpha + ...
                     theta_p * obj.v(1,:,obj.nonlinprice))';
@@ -81,14 +81,14 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
             for k = 1:size(obj.x2, 2)
                 obj.vx(:,:,k) = bsxfun(@times, obj.x2(:,k), obj.v);
             end
-            obj.nlpart(obj.rc_sigma);
+            obj.nlpart(obj.sigma);
         end
         
-        function der = deltaJacobian(obj, rc_sigma, edelta)
+        function der = deltaJacobian(obj, sigma, edelta)
             [~, si] = obj.sharecalc(edelta(obj.selection));
             wsi =  bsxfun(@times, si , obj.iweight'); % Row means
-            dssigma = zeros(size(si, 1), length(rc_sigma));
-            for k = 1:length(rc_sigma)
+            dssigma = zeros(size(si, 1), length(sigma));
+            for k = 1:length(sigma)
                 svx = wsi .* obj.vx(:,:,k); % Can be done outside loop
                 dssigma(:, k) = sum(svx, 2) - si * sum(svx)';
             end
@@ -97,10 +97,10 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
             der = -dsdelta\dssigma;
         end
         
-        function newedel = findDelta(obj, rc_sigma, edelta, tolerance)
+        function newedel = findDelta(obj, sigma, edelta, tolerance)
             i = 0;
             maxdev = 100;
-            obj.nlpart( rc_sigma );
+            obj.nlpart( sigma );
             while maxdev > tolerance && i < obj.config.fpmaxit
                 eg = bsxfun(@times, edelta, obj.expmu );
                 % Code with intermediate steps
@@ -125,11 +125,11 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
             sh = indsh * obj.iweight; % Row means
         end
         
-        function nlpart(obj, rc_sigma)
+        function nlpart(obj, sigma)
             [n,m,K] = size(obj.vx);
             mu = zeros(n, m);
             for k = 1:K
-                mu = mu + obj.vx(:,:,k) * rc_sigma(k);
+                mu = mu + obj.vx(:,:,k) * sigma(k);
             end
             obj.expmu = exp(mu);
         end

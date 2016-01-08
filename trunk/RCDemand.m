@@ -1,10 +1,7 @@
 classdef RCDemand < NLDemand
     % Random Coefficient demand class
-    %   Simulation of shares and estimation of parameters beta and rc_sigma.
+    %   Simulation of shares and estimation of parameters beta and sigma.
    
-    properties
-        rc_sigma % Starting and end value
-    end
     properties (SetAccess = protected, Hidden = true )
         draws % Random draws (nind, nmkt, k) matrix k = # random params. 
         W
@@ -110,16 +107,16 @@ classdef RCDemand < NLDemand
             end
         end
         
-        function der = deltaJacobian(obj, rc_sigma, edelta)
+        function der = deltaJacobian(obj, sigma, edelta)
             der = zeros(size(obj.x2));
             for t = 1:max(obj.marketid)
                 index = obj.marketid == t;
-                der(index, :) = obj.period{t}.deltaJacobian(rc_sigma, edelta);
+                der(index, :) = obj.period{t}.deltaJacobian(sigma, edelta);
             end
         end
         
 %% Estimation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
-        function rc_sigma = minimize(obj, varargin)
+        function sigma = minimize(obj, varargin)
         %        extraoptions = {'OutputFcn', @iterOutput}; % Show output func
 % 'DerivativeCheck', 'on', ...
 %             obj.config.historyx = [];
@@ -129,10 +126,10 @@ classdef RCDemand < NLDemand
             else
                 extraoptions = {};
             end
-            if isempty(obj.rc_sigma)
-                error('rc_sigma is not set, probably because init has not been invoked');
+            if isempty(obj.sigma)
+                error('sigma is not set, probably because init has not been invoked');
             end
-            obj.oldsigma = zeros(size(obj.rc_sigma));
+            obj.oldsigma = zeros(size(obj.sigma));
                 options = optimoptions(@fminunc, ...
                     'MaxIter',obj.settings.maxiter, ... 
                     'TolX', obj.config.tolerance, 'TolFun', obj.config.tolerance, ...
@@ -143,9 +140,9 @@ classdef RCDemand < NLDemand
             finished = false;
             func = @(x)obj.objective(x);
             while ~finished && i <= obj.config.restartMaxIterations 
-                [rc_sigma,fval,exitflag] = fminunc(func, obj.rc_sigma, options);
+                [sigma,fval,exitflag] = fminunc(func, obj.sigma, options);
                 if obj.settings.optimalIV && fval > obj.config.restartFval || exitflag <= 0
-                    obj.get_rc_sigma();
+                    obj.get_sigma();
                     if exitflag <= 0
                         disp('Restarting as minimization did not converge.');
                     else
@@ -161,9 +158,9 @@ classdef RCDemand < NLDemand
             obj.results.other.minimum = finished;
         end
         
-        function [f, g] = objective(obj, rc_sigma)
+        function [f, g] = objective(obj, sigma)
             %This function defines the objective over which to minimize
-            obj.edelta =  obj.findDelta(rc_sigma);
+            obj.edelta =  obj.findDelta(sigma);
             del = log(obj.edelta);
             
             if max(isnan(del)) == 1
@@ -176,7 +173,7 @@ classdef RCDemand < NLDemand
                 if ~isempty(obj.Z)
                     f = xi' * obj.ZWZ * xi;
                     if nargout > 1
-                        obj.deltaJac = obj.deltaJacobian(rc_sigma, obj.edelta);
+                        obj.deltaJac = obj.deltaJacobian(sigma, obj.edelta);
                         g = 2* obj.deltaJac'* obj.ZWZ * xi;
                     end
                 else
@@ -184,7 +181,7 @@ classdef RCDemand < NLDemand
 %                     f = xiX * xiX';
                     f = xi' * xi;
                     if nargout > 1
-                         obj.deltaJac = obj.deltaJacobian(rc_sigma, obj.edelta);
+                         obj.deltaJac = obj.deltaJacobian(sigma, obj.edelta);
 %                         g = 2*obj.deltaJac'* obj.X * xiX';
                         g = 2*obj.deltaJac' * xi;
                     end
@@ -206,12 +203,12 @@ classdef RCDemand < NLDemand
         
         function R = estimation_step(obj, optIV, varargin)
             obj.initEstimation(optIV);
-            obj.rc_sigma = obj.minimize([{'Display','iter-detailed'}, varargin]);
+            obj.sigma = obj.minimize([{'Display','iter-detailed'}, varargin]);
             delta = log(obj.edelta);
             if isnan(delta)
                 error('delta is NaN');
             end
-            obj.rc_sigma = abs(obj.rc_sigma); % Works for symmetric or positive dist
+            obj.sigma = abs(obj.sigma); % Works for symmetric or positive dist
             [obj.beta, xi] = obj.lpart(delta);
             
             if strcmpi(obj.settings.paneltype, 'fe')
@@ -225,7 +222,7 @@ classdef RCDemand < NLDemand
             end            
             
             obj.alpha = - obj.beta(strcmp(obj.getPriceName(), obj.vars));
-            coef = [obj.beta; obj.rc_sigma];  % vector of all parameters
+            coef = [obj.beta; obj.sigma];  % vector of all parameters
             varsel = [1:length(obj.vars ), ...
                 (length(coef)-length(obj.vars2)+1):length(coef)];
             varcovar = obj.computeVariance();
@@ -240,12 +237,12 @@ classdef RCDemand < NLDemand
             varcovar.Properties.VariableNames = variables;
             varcovar.Properties.RowNames = variables;
             obj.results.params.varcovar = varcovar;
-            obj.results.params.rc_sigma = obj.rc_sigma;
+            obj.results.params.sigma = obj.sigma;
             R = obj.results.estimate;
         end
         
         function varcovar = computeVariance(obj)
-            derdel = obj.deltaJacobian(obj.rc_sigma, obj.edelta);
+            derdel = obj.deltaJacobian(obj.sigma, obj.edelta);
             if strcmpi(obj.settings.paneltype, 'fe')
                 dgf = (size(obj.X,1) - size(obj.X,2)) - max(obj.panelid);
             else
@@ -302,16 +299,16 @@ classdef RCDemand < NLDemand
             if isempty(obj.nonlinparams)
                 error('Some variable has to be specified as nonlinear');
             end
-            if isempty(obj.rc_sigma)
-                obj.get_rc_sigma();
+            if isempty(obj.sigma)
+                obj.get_sigma();
             end
-            if size(obj.rc_sigma, 2) > 1
-                obj.rc_sigma = obj.rc_sigma';
+            if size(obj.sigma, 2) > 1
+                obj.sigma = obj.sigma';
             end
-            if length(obj.nonlinparams) ~= length(obj.rc_sigma)
-                error('rc_sigma and nonlinear have different dimensions');
+            if length(obj.nonlinparams) ~= length(obj.sigma)
+                error('sigma and nonlinear have different dimensions');
             end
-            obj.results.rc_sigma0 = obj.rc_sigma;
+            obj.results.sigma0 = obj.sigma;
             obj.vars2 = ...
                 cellfun(@(x) {sprintf('rc_%s', x)}, obj.nonlinparams );
             obj.x2 = obj.data{:, obj.nonlinparams };
@@ -327,11 +324,11 @@ classdef RCDemand < NLDemand
             obj.initPeriods();
         end
         
-        function get_rc_sigma(obj)
+        function get_sigma(obj)
             if isempty(obj.config.randstream)
-                obj.rc_sigma = randn(length(obj.nonlinparams),1);
+                obj.sigma = randn(length(obj.nonlinparams),1);
             else
-                obj.rc_sigma = obj.config.randstream.randn(length(obj.nonlinparams),1);
+                obj.sigma = obj.config.randstream.randn(length(obj.nonlinparams),1);
             end
         end
         
@@ -415,7 +412,7 @@ classdef RCDemand < NLDemand
             obj.sim.market = market; % HACK to get market based routines to work
             if isempty(obj.d)
                 % Create starting values for findDelta
-                obj.edelta = obj.findDelta(obj.rc_sigma);
+                obj.edelta = obj.findDelta(obj.sigma);
                 obj.d = log(obj.edelta) + obj.alpha*obj.X(:, 1);
                 for t = 1:max(obj.marketid)
                     obj.period{t}.d = obj.d(obj.dummarket(:, t));
@@ -430,7 +427,7 @@ classdef RCDemand < NLDemand
             demand.config = obj.config;
             demand.results = obj.results;
             demand.beta = obj.beta;
-            demand.rc_sigma = obj.rc_sigma;
+            demand.sigma = obj.sigma;
         end
         
         function obj = RCDemand(varargin)
@@ -469,7 +466,7 @@ classdef RCDemand < NLDemand
 
 %% Basic %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
     methods % (Access = private)
-        function newedelta = findDelta(obj, rc_sigma)
+        function newedelta = findDelta(obj, sigma)
             if isempty(obj.edelta)
                 % Create starting values for findDelta
                 if isempty(obj.share.s)
@@ -480,7 +477,7 @@ classdef RCDemand < NLDemand
                     obj.edelta = obj.share.s ./ obj.share.s0;
                 end
             end
-            if max(abs(rc_sigma - obj.oldsigma)) < 0.01
+            if max(abs(sigma - obj.oldsigma)) < 0.01
                 tolerance = obj.settings.fptolerance2;
                 closeFlag = 0;
             else
@@ -490,7 +487,7 @@ classdef RCDemand < NLDemand
             
             if obj.config.guessdelta && ~isempty(obj.deltaJac)
                 newdelta = log(obj.edelta) + ...
-                    obj.deltaJac*(rc_sigma - obj.oldsigma); 
+                    obj.deltaJac*(sigma - obj.oldsigma); 
                 edelta = exp(newdelta);
             else
                 edelta =  obj.edelta;
@@ -499,13 +496,13 @@ classdef RCDemand < NLDemand
             sel = logical(obj.dummarket);
             newedelta = zeros(size(edelta));
             for t = 1:max(obj.marketid)
-                newedelta(sel(:,t)) = obj.period{t}.findDelta(rc_sigma, ...
+                newedelta(sel(:,t)) = obj.period{t}.findDelta(sigma, ...
                     edelta(sel(:,t)), tolerance);
             end
             % Update oldsigma and edelta only in first stage and if
             % successful
             if closeFlag == 1 && max(isnan(newedelta)) < 1;
-                obj.oldsigma = rc_sigma;
+                obj.oldsigma = sigma;
             end
         end       
         
@@ -542,7 +539,7 @@ classdef RCDemand < NLDemand
                 % FE to give the same result as LSDV
                 pHat = obj.Zorig*((obj.Zorig'*obj.Zorig)\obj.Zorig'*obj.Xorig(:, 1));
                 deltaHat = [pHat, obj.Xorig(:, 2:end)] * obj.beta;
-                optInstr = obj.deltaJacobian(obj.rc_sigma, exp(deltaHat));
+                optInstr = obj.deltaJacobian(obj.sigma, exp(deltaHat));
                 if strcmpi(obj.settings.paneltype, 'fe')
                     da = [];
                     for i = 1:size(optInstr ,2)

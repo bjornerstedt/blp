@@ -80,17 +80,17 @@ classdef SimMarket < matlab.mixin.Copyable
         
         function results = estimate(obj)
             result = obj.estDemand.estimate();
-            if isa(obj.demand, 'NLDemand')
+            if isa(obj.demand, 'RCDemand')
+                beta = [-obj.demand.alpha; obj.model.beta'];
+            else
                 beta = [-obj.demand.alpha; reshape(obj.demand.sigma, [], 1);...
                     obj.model.beta'];
-            else
-                beta = [-obj.demand.alpha; obj.model.beta'];
             end
             if strcmpi(obj.estDemand.settings.paneltype, 'fe')
                 beta = beta(1:end-1);
             end
             if isa(obj.demand, 'RCDemand')
-                truevals = table([beta; obj.demand.rc_sigma]);
+                truevals = table([beta; obj.demand.sigma]);
                 truevals.Properties.VariableNames = {'Theta'};
             else
                 truevals = table(beta);
@@ -118,7 +118,7 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.simDemand = copy(obj.demand);
             obj.estDemand = copy(obj.demand);
             if isa(obj.demand, 'RCDemand')
-                obj.estDemand.rc_sigma = [];
+                obj.estDemand.sigma = [];
             end
             obj.model.beta = reshape(obj.model.beta, 1, length(obj.model.beta));
             

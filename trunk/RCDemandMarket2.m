@@ -17,7 +17,7 @@ classdef RCDemandMarket2  < matlab.mixin.Copyable
         d
         nonlinprice
         alpha
-        rc_sigma
+        sigma
     end
     
     properties
@@ -31,13 +31,13 @@ classdef RCDemandMarket2  < matlab.mixin.Copyable
     end
     
     methods 
-        function [jac, hess] = deltaDerivatives(obj, delta, rc_sigma)
+        function [jac, hess] = deltaDerivatives(obj, delta, sigma)
             % Calculates both delta Jacobian and Hessian in BLP
             % Note that matrix inversion is used rather than solving, due to
             % involvement of array mult. As the number of layers is theta, it would be
             % best not to solve.
-            [si, dsdd, dsdr] = obj.shareJacobians(delta, rc_sigma);
-            [d2sdd2,d2sdr2,d2sddr,d2sdrd] = obj.shareHessians(obj.vx, delta, rc_sigma);
+            [si, dsdd, dsdr] = obj.shareJacobians(delta, sigma);
+            [d2sdd2,d2sdr2,d2sddr,d2sdrd] = obj.shareHessians(obj.vx, delta, sigma);
             
             jac = -dsdd\dsdr;
             invdsdd = -inv(dsdd);
@@ -50,31 +50,31 @@ classdef RCDemandMarket2  < matlab.mixin.Copyable
         % Combine vec with inverse share Jacobian.
         % Then multiply with other derivative array to get part of objective
         % Hessian
-        function [jac, hess] = objectiveHessian(obj, delta, rc_sigma, vec)
+        function [jac, hess] = objectiveHessian(obj, delta, sigma, vec)
             % Create objective vector Xi
-            [~, dsdd, dsdr] = obj.shareJacobians(delta, rc_sigma);
+            [~, dsdd, dsdr] = obj.shareJacobians(delta, sigma);
             Xi = dsdd\vec;
             jac = -dsdd\dsdr;
-            [d2sdd2,d2sdr2,d2sddr,d2sdrd] = obj.shareHessians(obj.vx, delta, rc_sigma);
+            [d2sdd2,d2sdr2,d2sddr,d2sdrd] = obj.shareHessians(obj.vx, delta, sigma);
             analder = obj.arrayMult(obj.arrayMult(d2sdd2, jac, 2), jac) + ...
                 obj.arrayMult(d2sdrd, jac,2) + ...
                 obj.arrayMult(d2sddr, jac) + d2sdr2;
             hess = obj.arrayMult(Xi', analder);            
         end
                 
-        function [si, dsdelta, dssigma] = shareJacobians(obj, delta, rc_sigma)
+        function [si, dsdelta, dssigma] = shareJacobians(obj, delta, sigma)
             % sharecalc can be used instead if nlpart has been invoked
-            [~, si] = obj.getShares(delta, rc_sigma);
+            [~, si] = obj.getShares(delta, sigma);
             wsi = si ./ size(si,2); 
-            dssigma = zeros(size(si, 1), length(rc_sigma));
-            for k = 1:length(rc_sigma)
+            dssigma = zeros(size(si, 1), length(sigma));
+            for k = 1:length(sigma)
                 svx = wsi .* obj.vx(:,:,k); % Can be done outside loop
                 dssigma(:, k) = sum(svx, 2) - si * sum(svx)';
             end
             dsdelta = diag(sum(wsi, 2)) - wsi*si';
         end
 
-        function [hd, hr, hdr, hrd] = shareHessians(obj, vx, delta, rc_sigma)
+        function [hd, hr, hdr, hrd] = shareHessians(obj, vx, delta, sigma)
             % Calculates the share Hessian arrays as function of delta,
             % arrays of dimensions: MxMxM, MxKxM,MxMxK and MxKxK where
             % M is the number of products in S and K the number of of random coefs.
@@ -82,7 +82,7 @@ classdef RCDemandMarket2  < matlab.mixin.Copyable
             % Can thus benefit from C++ calculation. Using symmetry in the outer
             % product also reduces the number of multiplication to a half in 2d and
             % more in 3d.
-            [~, si] = obj.getShares(delta, rc_sigma);
+            [~, si] = obj.getShares(delta, sigma);
             M = size(si, 1);
             V = permute(vx, [1,3,2]);
             
@@ -185,7 +185,7 @@ classdef RCDemandMarket2  < matlab.mixin.Copyable
             obj.config = demand.config.getProperties();
             obj.nind = demand.settings.nind;
             obj.alpha = demand.alpha;
-            obj.rc_sigma = demand.rc_sigma;
+            obj.sigma = demand.sigma;
             obj.config.ces = demand.settings.ces;
             obj.config.compiled = true;
             obj.iweight = demand.iweight;
@@ -221,7 +221,7 @@ classdef RCDemandMarket2  < matlab.mixin.Copyable
             end
             [S, si] = obj.shares(P);
             if any(obj.nonlinprice) 
-                theta_p = obj.rc_sigma(obj.nonlinprice);
+                theta_p = obj.sigma(obj.nonlinprice);
                 % obj.sim.v is the same for all products
                 dUi = obj.iweight .* (- obj.alpha + ...
                     theta_p * obj.v(1,:,obj.nonlinprice))';
@@ -244,10 +244,10 @@ classdef RCDemandMarket2  < matlab.mixin.Copyable
             for k = 1:size(obj.x2, 2)
                 obj.vx(:,:,k) = bsxfun(@times, obj.x2(:,k), obj.v(k,:));
             end
-            obj.nlpart(obj.rc_sigma);
+            obj.nlpart(obj.sigma);
         end
         
-        function der = deltaJacobian(obj, rc_sigma, edelta)
+        function der = deltaJacobian(obj, sigma, edelta)
             % Note thate here deltaJacobian takes care of selection
             if obj.config.compiled
                 [s, si] = shareCalcCpp(obj.expmu, obj.iweight, edelta(obj.selection));
@@ -255,8 +255,8 @@ classdef RCDemandMarket2  < matlab.mixin.Copyable
                 [~, si] = obj.sharecalc(edelta(obj.selection));
             end
             wsi =  bsxfun(@times, si , obj.iweight'); % Row means
-            dssigma = zeros(size(si, 1), length(rc_sigma));
-            for k = 1:length(rc_sigma)
+            dssigma = zeros(size(si, 1), length(sigma));
+            for k = 1:length(sigma)
                 svx = wsi .* obj.vx(:,:,k); % Can be done outside loop
                 dssigma(:, k) = sum(svx, 2) - si * sum(svx)';
             end
@@ -265,8 +265,8 @@ classdef RCDemandMarket2  < matlab.mixin.Copyable
             der = -dsdelta\dssigma;
         end
         
-        function [sh, indsh] = getShares(obj, delta, rc_sigma)
-            nlpart(obj, rc_sigma); 
+        function [sh, indsh] = getShares(obj, delta, sigma)
+            nlpart(obj, sigma); 
             eg = bsxfun(@times, exp(delta), obj.expmu );
             denom = 1 ./ ( 1 + sum(eg));
             indsh = bsxfun(@times, eg , denom);
@@ -280,17 +280,17 @@ classdef RCDemandMarket2  < matlab.mixin.Copyable
             sh = indsh * obj.iweight; % Row means
         end
         
-        function nlpart(obj, rc_sigma)
+        function nlpart(obj, sigma)
             [n,m,K] = size(obj.vx);
             mu = zeros(n, m);
             for k = 1:K
-                mu = mu + obj.vx(:,:,k) * rc_sigma(k);
+                mu = mu + obj.vx(:,:,k) * sigma(k);
             end
             obj.expmu = exp(mu);
         end
         
-        function edelta = findDelta(obj, rc_sigma, edelta, tolerance)
-            obj.nlpart( rc_sigma );
+        function edelta = findDelta(obj, sigma, edelta, tolerance)
+            obj.nlpart( sigma );
             if obj.config.compiled
                 edelta = findDeltaCpp(obj.s, obj.expmu, obj.iweight, edelta);
 %                 , tolerance, obj.config.fpmaxit);

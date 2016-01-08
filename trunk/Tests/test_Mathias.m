@@ -34,8 +34,8 @@ if test == 1 || allTests
 dtest = copy(demand);
 
 dtest.var.nonlinear = 'paracetamol';  % prices added if nonlinearPrice.
-dtest.rc_sigma = [ -0.7648];      % Initial guess with wrong result  
-dtest.rc_sigma = [ 5];      % Gives initial guess for sigma's  
+dtest.sigma = [ -0.7648];      % Initial guess with wrong result  
+dtest.sigma = [ 5];      % Gives initial guess for sigma's  
 dtest.init();
 
 results = dtest.estimate();
@@ -70,7 +70,7 @@ if test == 2 || allTests
 dtest = copy(demand);
 
 dtest.var.nonlinear = 'constant';  % prices added if nonlinearPrice.
-%dtest.rc_sigma = [ 5;.1];      % Gives initial guess for sigma's  
+%dtest.sigma = [ 5;.1];      % Gives initial guess for sigma's  
 dtest.init();
 
 results = dtest.estimate();
@@ -89,7 +89,7 @@ if test == 3 || allTests
 dtest = copy(demand);
 
 dtest.var.nonlinear = 'packsize';  % prices added if nonlinearPrice.
-dtest.rc_sigma = [ .1];      % Gives initial guess for sigma's  
+dtest.sigma = [ .1];      % Gives initial guess for sigma's  
 dtest.init();
 
 results = dtest.estimate();
@@ -104,7 +104,7 @@ if test == 4 || allTests
 dtest = copy(demand);
 
 dtest.var.nonlinear = 'paracetamol packsize';  % prices added if nonlinearPrice.
-dtest.rc_sigma = [ 5;.1];      % Gives initial guess for sigma's  
+dtest.sigma = [ 5;.1];      % Gives initial guess for sigma's  
 dtest.init();
 
 results = dtest.estimate();
@@ -120,7 +120,7 @@ if test == 5 || allTests
 dtest = copy(demand);
 
 dtest.var.nonlinear = 'paracetamol Ptablets';  % prices added if nonlinearPrice.
-dtest.rc_sigma = [ .1;5];      % Gives initial guess for sigma's  
+dtest.sigma = [ .1;5];      % Gives initial guess for sigma's  
 %dtest.exponentialFPiteration = true;
 dtest.init();
 results = dtest.estimate();

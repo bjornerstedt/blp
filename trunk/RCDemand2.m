@@ -4,9 +4,9 @@ classdef RCDemand2 < RCDemand
     end
     
     methods
-        function [f, g, h] = objective(obj, rc_sigma)
+        function [f, g, h] = objective(obj, sigma)
             %This function defines the objective over which to minimize
-            obj.edelta =  obj.findDelta(rc_sigma);
+            obj.edelta =  obj.findDelta(sigma);
             del = log(obj.edelta);
             
             if max(isnan(del)) == 1
@@ -19,35 +19,35 @@ classdef RCDemand2 < RCDemand
                 if ~isempty(obj.Z)
                     f = xi' * obj.ZWZ * xi;
                     if nargout == 2
-                        obj.deltaJac = obj.deltaJacobian(rc_sigma, obj.edelta);
+                        obj.deltaJac = obj.deltaJacobian(sigma, obj.edelta);
                         g = 2* obj.deltaJac'* obj.ZWZ * xi;
                     elseif nargout == 3
-                        [g, h] = obj.objectiveHessian(xi, del, rc_sigma);
+                        [g, h] = obj.objectiveHessian(xi, del, sigma);
                     end
                 else
                     if false
                     f = xi' * xi;
                     if nargout == 2
-                        obj.deltaJac = obj.deltaJacobian(rc_sigma, obj.edelta);
+                        obj.deltaJac = obj.deltaJacobian(sigma, obj.edelta);
                         g = 2*obj.deltaJac' * xi;
                     elseif nargout == 3
-                        [g, h] = obj.objectiveHessian(xi, del, rc_sigma);
+                        [g, h] = obj.objectiveHessian(xi, del, sigma);
                     end
                     else
                     xiX =  xi' * obj.X;
                     f = xiX * xiX';
                     if nargout == 2
-                        obj.deltaJac = obj.deltaJacobian(rc_sigma, obj.edelta);
+                        obj.deltaJac = obj.deltaJacobian(sigma, obj.edelta);
                         g = 2*obj.deltaJac'* obj.X * xiX';
                     elseif nargout == 3
-                        [g, h] = obj.objectiveHessian(xi, del, rc_sigma);
+                        [g, h] = obj.objectiveHessian(xi, del, sigma);
                     end
                     end
                 end
             end
         end
  
-        function [j, h] = objectiveHessian(obj, xi, delta, rc_sigma)
+        function [j, h] = objectiveHessian(obj, xi, delta, sigma)
             % Create vector expression from Hessian
             % $-2ZWZ^{T}\xi(\theta)$
             if ~isempty(obj.Z)
@@ -55,11 +55,11 @@ classdef RCDemand2 < RCDemand
             else
                 hessVector = 2 * xi;
             end
-            hess = zeros(length(rc_sigma),length(rc_sigma));
+            hess = zeros(length(sigma),length(sigma));
             jac = zeros(size(delta));
-            j2 = zeros(size(rc_sigma));
+            j2 = zeros(size(sigma));
             for t = 1:max(obj.marketid)
-                [jp, hp] = obj.period{t}.objectiveHessian( delta(obj.dummarket(:,t)), rc_sigma, ...
+                [jp, hp] = obj.period{t}.objectiveHessian( delta(obj.dummarket(:,t)), sigma, ...
                     hessVector(obj.dummarket(:,t)) );
                 hess = hess + hp;
                 jac(obj.dummarket(:,t)) = jp; 
@@ -73,7 +73,7 @@ classdef RCDemand2 < RCDemand
             end
         end
  
-        function rc_sigma = minimize(obj, varargin)
+        function sigma = minimize(obj, varargin)
             %        extraoptions = {'OutputFcn', @iterOutput}; % Show output func
             if nargin > 1
                 extraoptions = varargin{1};
@@ -83,10 +83,10 @@ classdef RCDemand2 < RCDemand
             if obj.config.hessian
                 extraoptions = [extraoptions, {'Hessian', 'on'}];
             end
-            if isempty(obj.rc_sigma)
-                error('rc_sigma is not set, probably because init has not been invoked');
+            if isempty(obj.sigma)
+                error('sigma is not set, probably because init has not been invoked');
             end
-            obj.oldsigma = zeros(size(obj.rc_sigma));
+            obj.oldsigma = zeros(size(obj.sigma));
             options = optimoptions(@fminunc, ...
                 'MaxIter', obj.settings.maxiter, ...
                 'TolX', obj.config.tolerance, 'TolFun', obj.config.tolerance, ...
@@ -94,7 +94,7 @@ classdef RCDemand2 < RCDemand
                 'GradObj','on', ...
                 extraoptions{:});
             func = @(x)obj.objective(x);
-            [rc_sigma,fval,exitflag,output,grad,hessian] = fminunc(func, obj.rc_sigma, options);
+            [sigma,fval,exitflag,output,grad,hessian] = fminunc(func, obj.sigma, options);
         end
         
         function obj = RCDemand2(varargin)
@@ -132,7 +132,7 @@ classdef RCDemand2 < RCDemand
             end
         end
         
-        function newedelta = findDelta(obj, rc_sigma)
+        function newedelta = findDelta(obj, sigma)
             if isempty(obj.edelta)
                 % Create starting values for findDelta
                 if isempty(obj.share.s)
@@ -143,7 +143,7 @@ classdef RCDemand2 < RCDemand
                     obj.edelta = obj.share.s ./ obj.share.s0;
                 end
             end
-            if max(abs(rc_sigma - obj.oldsigma)) < 0.01
+            if max(abs(sigma - obj.oldsigma)) < 0.01
                 tolerance = obj.settings.fptolerance2;
                 closeFlag = 0;
             else
@@ -153,7 +153,7 @@ classdef RCDemand2 < RCDemand
             
             if obj.config.guessdelta && ~isempty(obj.deltaJac)
                 newdelta = log(obj.edelta) + ...
-                    obj.deltaJac*(rc_sigma - obj.oldsigma); 
+                    obj.deltaJac*(sigma - obj.oldsigma); 
                 edelta = exp(newdelta);
             else
                 edelta =  obj.edelta;
@@ -162,13 +162,13 @@ classdef RCDemand2 < RCDemand
             sel = logical(obj.dummarket);
             newedelta = zeros(size(edelta));
             for t = 1:max(obj.marketid)
-                newedelta(sel(:,t)) = obj.period{t}.findDelta(rc_sigma, ...
+                newedelta(sel(:,t)) = obj.period{t}.findDelta(sigma, ...
                     edelta(sel(:,t)), tolerance);
             end
             % Update oldsigma and edelta only in first stage and if
             % successful
             if closeFlag == 1 && max(isnan(newedelta)) < 1;
-                obj.oldsigma = rc_sigma;
+                obj.oldsigma = sigma;
             end
         end       
     end

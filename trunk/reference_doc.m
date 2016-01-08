@@ -130,7 +130,7 @@ demand.var
 %%
 % RCDemand with properties:
 % 
-%    rc_sigma: The calibrated or estimated nonlinear parameters
+%    sigma: The calibrated or estimated nonlinear parameters
 %        
 %% 
 % Settings

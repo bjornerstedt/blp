@@ -249,7 +249,7 @@ results = m1.estimate()
 
 demand = RCDemand();
 demand.alpha = 1;
-demand.rc_sigma = 1;
+demand.sigma = 1;
 demand.var.nonlinear = 'x';
 
 %% 

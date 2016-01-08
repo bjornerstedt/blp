@@ -72,14 +72,14 @@ display '**********************  Test 3  *************************'
 m = SimMarket();
 m.demand = RCDemand;
 m.demand.alpha = 1;
-m.demand.rc_sigma = 1;
+m.demand.sigma = 1;
 m.demand.var.nonlinear = 'constant';
 sresults = m.create();
 display(m.model)
 
 results = m.estimate()
 % Check that estimate different than initial guess:
-assert(abs(m.estDemand.results.rc_sigma0 - m.estDemand.rc_sigma) > 0.5)
+assert(abs(m.estDemand.results.sigma0 - m.estDemand.sigma) > 0.5)
 
 testtrue(results{'p','Coef'} , results{'p', 'Theta'}, 1e-2 )
 
@@ -92,7 +92,7 @@ display '**********************  Test 4  *************************'
 m = SimMarket();
 m.demand = RCDemand;
 m.demand.alpha = 1;
-m.demand.rc_sigma = 1;
+m.demand.sigma = 1;
 m.demand.var.nonlinear = 'x';
 sresults = m.create();
 display(m.model)
@@ -102,7 +102,7 @@ testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p'
 correctVals = [0.028966904126857,4.961760272683717,-1.001534413344814,0.005151635757488];
 testSameResults(testVals, correctVals, 4);
 
-%testtrue(results{'rc_x','Coef'} , m.demand.rc_sigma, 1e-1 )
+%testtrue(results{'rc_x','Coef'} , m.demand.sigma, 1e-1 )
 
 %% Test 5: CES RCDemand
 display '**********************  Test 5  *************************'
@@ -112,7 +112,7 @@ m.demand.settings.ces = true;
 %         m.estDemand.settings.robust = 'false';
 m.model.endog = false;
 m.demand.alpha = 4;
-m.demand.rc_sigma = 1;
+m.demand.sigma = 1;
 m.model.beta = [ 1; 4];
 m.model.markets = 200;
 m.model.randproducts = false;
@@ -135,7 +135,7 @@ m = SimMarket();
 m.demand = RCDemand;
 m.demand.var.nonlinear = 'x';
 m.demand.alpha = 1;
-m.demand.rc_sigma = 1;
+m.demand.sigma = 1;
 m.demand.settings.optimalIV = true;
 
 m.model.endog = true;
@@ -165,7 +165,7 @@ for d = 1:2
         else
             m.demand = RCDemand;
             m.demand.var.nonlinear = 'constant';
-            m.demand.rc_sigma = 1;
+            m.demand.sigma = 1;
         end
         m.model.endog = false;
         m.demand.alpha = 0.2;
@@ -199,7 +199,7 @@ m = SimMarket();
 m.demand = RCDemand;
 m.demand.settings.drawmethod = 'quadrature';
 m.demand.alpha = 1;
-m.demand.rc_sigma = .1;
+m.demand.sigma = .1;
 
 m.demand.settings.paneltype = 'lsdv';
 m.demand.var.nonlinear = 'p';
@@ -227,7 +227,7 @@ m = SimMarket();
 m.demand = RCDemand;
 m.demand.var.nonlinear = 'p constant';
 m.demand.alpha = 1;
-m.demand.rc_sigma = [0.1; 1];
+m.demand.sigma = [0.1; 1];
 
 m.demand.settings.optimalIV = false;
 
