@@ -52,13 +52,15 @@ classdef RCpkTest < matlab.unittest.TestCase
            
            market = Market(demand);
            market.var.firm = 'firm';
+           market.settings.valueShares = false;
+           market.settings.weightedAverages = false;
            market.findCosts(selection);
            
            market2 = copy(market);
            market2.firm(market2.firm == 'AstraZeneca' ) = 'GSK';
            market2.p0 = market.p;
            market2.equilibrium(selection);
-           result = market.compare(market2.p);
+           result = market.compare(market2);
            result
        end
    end

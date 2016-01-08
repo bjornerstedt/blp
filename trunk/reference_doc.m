@@ -1,4 +1,6 @@
-%% SimMarket Reference
+%% SimMarket 0.2 Reference 
+% This is a preliminary version that includes output of structures for
+% comparisons.
 
 %% Estimate class
 % SimMarket demand and market classes all inherit the linear estimation 
@@ -78,7 +80,7 @@ est.results.settings
 
 
 %%
-% Methods
+% *Methods*
 %
 % Estimation is done with the |estimate()| method. The mehod used depends
 % on the type of object that estimation is performed on. In the |Estimate|
@@ -99,7 +101,7 @@ demand.var
 %      sigma: A vector with sigmas
 %          d: A vector with utility shifters, used in Monte Carlo estimation
 % 
-%  Additional variables are specified in demand.var:
+% Additional variables are specified in demand.var:
 % 
 %         price: Variable name of price variable
 %         nests: Name(s) of nesting variables
@@ -114,7 +116,7 @@ demand.var
 demand.settings
 
 %% 
-% Methods
+% *Methods*
 %
 % The method |NestedLogitDemand.estimate()| performs a linear panel
 % estimate based on the settings.
@@ -162,7 +164,7 @@ demand.settings
 demand.config
 
 %% 
-% Methods
+% *Methods*
 %
 % The method |MixedLogitDemand.estimate()| performs a BLP
 % estimate based on the settings specified in the demand object.
@@ -206,7 +208,7 @@ market.demand = demand;
 market.settings
 
 %% 
-% Methods
+% *Methods*
 %
 % |Market.findCosts()| calculates costs based on a demand specification
 % Prices and quantities used are copied from the demand specification
@@ -228,7 +230,13 @@ methods(Market)
 % |Market.settings.weightedAverages| and |Market.settings.valueShares|.
 % One can also summarise a selection in a logical vector by invoking:
 %
-%   m1.summarise('selection', vec);
+%   m1.summary('selection', vec);
+% 
+% Options to functions in Matlab are specified with argument pairs: an
+% identifying text string and a value. To get averages by product for the
+% same selection, one specifies:
+%
+%   m1.summary('selection', vec, 'GroupingVariables', 'productid'); 
 
 %%
 % The method |Market.compare()| can be used to compare two market equilibria 
@@ -236,45 +244,47 @@ methods(Market)
 % By default weighted average prices, grouped by firm are shown using
 %
 %   compare(m1, m2)
+% 
+% |compare| can take the same options as |summarise|.
 
 %% SimMarket class
 % In addition to the associated demand object it creates a new demand object |m.estDemand|
 % that is used for estimation. 
 %
-%  SimMarket has the following properties:
+% SimMarket has the following properties:
 % 
-%      model: Structure with model settings
-%       data: Data created by SimMarket
-%     demand: Demand model specified by user
-%     market: Market model specified by user
+%  model: Structure with model settings
+%   data: Data created by SimMarket
+% demand: Demand model specified by user
+% market: Market model specified by user
 m = SimMarket()
 
 %% 
-% m.model
-%
-%              endog: 0 - Endogenous prices and quanities true/false
-%       randproducts: 0 - Exogenously random products in market true/false
-%     simulatePrices: 1 - Simulate prices or let them be randomly drawn as
-%                         in Nevo code true/false
-%            markets: 100 - Number of markets generated
-%           products: 5 - (Maximum) number of products in each market.
-%              types: [] - Number of types for each categorical
-%               firm: [] - Vector of ownership for each producty
-%               beta: [1 0] - 
-%                  x: [5 0] - Expected value for p and other demand shifters
-%              x_vcv: [1 1] - Variance, can be specified as a matrix for
-%                             multicollinearity
-%                  c: 4 - Costs
-%              c_vcv: 1
-%              gamma: 0 - Cost shifter parameter
-%      epsilon_sigma: 0.1 - Sd of individual unobservables
-%           sigma_xi: 0.1 - Sd of panel unobservables
-%        endog_sigma: 0.1 - Endogeneity parameter for non simulated prices
-%          prob_prod: 0.8 - Probability that product exists in a market       
+% The market model is specified with the parameters in |SimMarket.model|:
+% 
+%          endog: 0 - Endogenous prices and quanities true/false
+%   randproducts: 0 - Exogenously random products in market true/false
+% simulatePrices: 1 - Simulate prices or let them be randomly drawn as
+%                     in Nevo code true/false
+%        markets: 100 - Number of markets generated
+%       products: 5 - (Maximum) number of products in each market.
+%          types: [] - Number of types for each categorical
+%           firm: [] - Vector of ownership for each producty
+%           beta: [1 0] - 
+%              x: [5 0] - Expected value for p and other demand shifters
+%          x_vcv: [1 1] - Variance, can be specified as a matrix for
+%                         multicollinearity
+%              c: 4 - Costs
+%          c_vcv: 1
+%          gamma: 0 - Cost shifter parameter
+%  epsilon_sigma: 0.1 - Sd of individual unobservables
+%       sigma_xi: 0.1 - Sd of panel unobservables
+%    endog_sigma: 0.1 - Endogeneity parameter for non simulated prices
+%      prob_prod: 0.8 - Probability that product exists in a market       
 m.model
 
 %% 
-% Methods
+% *Methods*
 % 
 % * SimMarket - Create a new simulation object, optionally with demand spec       
 % * create - Creates market - should return dataset.

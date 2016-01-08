@@ -1,4 +1,4 @@
-%% SimMarket Users Manual
+%% SimMarket 0.2 Users Guide
 
 %% Demand estimation
 % Demand is estimated using the |NestedLogitDemand| and

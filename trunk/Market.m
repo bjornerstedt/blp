@@ -328,11 +328,11 @@ classdef Market < Estimate % matlab.mixin.Copyable
             args.addParameter('weights', [], @ischar);
             args.parse(varargin{:});
             if ~strcmpi(args.Results.GroupingVariables, 'Firm')
-                varnames = {args.Results.GroupingVariables, obj.var.market};
-                var = obj.data{:, varnames};
+                varnames = {args.Results.GroupingVariables, 'Marketid'};
+                var = obj.data(:, varnames);
             else
-                varnames = {'Firm', obj.demand.var.market};
-                var = [obj.firm, obj.marketid];
+                varnames = {'Firm', 'Marketid'};
+                var = table(obj.firm, obj.marketid, 'VariableNames', varnames);
             end
             
             %%%%%% Specific code
@@ -343,9 +343,10 @@ classdef Market < Estimate % matlab.mixin.Copyable
             end
             tableCols = {'Costs', 'Price1', 'Price2', 'PriceCh'};
             priceChange = (obj2.p - obj.p ) ./ obj.p;
-            res = array2table([var, obj.c, obj.p,  obj2.p, priceChange]);            
+            res = [var, array2table([ obj.c, obj.p,  obj2.p, priceChange],...
+                'VariableNames', tableCols)];            
 %                 apc = priceChange' * obj.s / sum(obj.s); 
-            res.Properties.VariableNames = [varnames, tableCols];
+ %           res.Properties.VariableNames = [varnames, tableCols];
             %%%%%% End specific code
             
             % weights can be set manually
@@ -356,7 +357,9 @@ classdef Market < Estimate % matlab.mixin.Copyable
             end
             if ~all(selection)
                 res = res(selection, :);
-                weights = weights(selection, :);
+                if ~isempty(weights)
+                    weights = weights(selection, :);
+                end
             end
             x = Estimate.means(res, tableCols, varnames, weights);
             pricetab = Estimate.means(x, tableCols, args.Results.GroupingVariables);

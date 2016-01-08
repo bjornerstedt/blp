@@ -33,6 +33,8 @@ selection = T.year == 1998 & countrynew== 3 ;
 
 market = Market(demand);
 market.var.firm = 'firm';
+market.settings.valueShares = false;
+market.settings.weightedAverages = false;
 
 market.findCosts(selection);
 display Costs:
@@ -45,7 +47,7 @@ market2.equilibrium(selection);
 disp 'Sum new prices:'
 disp(sum(market2.p))
 
-result = market.compare(market2.p);
+result = market.compare(market2);
 
 assert(abs(result{1,'Price2'} - 0.7499176 )<1e-5)
 assert(abs(result{1,'PriceCh'} - 0.00265315  )<1e-5)
