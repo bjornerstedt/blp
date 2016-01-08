@@ -22,6 +22,7 @@ testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p'
 correctVals = [0.022769720687512,4.895422144428684,-1.000390188323463,0.004938388080890];
 
 testSameResults(testVals, correctVals, 1);
+
 %% Test 2: NestedLogitDemand - one nest
 display '**********************  Test 2  *************************'
 m = SimMarket();
@@ -40,6 +41,28 @@ testtrue(results{'p','Coef'} , results{'p', 'Beta'}, 1e-2)
 
 testVals = [results{'p','Coef'}, results{'lsjg','Coef'}, results{'p','Std_err'}];
 correctVals = [-1.995650385534655,0.502068400039377,0.006222691020318];
+
+testSameResults(testVals, correctVals, 2);
+
+%% Test 2b: NestedLogitDemand - two level nests
+display '**********************  Test 2b *************************'
+m = SimMarket();
+m.demand = NestedLogitDemand;
+m.demand.var.nests = 'type1 type2';
+m.demand.alpha = 2;
+m.demand.sigma = [0.6, 0.3];
+m.model.types = [2, 3];
+m.model.products = 9;
+m.create();
+
+display(m.model)
+
+results = m.estimate()
+% Test that result is within 0.1% of true value
+testtrue(results{'p','Coef'} , results{'p', 'Beta'}, 1e-2)
+
+testVals = [results{'p','Coef'}, results{'lsjh','Coef'}, results{'p','Std_err'}];
+correctVals = [-1.995280968011216,0.602548086049320,0.005338793317819];
 
 testSameResults(testVals, correctVals, 2);
 

@@ -4,7 +4,6 @@
 % SimMarket demand and market classes all inherit the linear estimation 
 % functionality of the |Estimate| class. This class can be used for
 % estimation not directly related to demand or market estimation. 
-
 load example_data;
 est = Estimate(dt3);
 
@@ -16,20 +15,7 @@ est = Estimate(dt3);
 %        var: A structure with variable names used in estimation
 %       data: The Matlab table with data useed in estimation. Can be
 %             specified in the constructor as above.
-%
-% In estimating, Estimate creates the following fields
-% 
-%   results: A structure with results (coefficients, standare errors, other statistics) 
-%         y: []
-%         X: []
-%         Z: []
-%      beta: []
-%
-%   panelid: []
-%  marketid: []
-%     Xorig: [x]
-%     Zorig: [x]
-
+%    results: A structure with results (coefficients, standare errors, other statistics) 
 est
 
 %%        
@@ -40,8 +26,7 @@ est
 %          depvar: Dependent variable
 %            exog: List of exogenous variable names, separated by spaces
 %           endog: List of endogenous variable
-%     instruments: List of instruments
-    
+%     instruments: List of instruments   
 est.var
 
 %%
@@ -51,23 +36,46 @@ est.var
 %          paneltype: 'none' - panel estimate: 'fe'/'lsdv'/'none'
 %             nocons: 0 Do not include constant in estimation true/false
 %     estimateMethod: 'ols'/'2sls'/'gmm'
-%
-% est.results
-%
-
-%     estimateDescription: 'Linear Estimate'
-%                   other: [x]
-%                  params: [1x1 struct]
-%                estimate: [2x3 table]
-%                     var: [6x2 table]
-%                settings: [5x2 table]
-%                
-%     est.settings.paneltype = 'none';
-%     est.var.exog = 'w';
-%     est.var.depvar = 'c';
-%     est.estimate()
-
 est.settings
+
+%% 
+% The method |Estimate.estimate()| generates a result table as output. It
+% also populates the structure |Estimate.results| with various results
+%
+% estimateDescription: 'Linear Estimate'
+%               other: [x]
+%              params: Structure with the estimate and var-covar matrix
+%            estimate: Estimate table
+%                 var: Table with variable names used
+%            settings: Table with settings
+est.settings.paneltype = 'none';
+est.var.exog = 'w';
+est.var.depvar = 'c';
+est.estimate()
+
+%%
+% The complete variance covariance matrix is obtained in the property
+est.results.params.varcovar
+%%
+% The settings and var structs can also be obtained as tables
+est.results.var
+est.results.settings
+
+%%
+% In estimating, Estimate creates the following properties that can be used in
+% calculations. To generate these properties without estimating, the method
+% |Estimate.init()| is invoked.
+% 
+%         y: []
+%         X: []
+%         Z: []
+%      beta: []
+%
+%   panelid: []
+%  marketid: []
+%     Xorig: [x]
+%     Zorig: [x]
+
 
 %%
 % Methods
@@ -75,14 +83,12 @@ est.settings
 % Estimation is done with the |estimate()| method. The mehod used depends
 % on the type of object that estimation is performed on. In the |Estimate|
 % class, the method can be set to OLS, 2SLS or GMM in settings. 
-
 methods(Estimate)
 
 %% NestedLogitDemand class
 %
 % The demand classes extend |Estimate| to allow estimation of demand
 % systems. 
-
 demand = NestedLogitDemand(dt1)
 demand.var
 
@@ -105,7 +111,6 @@ demand.var
 % Estimate:
 % 
 % * ces: 0 - Use CES logit rather than unit demand true/false
-
 demand.settings
 
 %% 
@@ -113,12 +118,10 @@ demand.settings
 %
 % The method |NestedLogitDemand.estimate()| performs a linear panel
 % estimate based on the settings.
-
 methods(NestedLogitDemand)
 
 %% MixedLogitDemand class
 %
-
 demand = MixedLogitDemand(dt1)
 demand.var
 
@@ -142,7 +145,6 @@ demand.var
 %        quaddraws: 10 - Quadrature accuracy level
 %     fptolerance1: 1.0000e-14
 %     fptolerance2: 1.0000e-14
-
 demand.settings
 
 %%
@@ -157,7 +159,6 @@ demand.settings
 %               guessdelta: 1
 %                  quietly: 1
 %     restartMaxIterations: 1
-
 demand.config
 
 %% 
@@ -165,7 +166,6 @@ demand.config
 %
 % The method |MixedLogitDemand.estimate()| performs a BLP
 % estimate based on the settings specified in the demand object.
-
 methods(MixedLogitDemand)
 
 %% Market class
@@ -182,9 +182,18 @@ methods(MixedLogitDemand)
 % 
 % The |Market| class obtains data and various settings from the associated
 % demand class. List these... It has the settings and var structures allowing estimation of costs. 
-
 market = Market();
 market.var
+
+%%
+% |Market.var.firm| is the only property that has to be set to calculate
+% costs or equilibrium.
+market.var.firm = 'productid';
+%%
+% An estimated or calibrated demand is associated with the marktet either
+% by providing it in the constructor or adding it to the |Market.demand|
+% property:
+market.demand = demand;
 
 %% 
 % The Market class has the following settings, set in Market.settings
@@ -193,22 +202,40 @@ market.var
 %            maxit: 1000 - Maximum number of iterations in calculating equilibrium
 %          conduct: 0 - Conduct parameter in [0,1] interval
 % weightedAverages: 1 - Calculate weighted averages true/false
-%      valueShares: 0 (1 for CES) - Use value shares as weights
-
+%      valueShares: 0 (1 for CES) - Use value shares as weights true/false
 market.settings
 
 %% 
 % Methods
 %
-% Market.findCosts() calculates costs based on a demand specification
+% |Market.findCosts()| calculates costs based on a demand specification
 % Prices and quantities used are copied from the demand specification
 % 
+%   market.findCosts()
+
+%%
 % |Market.equilibrium()| calculates a market equilibrium based on a demand
 % specification, costs, and a specification of ownership and conduct (using
 % |Market.var.firm| and |Market.settings.conduct|. 
-
 methods(Market)
 
+%%
+% To summarise market calculations after calculating costs with |Market.findCosts()|, 
+% |Market.summarise()| can be used. By default weighted averages by firm using market
+% shares as weights are calculated. Market shares by quantity are used by
+% default for unit demand, and market shares by value for CES demand. The
+% type of average can be controlled by setting
+% |Market.settings.weightedAverages| and |Market.settings.valueShares|.
+% One can also summarise a selection in a logical vector by invoking:
+%
+%   m1.summarise('selection', vec);
+
+%%
+% The method |Market.compare()| can be used to compare two market equilibria 
+% m1 and m2. Aggregated prices and percentage price changes from m1 to m2 are shown. 
+% By default weighted average prices, grouped by firm are shown using
+%
+%   compare(m1, m2)
 
 %% SimMarket class
 % In addition to the associated demand object it creates a new demand object |m.estDemand|
@@ -220,7 +247,6 @@ methods(Market)
 %       data: Data created by SimMarket
 %     demand: Demand model specified by user
 %     market: Market model specified by user
-
 m = SimMarket()
 
 %% 
@@ -244,8 +270,7 @@ m = SimMarket()
 %      epsilon_sigma: 0.1 - Sd of individual unobservables
 %           sigma_xi: 0.1 - Sd of panel unobservables
 %        endog_sigma: 0.1 - Endogeneity parameter for non simulated prices
-%          prob_prod: 0.8 - Probability that product exists in a market
-         
+%          prob_prod: 0.8 - Probability that product exists in a market       
 m.model
 
 %% 
@@ -255,6 +280,5 @@ m.model
 % * create - Creates market - should return dataset.
 % * estimate -  Estimate and compare, used in testing framework
 % * findCosts - Calculate costs, used in testing framework
-
 methods(SimMarket)
 

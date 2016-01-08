@@ -81,7 +81,8 @@ classdef SimMarket < matlab.mixin.Copyable
         function results = estimate(obj)
             result = obj.estDemand.estimate();
             if isa(obj.demand, 'NestedLogitDemand')
-                beta = [-obj.demand.alpha; obj.demand.sigma; obj.model.beta'];
+                beta = [-obj.demand.alpha; reshape(obj.demand.sigma, [], 1);...
+                    obj.model.beta'];
             else
                 beta = [-obj.demand.alpha; obj.model.beta'];
             end
@@ -96,6 +97,11 @@ classdef SimMarket < matlab.mixin.Copyable
                 truevals.Properties.VariableNames = {'Beta'};
             end
             results = [truevals, result];
+        end
+        
+        function R = means(obj, cols, index)
+            R = array2table(splitapply(@mean, obj.data{:, cols}, ...
+                obj.data.(index)), 'VariableNames', cols);
         end
         
     end
@@ -128,6 +134,19 @@ classdef SimMarket < matlab.mixin.Copyable
             % createData creates firm, type, and demand and cost shifters.
             % Price is created i
             % Note that demand class is not involved in the creation
+            function nt  = nestTree( types )
+                nt = (1:types(end))';
+                for i = (length(types)-1):-1:1
+                    nt = [ reshape(repmat(1:types(i), size(nt, 1), 1), [], 1), ...
+                        repmat(nt, types(i), 1)];
+                end
+            end
+            function typemat = createTypes(types, products, markets)
+                ntree = nestTree(types);
+                typelist = repmat(ntree, ceil(products / size(ntree,2)), 1);
+                type = repmat(typelist(1:products, :), markets, 1);
+                typemat = array2table(type);
+            end
             obj.data = table();
             n = obj.model.markets * obj.model.products;
             obj.data.marketid = reshape(repmat(1:obj.model.markets, ...
@@ -135,10 +154,8 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.data.productid = repmat((1:obj.model.products)', ...
                 obj.model.markets, 1);
             if ~isempty(obj.model.types)
-                reps = ceil(obj.model.products / obj.model.types);
-                typelist = repmat((1:obj.model.types)', reps, 1);
-                obj.data.type = repmat(typelist(1:obj.model.products), ...
-                    obj.model.markets, 1);
+                obj.data = [obj.data, createTypes(obj.model.types, ...
+                    obj.model.products, obj.model.markets)];
             end
             if ~isempty(obj.model.firm)
                 obj.model.firm = reshape(obj.model.firm, length(obj.model.firm),1);
@@ -251,11 +268,6 @@ classdef SimMarket < matlab.mixin.Copyable
                 end
             end
             obj.estDemand.data = obj.data;
-        end
-        
-        function R = means(obj, cols, index)
-            R = array2table(splitapply(@mean, obj.data{:, cols}, ...
-                obj.data.(index)), 'VariableNames', cols);
         end
         
         function randdraws(obj)
