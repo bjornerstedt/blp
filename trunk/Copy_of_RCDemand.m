@@ -142,7 +142,7 @@ classdef RCDemand < NLDemand
             while ~finished && i <= obj.config.restartMaxIterations 
                 [sigma,fval,exitflag] = fminunc(func, obj.sigma, options);
                 if obj.settings.optimalIV && fval > obj.config.restartFval || exitflag <= 0
-                    obj.get_sigma();
+                    obj.getSigma();
                     if exitflag <= 0
                         disp('Restarting as minimization did not converge.');
                     else
@@ -299,16 +299,7 @@ classdef RCDemand < NLDemand
             if isempty(obj.nonlinparams)
                 error('Some variable has to be specified as nonlinear');
             end
-            if isempty(obj.sigma)
-                obj.get_sigma();
-            end
-            if size(obj.sigma, 2) > 1
-                obj.sigma = obj.sigma';
-            end
-            if length(obj.nonlinparams) ~= length(obj.sigma)
-                error('sigma and nonlinear have different dimensions');
-            end
-            obj.results.sigma0 = obj.sigma;
+            obj.getSigma0();
             obj.vars2 = ...
                 cellfun(@(x) {sprintf('rc_%s', x)}, obj.nonlinparams );
             obj.x2 = obj.data{:, obj.nonlinparams };
@@ -324,13 +315,24 @@ classdef RCDemand < NLDemand
             obj.initPeriods();
         end
         
-        function get_sigma(obj)
-            if isempty(obj.config.randstream)
-                obj.sigma = randn(length(obj.nonlinparams),1);
-            else
-                obj.sigma = obj.config.randstream.randn(length(obj.nonlinparams),1);
+        function getSigma0(obj)
+            if  isfield(obj.results, 'sigma0')
+                return
             end
-        end
+            if isempty(obj.settings.sigma0)
+                if isempty(obj.config.randstream)
+                    obj.results.sigma0 = randn(length(obj.nonlinparams),1);
+                else
+                    obj.results.sigma0 = obj.config.randstream.randn(length(obj.nonlinparams),1);
+                end
+            else
+                obj.results.sigma0 = reshape(obj.settings.sigma0, [], 1);
+                if length(obj.nonlinparams) ~= length(obj.settings.sigma0)
+                    error('sigma and nonlinear have different dimensions');
+                end
+            end
+            obj.sigma = obj.results.sigma0;
+       end
         
         function initPeriods(obj)
             md = RCDemandMarket(obj);
@@ -434,9 +436,9 @@ classdef RCDemand < NLDemand
             obj = obj@NLDemand(varargin{:});
             obj.var.setParameters({'nonlinear','nonlinearlogs','nonlineartriangular'});
             obj.settings.setParameters({'optimalIV','drawmethod',... 
-                'marketdraws','nind','quaddraws','maxiter'});
-            obj.config = SettingsClass({'tolerance','fptolerance1','fptolerance2', ...
-                'restartMaxIterations','restartFval', 'test', 'fpmaxit',...
+                'marketdraws','nind','quaddraws','maxiter', 'sigma0'});
+            obj.config = SettingsClass({'tolerance','fptolerance1','fptolerance2','fpmaxit', ...
+                'restartMaxIterations','restartFval', 'test', ...
                 'randstream','hessian','guessdelta','quietly'});
             
             obj.settings.paneltype = 'lsdv';
@@ -448,10 +450,11 @@ classdef RCDemand < NLDemand
             obj.settings.quaddraws = 10;
             obj.settings.maxiter = 100;
             obj.settings.ces = false;
+            obj.settings.sigma0 = [];
             
-            obj.config.tolerance = 1e-9;
             obj.config.fptolerance1 = 1e-14; % lower tol for first FP its
             obj.config.fptolerance2 = 1e-14; % high tol for last iterations
+            obj.config.tolerance = 1e-9;
             obj.config.fpmaxit = 1000; % maximum iterations in contraction mapping
             obj.config.restartMaxIterations = 1; % Max # of restarts if fval is high
             obj.config.restartFval =  10^3; % Restart optimal IV estimation if fval >.

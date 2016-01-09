@@ -144,10 +144,10 @@ classdef RCDemand2 < RCDemand
                 end
             end
             if max(abs(sigma - obj.oldsigma)) < 0.01
-                tolerance = obj.settings.fptolerance2;
+                tolerance = obj.config.fptolerance2;
                 closeFlag = 0;
             else
-                tolerance = obj.settings.fptolerance1;
+                tolerance = obj.config.fptolerance1;
                 closeFlag = 1;
             end
             

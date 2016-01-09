@@ -37,8 +37,8 @@ classdef RCpkTest < matlab.unittest.TestCase
            demand.settings.paneltype = 'lsdv';
            demand.settings.nind = 300;
            
-           demand.settings.fptolerance1 = 1e-12; % use lower tolerance for first FP iterations
-           demand.settings.fptolerance2 = 1e-12; % use maximum tolerance for last iterations
+           demand.config.fptolerance1 = 1e-12; % use lower tolerance for first FP iterations
+           demand.config.fptolerance2 = 1e-12; % use maximum tolerance for last iterations
            demand.settings.drawmethod = method;
            demand.init();
            demand.estimate();

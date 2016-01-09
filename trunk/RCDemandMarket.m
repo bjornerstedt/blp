@@ -58,10 +58,10 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
             end
             [S, si] = obj.shares(P);
             if any(obj.nonlinprice) 
-                theta_p = obj.sigma(obj.nonlinprice);
+                sigma_p = obj.sigma(obj.nonlinprice);
                 % obj.sim.v is the same for all products
                 dUi = obj.iweight .* (- obj.alpha + ...
-                    theta_p * obj.v(1,:,obj.nonlinprice))';
+                    sigma_p * obj.v(1,:,obj.nonlinprice))';
             else
                 dUi = - obj.alpha*obj.iweight;
             end
@@ -85,6 +85,9 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
         end
         
         function der = deltaJacobian(obj, sigma, edelta)
+            % Note that sigma is an unecessary parameter. The following
+            % line does not affect the estimation outcome.
+            obj.nlpart(sigma);
             [~, si] = obj.sharecalc(edelta(obj.selection));
             wsi =  bsxfun(@times, si , obj.iweight'); % Row means
             dssigma = zeros(size(si, 1), length(sigma));
