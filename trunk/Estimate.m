@@ -5,7 +5,6 @@ classdef Estimate  < matlab.mixin.Copyable
     properties
         data % Data table used by init
         panelid
-        marketid
         results   
         y
         X
@@ -162,7 +161,6 @@ classdef Estimate  < matlab.mixin.Copyable
             end
             newvars = [constant, obj.lsdv, obj.dummyvars];
             if ~isempty(selection)
-%                 obj.marketid = obj.marketid(selection, :);
                 newvars = newvars(selection, :);
                 T = T(selection, :);
                 Torig = obj.data(selection, :);

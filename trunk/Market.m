@@ -8,6 +8,7 @@ classdef Market < Estimate % matlab.mixin.Copyable
         p %prices
         p0 %Initial prices
         c %Costs
+        marketid % Protected?
         demand % Demand class        
     end
     properties (SetAccess = protected, Hidden = true )

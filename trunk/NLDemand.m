@@ -5,6 +5,7 @@ classdef NLDemand < Estimate
         alpha
         sigma
         d % Utility without the price effect 
+        marketid % Protected?
     end
     properties (SetAccess = protected, Hidden = true )
         nestlist
