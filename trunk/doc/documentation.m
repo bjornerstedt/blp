@@ -69,42 +69,41 @@ result = demand.estimate()
 % we use count instruments to identify an endogenous price variable.
 
 load example_data;
-demand = RCDemand(dt2);
+demand2 = RCDemand(dt2);
 
-demand.var.market = 'marketid';
-demand.var.panel = 'productid';
-demand.var.price = 'p';
-demand.var.quantity = 'q';
-demand.var.marketsize = 'constant';
-demand.var.exog = 'x';
-demand.var.instruments = 'nprod nprod2';
+demand2.var.market = 'marketid';
+demand2.var.panel = 'productid';
+demand2.var.price = 'p';
+demand2.var.quantity = 'q';
+demand2.var.marketsize = 'constant';
+demand2.var.exog = 'x';
+demand2.var.instruments = 'nprod nprod2';
 
-demand.var.nonlinear = 'x';
+demand2.var.nonlinear = 'x';
 
 %%
 % To estimate, the |estimate()| method is invoked:
 
-result = demand.estimate()
+result = demand2.estimate()
 
 %%
-% The demand class |RCDemand| has more settings than
+% The demand2 class |RCDemand| has more settings than
 % |NLDemand|
 
-demand.settings
+demand2.settings
 
 %% 
 % We can for example estimate using quadrature, with optimal instruments:
 
-demand.settings.drawmethod = 'quadrature';
-demand.settings.optimalIV = true;
-result = demand.estimate()
+demand2.settings.drawmethod = 'quadrature';
+demand2.settings.optimalIV = true;
+result = demand2.estimate()
 
 %% Market class
 % The market class is used to calculate equilibrium prices and quantities,
 % based on market structure. The equilibrium depends on the estimated
 % parameters of the demand model specified.
 
-demand2 = copy(demand);
 market = Market(demand);
 market.var.firm = 'firm';
 
@@ -117,7 +116,7 @@ market.findCosts();
 averageCosts = mean(market.c)
 market.summary()
 market.summary('selection', dt2.marketid == 1)
-
+return
 %%
 % Having determined costs, one can use the market class (with its
 % associated demand) to study variations in ownership, costs etc. The
@@ -146,7 +145,7 @@ market2 = copy(market);
 market2.firm(market2.firm == 2 ) = 1;
 market2.equilibrium();
 mergerResult2 = compare(market, market2)
-
+return
 %%
 % One can also explicitly restrict 
 % equilibrium calculation to some markets. In this case calculations will

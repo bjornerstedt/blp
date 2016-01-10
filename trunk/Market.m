@@ -312,7 +312,9 @@ classdef Market < Estimate % matlab.mixin.Copyable
             end
             if ~all(selection)
                 res = res(selection, :);
-                weights = weights(selection, :);
+                if ~isempty(weights)
+                    weights = weights(selection, :);
+                end
             end
             x = Estimate.means(res, tableCols, varnames, weights);
             markettab = Estimate.means(x, tableCols, args.Results.GroupingVariables);

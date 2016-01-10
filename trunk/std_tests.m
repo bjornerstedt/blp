@@ -173,7 +173,6 @@ for d = 1:2
         m.model.x = [5,5];
         m.model.markets = 100;
         m.model.randproducts = false;
-        % m.model.products = 5;
         m.model.simulatePrices = false;
         
         m.create();
@@ -217,7 +216,8 @@ results = m.estimate()
 testtrue(results{'p','Coef'} , results{'p', 'Theta'}, 2e-1 )
 
 m.findCosts()
-testtrue( mean(m.data.c) ,  0.9, 1e-1 )
+meanCosts = mean(m.data.c)
+testtrue( meanCosts ,  0.9, 1e-1 )
 
 %% Test 9: Nonlinear price, testing findCosts
 % Succeeds at the 1% level

@@ -73,9 +73,9 @@ classdef SimMarket < matlab.mixin.Copyable
                 obj.market.var.firm = 'firm'; % Firm variable has been created
             end
             obj.market.findCosts();
-            mr = obj.means( {'sh','c',  'p'}, 'productid') ;
+            mr = obj.means( {'q','c',  'p'}, 'productid') ;
             cr = rowfun(@(x,y)(y-x)/y, mr(:,2:3),'OutputVariableNames','Markup');
-            mr = [mr,cr];
+            mr = [mr, cr];
         end
         
         function results = estimate(obj)
@@ -254,7 +254,6 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.market.equilibrium();
             
             obj.data.p = obj.market.p;
-            obj.data.sh = obj.market.s;
             obj.data.q = obj.simDemand.getDemand(obj.data.p);
             
             mr = obj.means({'p', 'q'}, 'productid') ;
