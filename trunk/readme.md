@@ -1,6 +1,6 @@
 # BLP project
 
-SimMerger users manual is found in documentation.m. To run without example_data.mat
+SimMerger user documentation is found in documentation.m. To run without example_data.mat
 run the second half of the document first - the SimMarket simulation part. 
 This generates the dataset used in the first half of the manual
 
