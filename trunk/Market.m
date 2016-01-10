@@ -63,14 +63,11 @@ classdef Market < Estimate % matlab.mixin.Copyable
             obj.panelid = obj.demand.panelid;            
             if ~isempty(selection) 
                 if isempty(obj.demand.selection)  
-                    % Rather ugly code to handle both data creation AND 
+                    % Rather ugly condition to handle both data creation AND
+                    % equilibrium calc
                     if ~isempty(obj.q) 
                         obj.q = obj.q(selection,:);
-                    end
-                    if ~isempty(obj.p)
                         obj.p = obj.p(selection,:);
-                    end
-                    if ~isempty(obj.p0)
                         obj.p0 = obj.p0(selection,:);
                     end
                     if ~isempty(obj.c)
@@ -203,7 +200,7 @@ classdef Market < Estimate % matlab.mixin.Copyable
             end
         end
 
-        function theta = gmm_estimate(obj, theta)
+        function theta = estimateGMM(obj, theta)
             % Simultaneous 2SLS estimate of demand and costs over alpha
             
             WC = inv(obj.X' * obj.X);

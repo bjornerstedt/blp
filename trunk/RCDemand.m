@@ -192,16 +192,16 @@ classdef RCDemand < NLDemand
         function R = estimate(obj, varargin)
             obj.init(varargin{:});
             obj.edelta = exp(obj.share.ls);
-            est = obj.estimation_step(false, varargin{:});
+            est = obj.estimationStep(false, varargin{:});
             if obj.settings.optimalIV
-                R = obj.estimation_step(true, varargin{:});
+                R = obj.estimationStep(true, varargin{:});
                 obj.results.estimate1 = est;   
             else
                 R = est;
             end
        end
         
-        function R = estimation_step(obj, optIV, varargin)
+        function R = estimationStep(obj, optIV, varargin)
             obj.initEstimation(optIV);
             obj.sigma = obj.minimize([{'Display','iter-detailed'}, varargin]);
             delta = log(obj.edelta);
@@ -299,22 +299,14 @@ classdef RCDemand < NLDemand
             if isempty(obj.nonlinparams)
                 error('Some variable has to be specified as nonlinear');
             end
-            if isempty(obj.sigma)
-                obj.get_sigma();
-            end
-            if size(obj.sigma, 2) > 1
-                obj.sigma = obj.sigma';
-            end
-            if length(obj.nonlinparams) ~= length(obj.sigma)
-                error('sigma and nonlinear have different dimensions');
-            end
-            obj.results.sigma0 = obj.sigma;
+            obj.getSigma();
             obj.vars2 = ...
                 cellfun(@(x) {sprintf('rc_%s', x)}, obj.nonlinparams );
             obj.x2 = obj.data{:, obj.nonlinparams };
             nonlinprice = strcmp(obj.var.price, obj.nonlinparams);
             if any(nonlinprice) 
                 % For CES, logprice rather than price.
+                % Does not work for FE!!!
                 obj.x2(:, nonlinprice) = obj.X(:, 1);
             end
             obj.randdraws(selection);
@@ -324,11 +316,23 @@ classdef RCDemand < NLDemand
             obj.initPeriods();
         end
         
-        function get_sigma(obj)
-            if isempty(obj.config.randstream)
-                obj.sigma = randn(length(obj.nonlinparams),1);
-            else
-                obj.sigma = obj.config.randstream.randn(length(obj.nonlinparams),1);
+        function getSigma(obj)
+            % Only run once
+            if isempty(obj.sigma)
+                if ~isempty(obj.settings.sigma0)
+                    obj.sigma = obj.settings.sigma0;
+                elseif isempty(obj.config.randstream)
+                    obj.sigma = randn(length(obj.nonlinparams),1);
+                else
+                    obj.sigma = obj.config.randstream.randn(length(obj.nonlinparams),1);
+                end
+            end
+            obj.results.sigma0 = obj.sigma;
+            if size(obj.sigma, 2) > 1
+                obj.sigma = obj.sigma';
+            end
+            if length(obj.nonlinparams) ~= length(obj.sigma)
+                error('sigma and nonlinear have different dimensions');
             end
         end
         
@@ -434,7 +438,7 @@ classdef RCDemand < NLDemand
             obj = obj@NLDemand(varargin{:});
             obj.var.setParameters({'nonlinear','nonlinearlogs','nonlineartriangular'});
             obj.settings.setParameters({'optimalIV','drawmethod',... 
-                'marketdraws','nind','quaddraws','maxiter'});
+                'marketdraws','nind','quaddraws','maxiter', 'sigma0'});
             obj.config = SettingsClass({'tolerance','fptolerance1','fptolerance2', ...
                 'restartMaxIterations','restartFval', 'test', 'fpmaxit',...
                 'randstream','hessian','guessdelta','quietly'});
@@ -448,6 +452,7 @@ classdef RCDemand < NLDemand
             obj.settings.quaddraws = 10;
             obj.settings.maxiter = 100;
             obj.settings.ces = false;
+            obj.settings.sigma0 = [];
             
             obj.config.tolerance = 1e-9;
             obj.config.fptolerance1 = 1e-14; % lower tol for first FP its
@@ -460,6 +465,7 @@ classdef RCDemand < NLDemand
             obj.config.hessian = false;
             obj.config.quietly = true;
             obj.results.estimateDescription = 'Random Coefficient Logit Demand'; 
+            obj.results.sigma0 = []; 
         end  
         
     end

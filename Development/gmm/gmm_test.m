@@ -12,23 +12,21 @@ model.types = 2;
 m = SimMarket(model);
 m.model.randproducts = true;
 m.model.endog = true;
-m.demand = NestedLogitDemand;
+m.demand = NLDemand;
 m.demand.alpha = 1;
-m.init();
-m.simulateDemand();
+m.create();
 results = m.estimate()
 
-%% Test: NestedLogitDemand
+%% Test: NLDemand
 m = SimMarket(model);
 m.model.randproducts = true;
 m.model.endog = true;
-m.demand = NestedLogitDemand;
+m.demand = NLDemand;
 m.demand.alpha = 1;
 %m.demand.var.nests = 'type';
 
 m.demand.settings.paneltype = 'fe';
-m.init();
-m.simulateDemand()
+m.create()
 
 display('2SLS estimate')
 m.estDemand.var.instruments = 'w';
@@ -53,7 +51,7 @@ market.settings.paneltype = 'none';
 market.var.exog = 'w';
 market.init();
     
-beta = market.gmm_estimate( alpha)
+beta = market.estimateGMM( alpha)
 mean(market.c)
 
 market.findCosts()

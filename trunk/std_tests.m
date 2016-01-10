@@ -79,7 +79,7 @@ display(m.model)
 
 results = m.estimate()
 % Check that estimate different than initial guess:
-assert(abs(m.estDemand.results.sigma0 - m.estDemand.sigma) > 0.5)
+assert(abs(m.estDemand.results.sigma0 - m.estDemand.sigma) > 0.3)
 
 testtrue(results{'p','Coef'} , results{'p', 'Theta'}, 1e-2 )
 
