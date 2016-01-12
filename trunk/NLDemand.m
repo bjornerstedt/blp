@@ -68,7 +68,15 @@ classdef NLDemand < Estimate
         end
 
         function R = estimate(obj, varargin)
+        % estimate executes a linear estimate 
+        % It uses the settings in NLDemand.settings and NLDemand.var
+        
+            % If alpha (sigma) and beta have been set, these are
+            % displayed as the true values: TODO...
+%             if ~isempty(obj.alpha) && ~isempty(obj.sigma)
+%             end
             R = estimate@Estimate(obj, varargin{:});
+            % These conditions should always hold!:
             if ~isempty(obj.results) && isfield(obj.results,'estimate') && ...
                     ~isempty(obj.results.estimate)
                 price = obj.X(:, 1);

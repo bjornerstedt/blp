@@ -262,25 +262,25 @@ m = SimMarket()
 %% 
 % The market model is specified with the parameters in |SimMarket.model|:
 % 
-%          endog: 0 - Endogenous prices and quanities true/false
-%   randproducts: 0 - Exogenously random products in market true/false
-% simulatePrices: 1 - Simulate prices or let them be randomly drawn as
+%           endog: 0 - Endogenous prices and quanities true/false
+%  randomProducts: 0 - Exogenously random products in market true/false
+% pricesFromCosts: 1 - Simulate prices or let them be randomly drawn as
 %                     in Nevo code true/false
-%        markets: 100 - Number of markets generated
-%       products: 5 - (Maximum) number of products in each market.
-%          types: [] - Number of types for each categorical
-%           firm: [] - Vector of ownership for each producty
-%           beta: [1 0] - 
-%              x: [5 0] - Expected value for p and other demand shifters
-%          x_vcv: [1 1] - Variance, can be specified as a matrix for
+%         markets: 100 - Number of markets generated
+%        products: 5 - (Maximum) number of products in each market.
+%           types: [] - Number of types for each categorical
+%            firm: [] - Vector of ownership for each producty
+%            beta: [1 0] - 
+%               x: [5 0] - Expected value for p and other demand shifters
+%           x_vcv: [1 1] - Variance, can be specified as a matrix for
 %                         multicollinearity
-%              c: 4 - Costs
-%          c_vcv: 1
-%          gamma: 0 - Cost shifter parameter
-%  epsilon_sigma: 0.1 - Sd of individual unobservables
-%       sigma_xi: 0.1 - Sd of panel unobservables
-%    endog_sigma: 0.1 - Endogeneity parameter for non simulated prices
-%      prob_prod: 0.8 - Probability that product exists in a market       
+%               c: 4 - Costs
+%           c_vcv: 1
+%           gamma: 0 - Cost shifter parameter
+%   epsilon_sigma: 0.1 - Sd of individual unobservables
+%        sigma_xi: 0.1 - Sd of panel unobservables
+%     endog_sigma: 0.1 - Endogeneity parameter for non simulated prices
+%       prob_prod: 0.8 - Probability that product exists in a market       
 m.model
 
 %% 

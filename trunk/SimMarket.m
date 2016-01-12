@@ -27,8 +27,8 @@ classdef SimMarket < matlab.mixin.Copyable
                 obj.model = varargin{1};
             else
                 defmodel.endog = false;      % Endog with count instruments or no endog
-                defmodel.randproducts = false; % Let the number of products be random
-                defmodel.simulatePrices = true; % Simulate price
+                defmodel.randomProducts = false; % Let the number of products be random
+                defmodel.pricesFromCosts = true; % Simulate price
                 defmodel.markets = 100;
                 defmodel.products = 5;
                 defmodel.types = [];
@@ -54,7 +54,7 @@ classdef SimMarket < matlab.mixin.Copyable
         
         function rt = create(obj)
             obj.init();
-            if obj.model.simulatePrices % && obj.model.endog
+            if obj.model.pricesFromCosts && obj.model.endog
                 rt = obj.simulateDemand();
             else
                 rt = obj.calculateDemand();
@@ -91,11 +91,10 @@ classdef SimMarket < matlab.mixin.Copyable
             end
             if isa(obj.demand, 'RCDemand')
                 truevals = table([beta; obj.demand.sigma]);
-                truevals.Properties.VariableNames = {'Theta'};
             else
                 truevals = table(beta);
-                truevals.Properties.VariableNames = {'Beta'};
             end
+            truevals.Properties.VariableNames = {'True_val'};
             results = [truevals, result];
         end
         
@@ -192,7 +191,7 @@ classdef SimMarket < matlab.mixin.Copyable
             end
             
             % Random selection of products
-            if obj.model.randproducts
+            if obj.model.randomProducts
                 % probability prob_prod of a product existing in a period
                 prodsel = logical(binornd(1, obj.model.prob_prod, n, 1));
                 obj.data = obj.data(prodsel, :);
@@ -258,7 +257,7 @@ classdef SimMarket < matlab.mixin.Copyable
             
             mr = obj.means({'p', 'q'}, 'productid') ;
             if obj.model.endog && isempty(obj.estDemand.var.instruments)
-                if obj.model.randproducts
+                if obj.model.randomProducts
                     obj.estDemand.var.instruments = 'nprod nprod2';
                 elseif obj.model.gamma ~= 0
                     obj.estDemand.var.instruments = 'w';
@@ -284,8 +283,9 @@ classdef SimMarket < matlab.mixin.Copyable
     end
     methods(Static)
         function vals = testEqual(x,y,z)
-            assert(abs((x - y)/y)<z, 'Percentage diff is %f', abs((x - y)/y));
-            vals = [y, x, abs((x - y)/y)];
+            diff = abs((y - x)/y);
+            assert(diff < z, 'Percentage diff is %f', diff);
+            vals = [y, x, diff];
         end
     end
 end

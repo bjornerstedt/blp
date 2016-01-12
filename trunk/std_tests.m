@@ -12,14 +12,15 @@ display '**********************  Test 1  *************************'
 m = SimMarket();
 m.demand = NLDemand;
 m.demand.alpha = 1;
+
 sresults = m.create();
 display(m.model)
 results = m.estimate()
 % Test that result is within 0.1% of true value
-SimMarket.testEqual(results{'p','Coef'} , results{'p', 'Beta'}, 1e-2)
+SimMarket.testEqual(results{'p','Coef'} , results{'p', 'True_val'}, 1e-2)
 
 testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
-correctVals = [0.022769720687512,4.895422144428684,-1.000390188323463,0.004938388080890];
+correctVals = [0.021574061753928,4.980964755245374,-1.003422555598600,0.004304018905541];
 
 testSameResults(testVals, correctVals, 1);
 
@@ -37,10 +38,10 @@ display(m.model)
 
 results = m.estimate()
 % Test that result is within 0.1% of true value
-SimMarket.testEqual(results{'p','Coef'} , results{'p', 'Beta'}, 1e-2)
+SimMarket.testEqual(results{'p','Coef'} , results{'p', 'True_val'}, 1e-2)
 
 testVals = [results{'p','Coef'}, results{'lsjg','Coef'}, results{'p','Std_err'}];
-correctVals = [-1.995650385534655,0.502068400039377,0.006222691020318];
+correctVals = [-2.003706029185489,0.499863507432290,0.005375770177673];
 
 testSameResults(testVals, correctVals, 2);
 
@@ -59,10 +60,10 @@ display(m.model)
 
 results = m.estimate()
 % Test that result is within 0.1% of true value
-SimMarket.testEqual(results{'p','Coef'} , results{'p', 'Beta'}, 1e-2)
+SimMarket.testEqual(results{'p','Coef'} , results{'p', 'True_val'}, 1e-2)
 
 testVals = [results{'p','Coef'}, results{'lsjh','Coef'}, results{'p','Std_err'}];
-correctVals = [-1.995280968011216,0.602548086049320,0.005338793317819];
+correctVals = [-1.994459335261852,0.601735881106264,0.004873164058653];
 
 testSameResults(testVals, correctVals, 3);
 
@@ -81,10 +82,10 @@ results = m.estimate()
 % Check that estimate different than initial guess:
 assert(abs(m.estDemand.results.sigma0 - m.estDemand.sigma) > 0.3)
 
-SimMarket.testEqual(results{'p','Coef'} , results{'p', 'Theta'}, 1e-2 )
+SimMarket.testEqual(results{'p','Coef'} , results{'p', 'True_val'}, 1e-2 )
 
 testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
-correctVals = [0.027528441329171,4.922947217451795,-1.001769146394760,0.005015988697898];
+correctVals = [0.027209827330165,4.980964755245374,-1.002058277997551,0.004437443811257];
 testSameResults(testVals, correctVals, 4);
 
 %% Test 5: RCDemand - rc_x
@@ -99,10 +100,11 @@ display(m.model)
 
 results = m.estimate()
 testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
-correctVals = [0.028966904126857,4.961760272683717,-1.001534413344814,0.005151635757488];
+correctVals = [0.030538586199379,4.980964755245374,-1.004698788631557,0.004361554728947];
 testSameResults(testVals, correctVals, 5);
 
-%SimMarket.testEqual(results{'rc_x','Coef'} , m.demand.sigma, 1e-1 )
+SimMarket.testEqual(results{'p','Coef'} , results{'p', 'True_val'}, 1e-2 )
+SimMarket.testEqual(results{'rc_x','Coef'} , results{'rc_x', 'True_val'}, 2e-2 )
 
 %% Test 6: CES RCDemand
 display '**********************  Test 6  *************************'
@@ -110,24 +112,24 @@ m = SimMarket();
 m.demand = RCDemand;
 m.demand.settings.ces = true;
 %         m.estDemand.settings.robust = 'false';
-m.model.endog = false;
 m.demand.alpha = 4;
 m.demand.sigma = 1;
 m.model.beta = [ 1; 4];
-m.model.markets = 200;
-m.model.randproducts = false;
+% m.model.markets = 200;
 m.demand.var.nonlinear = 'constant';
-m.model.simulatePrices = false;
+% m.model.endog = false;
+% m.model.randomProducts = false;
+% m.model.pricesFromCosts = false;
 
 m.create();
 display(m.model)
 
 results = m.estimate()
 testVals = [results{'lP', 'Coef'}, results{'rc_constant', 'Coef'}];
-correctVals = [-4.005833090434905,0.980403597281313];
+correctVals = [-4.012600987612641,0.973319662065424];
 testSameResults(testVals, correctVals, 6);
 
-SimMarket.testEqual(results{'lP', 'Coef'} , results{'lP', 'Theta'}, 2e-2)
+SimMarket.testEqual(results{'lP', 'Coef'} , results{'lP', 'True_val'}, 1e-2)
 
 %% Test 7: Optimal IV
 display '**********************  Test 7  *************************'
@@ -139,7 +141,7 @@ m.demand.sigma = 1;
 m.demand.settings.optimalIV = true;
 
 m.model.endog = true;
-m.model.randproducts = true;
+m.model.randomProducts = true;
 m.model.products = 10;
 m.create();
 display(m.model)
@@ -150,13 +152,13 @@ testVals = [results{'p','Coef'}, results{'rc_x','Coef'}];
 correctVals = [-0.969984767147493,1.044593651632106];
 testSameResults(testVals, correctVals, 7);
 
-SimMarket.testEqual(results{'rc_x','Coef'} , results{'rc_x', 'Theta'}, 1e-1 )
+SimMarket.testEqual(results{'rc_x','Coef'} , results{'rc_x', 'True_val'}, 1e-1 )
 
 %% Test 8: LSDV/FE
 % Four tests, comparing LSDV/FE for NL/FE
 display '**********************  Test 8  *************************'
 results = cell(2,1);
-for d = 1:2
+for d = 1:1
     paneltype = {'lsdv', 'fe'};
     for i = 1:2
         m = SimMarket();
@@ -167,13 +169,13 @@ for d = 1:2
             m.demand.var.nonlinear = 'constant';
             m.demand.sigma = 1;
         end
-        m.model.endog = false;
         m.demand.alpha = 0.2;
         m.model.beta = [1; -5];
         m.model.x = [5,5];
-        m.model.markets = 100;
-        m.model.randproducts = false;
-        m.model.simulatePrices = false;
+%         m.model.markets = 100;
+%        m.model.endog = false;
+%         m.model.randomProducts = false;
+%        m.model.pricesFromCosts = false;
         
         m.create();
 
@@ -185,8 +187,8 @@ for d = 1:2
     disp(results{2})
     display '************************************************************'
     % Loop over cols and rows
-%     SimMarket.testEqual(results{1}{'p','Coef'}, results{2}{'p','Coef'}, 1e-2)
-%     SimMarket.testEqual(results{1}{'p','Std_err'}, results{2}{'p','Std_err'}, 1e-2)
+    SimMarket.testEqual(results{1}{'p','Coef'}, results{2}{'p','Coef'}, 1e-4)
+    SimMarket.testEqual(results{1}{'p','Std_err'}, results{2}{'p','Std_err'}, 1e-4)
 end
 
 %% Test 9: Exogenous nonlinear price constant, testing findCosts
@@ -195,23 +197,20 @@ display '**********************  Test 9  *************************'
 m = SimMarket();
 m.demand = RCDemand;
 m.demand.var.nonlinear = 'p constant';
-m.demand.alpha = .2;
-m.demand.sigma = [0.01; 1];
+m.demand.alpha = 1;
+m.demand.sigma = [0.1; 1];
 
-m.demand.settings.optimalIV = false;
+% m.demand.settings.optimalIV = false;
+% m.model.endog = false;
 
-m.model.endog = false;
-m.model.randproducts = false;
-m.model.simulatePrices = true; % Simulate price
-
+% Increase in number of observations to get significance
 m.model.markets = 200;
 m.model.products = 10;
-m.model.x_vcv = [.2, 1];
 m.create();
 display(m.model)
 
 results = m.estimate()
-SimMarket.testEqual(results{'rc_p','Coef'} , results{'rc_p', 'Theta'}, 2e-1 )
+SimMarket.testEqual(results{'rc_p','Coef'} , results{'rc_p', 'True_val'}, 1e-1 )
 
 m.findCosts()
 meanCosts = mean(m.data.c)
@@ -232,14 +231,14 @@ m.demand.var.instruments = 'nprod nprod2 c';
 m.demand.settings.optimalIV = true;
 
 m.model.endog = true;
-m.model.randproducts = true;
+m.model.randomProducts = true;
 m.model.markets = 200;
-m.model.products = 5;
+% m.model.products = 5;
 m.create();
 display(m.model)
 
 results = m.estimate()
-SimMarket.testEqual(results{'rc_p','Coef'} , results{'rc_p', 'Theta'}, 4e-2 )
+SimMarket.testEqual(results{'rc_p','Coef'} , results{'rc_p', 'True_val'}, 4e-2 )
 
 m.findCosts()
 meanCosts = mean(m.data.c)

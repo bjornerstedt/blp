@@ -5,19 +5,18 @@ display '**********************  Test 1  *************************'
 
 m1 = SimMarket()
 demand = NLDemand();
-demand.alpha =.3;
+demand.alpha = .3;
 m1.demand = demand;
-m1.model.simulatePrices = true;
+
 m1.model.endog = true;
-m1.model.randproducts = false;
-% m1.model.gamma = 2;
-% m1.model.x_vcv = [1, .01];
 m1.model.markets = 100;
 m1.model.products = 3;
 m1.model.beta = [ 1, 0];
 
 m1.create()
 dt1 = m1.data;
+
+%% NL Demand estimation
 
 demand = NLDemand(dt1);
 
@@ -59,11 +58,10 @@ market2.equilibrium();
 compare(market, market2)
 compare(market, market2, 'selection', dt1.marketid == 1)
 
-return
-%% RCDemand
+%% RCDemand simulation
 
 demand2 = RCDemand();
-demand2.alpha = .1;
+demand2.alpha = .3;
 demand2.sigma = 1;
 
 demand2.var.nonlinear = 'x';
@@ -72,11 +70,14 @@ m2 = SimMarket();
 m2.demand = demand2;
 
 m2.model.endog = true;
-m2.model.randproducts = true;
+m2.model.randomProducts = true;
 m2.model.firm = [1,1,2,2,3];
+m2.model.markets = 200;
 m2.create();
 
 dt2 = m2.data;
+%% RC Demand estimation
+
 demand2 = RCDemand(dt2);
 
 demand2.var.market = 'marketid';
@@ -85,18 +86,23 @@ demand2.var.price = 'p';
 demand2.var.quantity = 'q';
 demand2.var.marketsize = 'constant';
 demand2.var.exog = 'x';
-demand2.var.instruments = 'nprod nprod2';
+demand2.var.instruments = 'nprod nprod2 c';
 
 demand2.var.nonlinear = 'x';
 
 result = demand2.estimate()
 
-market2 = Market(demand2);
-market2.var.firm = 'firm';
+market = Market(demand2);
+market.var.firm = 'firm';
 
-market2.findCosts();
+market.findCosts();
 averageCosts = mean(market2.c)
-market2.summary()
-market2.summary('selection', dt2.marketid == 1)
+market.summary()
+market.summary('selection', dt2.marketid == 1)
 
+market2 = copy(market);
+market2.firm(market2.firm == 2 ) = 1;
 market2.equilibrium();
+
+compare(market, market2)
+compare(market, market2, 'selection', dt2.marketid == 1)
