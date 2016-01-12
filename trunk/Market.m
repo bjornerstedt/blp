@@ -20,11 +20,7 @@ classdef Market < Estimate % matlab.mixin.Copyable
     end
     
     methods
-       function init(obj, varargin)
-            args = inputParser;
-            args.addParameter('selection', [],  @islogical );
-            args.parse(varargin{:});
-            selection = args.Results.selection;
+       function init(obj)
             if isempty(obj.demand)
                 error('Demand object must be specified')
             end
@@ -61,31 +57,11 @@ classdef Market < Estimate % matlab.mixin.Copyable
             end
             obj.marketid = obj.demand.marketid;
             obj.panelid = obj.demand.panelid;            
-            if ~isempty(selection) 
-                if isempty(obj.demand.selection)  
-                    % Rather ugly condition to handle both data creation AND
-                    % equilibrium calc
-                    if ~isempty(obj.q) 
-                        obj.q = obj.q(selection,:);
-                        obj.p = obj.p(selection,:);
-                        obj.p0 = obj.p0(selection,:);
-                    end
-                    if ~isempty(obj.c)
-                        obj.c = obj.c(selection,:);
-                    end
-                    obj.s = obj.demand.share.s(selection,:);
-                end
-                if length(obj.firm) ~= length(obj.s)
-                    obj.firm = obj.firm(selection,:);
-                end
-            end
         end
         
         function initSimulation(obj, market_number)
             obj.demand.initSimulation(market_number);
-            rs = obj.firm(obj.marketid == market_number);
-            %ownership vector:
-            R = dummyvar(rs)';
+            R = dummyvar(obj.firm(obj.marketid == market_number) )';
             obj.RR  = R' * R;
             if obj.settings.conduct > 0
                 obj.RR(obj.RR == 0) = obj.settings.conduct;
@@ -100,32 +76,29 @@ classdef Market < Estimate % matlab.mixin.Copyable
                 selection = logical(ones(size(obj.marketid)));
             end
             selection = selection & ~isnan(obj.c);
-            options = optimoptions(@fsolve,'MaxFunEvals',obj.settings.maxit,'Display', 'off');
+            options = optimoptions(@fsolve,... 
+                'MaxFunEvals',obj.settings.maxit,'Display', 'off');
             obj.p = nan(size(obj.marketid));
             obj.s = nan(size(obj.marketid));
             marketid_list = unique(obj.marketid(selection));
-            convcount = 0;
+            convCount = 0;
             for i = 1:length(marketid_list)
                 selection = obj.marketid == marketid_list(i);
                 t = marketid_list(i);
                 obj.initSimulation(t);
-                %                try
-                [pt,~,exitflag] = fsolve( ...
+                [pt, ~, exitflag, output] = fsolve( ...
                     @(x)obj.foc(x, obj.c(obj.marketid == t)), ...
                     obj.p0(selection), options);
-                %                 catch err
-                %                     warning('The merger simulation did not converge')
-                %                     exitflag = 0;
-                %                 end
                 obj.p(selection) = pt;
                 obj.s(selection) = obj.demand.shares(pt);
-                obj.results.equilibrium = (exitflag > 0);
+                obj.results.iterations = output.iterations;
                 if exitflag == 1
-                    convcount = convcount+1;
+                    convCount = convCount+1;
                 end
             end
             display(sprintf('Simulation converged for %d of %d markets', ...
-                convcount, length(marketid_list)));
+                convCount, length(marketid_list)));
+            obj.results.convCount = convCount;
         end
 
 		function f = fixedPoint(obj, maxit)
@@ -189,14 +162,22 @@ classdef Market < Estimate % matlab.mixin.Copyable
             end
             obj.c = nan(size(obj.marketid));
             marketid_list = unique(obj.marketid(selection));
+            obj.results.findCosts.cond = [];
             for i = 1:length(marketid_list)
-                selection = obj.marketid == marketid_list(i);
+                msel = obj.marketid == marketid_list(i);
                 t = marketid_list(i);
                 obj.initSimulation(t);
-                ct = obj.p(selection) - ...
-                    linsolve( obj.RR .* obj.demand.shareJacobian([]), ...
-                    -obj.s(selection) );
-                obj.c(selection) = ct;
+                [sj, cnd] = linsolve( obj.RR .* obj.demand.shareJacobian([]), ...
+                    -obj.s(msel) );
+                obj.c(msel) = obj.p(msel) - sj;
+                obj.results.findCosts.cond = min([obj.results.findCosts.cond, cnd]);
+            end
+            obj.results.findCosts.minCosts = min(obj.c(selection));
+            if obj.results.findCosts.minCosts < 0
+                warning('Calculated negative costs')
+            end
+            if min(obj.p(selection) - obj.c(selection)) < 0
+                warning('Calculated costs exceeding prices')
             end
         end
 

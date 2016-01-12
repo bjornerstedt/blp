@@ -257,7 +257,7 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.data.q = obj.simDemand.getDemand(obj.data.p);
             
             mr = obj.means({'p', 'q'}, 'productid') ;
-            if obj.model.endog
+            if obj.model.endog && isempty(obj.estDemand.var.instruments)
                 if obj.model.randproducts
                     obj.estDemand.var.instruments = 'nprod nprod2';
                 elseif obj.model.gamma ~= 0
@@ -280,7 +280,13 @@ classdef SimMarket < matlab.mixin.Copyable
             % Make a deep copy of the DeepCp object
             cpObj.model = copy(obj.model);
         end
-        
+
+    end
+    methods(Static)
+        function vals = testEqual(x,y,z)
+            assert(abs((x - y)/y)<z, 'Percentage diff is %f', abs((x - y)/y));
+            vals = [y, x, abs((x - y)/y)];
+        end
     end
 end
 

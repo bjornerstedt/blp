@@ -235,6 +235,7 @@ classdef NLDemand < Estimate
             obj.var.setParameters({'quantity','price','nests','marketsize'});
             obj.settings.setParameters({'ces'});
             
+            obj.settings.paneltype = 'lsdv';
             obj.settings.estimateMethod = 'gls';
             obj.settings.ces = false;
             

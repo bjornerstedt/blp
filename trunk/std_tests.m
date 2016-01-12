@@ -16,7 +16,7 @@ sresults = m.create();
 display(m.model)
 results = m.estimate()
 % Test that result is within 0.1% of true value
-testtrue(results{'p','Coef'} , results{'p', 'Beta'}, 1e-2)
+SimMarket.testEqual(results{'p','Coef'} , results{'p', 'Beta'}, 1e-2)
 
 testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
 correctVals = [0.022769720687512,4.895422144428684,-1.000390188323463,0.004938388080890];
@@ -37,15 +37,15 @@ display(m.model)
 
 results = m.estimate()
 % Test that result is within 0.1% of true value
-testtrue(results{'p','Coef'} , results{'p', 'Beta'}, 1e-2)
+SimMarket.testEqual(results{'p','Coef'} , results{'p', 'Beta'}, 1e-2)
 
 testVals = [results{'p','Coef'}, results{'lsjg','Coef'}, results{'p','Std_err'}];
 correctVals = [-1.995650385534655,0.502068400039377,0.006222691020318];
 
 testSameResults(testVals, correctVals, 2);
 
-%% Test 2b: NLDemand - two level nests
-display '**********************  Test 2b *************************'
+%% Test 3: NLDemand - two level nests
+display '**********************  Test 3 *************************'
 m = SimMarket();
 m.demand = NLDemand;
 m.demand.var.nests = 'type1 type2';
@@ -59,16 +59,16 @@ display(m.model)
 
 results = m.estimate()
 % Test that result is within 0.1% of true value
-testtrue(results{'p','Coef'} , results{'p', 'Beta'}, 1e-2)
+SimMarket.testEqual(results{'p','Coef'} , results{'p', 'Beta'}, 1e-2)
 
 testVals = [results{'p','Coef'}, results{'lsjh','Coef'}, results{'p','Std_err'}];
 correctVals = [-1.995280968011216,0.602548086049320,0.005338793317819];
 
-testSameResults(testVals, correctVals, 2);
+testSameResults(testVals, correctVals, 3);
 
-%% Test 3: RCDemand - rc_constant
+%% Test 4: RCDemand - rc_constant
 % Estimate without instruments, with exogeneous p.
-display '**********************  Test 3  *************************'
+display '**********************  Test 4  *************************'
 m = SimMarket();
 m.demand = RCDemand;
 m.demand.alpha = 1;
@@ -81,14 +81,14 @@ results = m.estimate()
 % Check that estimate different than initial guess:
 assert(abs(m.estDemand.results.sigma0 - m.estDemand.sigma) > 0.3)
 
-testtrue(results{'p','Coef'} , results{'p', 'Theta'}, 1e-2 )
+SimMarket.testEqual(results{'p','Coef'} , results{'p', 'Theta'}, 1e-2 )
 
 testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
 correctVals = [0.027528441329171,4.922947217451795,-1.001769146394760,0.005015988697898];
-testSameResults(testVals, correctVals, 3);
+testSameResults(testVals, correctVals, 4);
 
-%% Test 4: RCDemand - rc_x
-display '**********************  Test 4  *************************'
+%% Test 5: RCDemand - rc_x
+display '**********************  Test 5  *************************'
 m = SimMarket();
 m.demand = RCDemand;
 m.demand.alpha = 1;
@@ -100,12 +100,12 @@ display(m.model)
 results = m.estimate()
 testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
 correctVals = [0.028966904126857,4.961760272683717,-1.001534413344814,0.005151635757488];
-testSameResults(testVals, correctVals, 4);
+testSameResults(testVals, correctVals, 5);
 
-%testtrue(results{'rc_x','Coef'} , m.demand.sigma, 1e-1 )
+%SimMarket.testEqual(results{'rc_x','Coef'} , m.demand.sigma, 1e-1 )
 
-%% Test 5: CES RCDemand
-display '**********************  Test 5  *************************'
+%% Test 6: CES RCDemand
+display '**********************  Test 6  *************************'
 m = SimMarket();
 m.demand = RCDemand;
 m.demand.settings.ces = true;
@@ -125,12 +125,12 @@ display(m.model)
 results = m.estimate()
 testVals = [results{'lP', 'Coef'}, results{'rc_constant', 'Coef'}];
 correctVals = [-4.005833090434905,0.980403597281313];
-testSameResults(testVals, correctVals, 5);
+testSameResults(testVals, correctVals, 6);
 
-testtrue(results{'lP', 'Coef'} , results{'lP', 'Theta'}, 2e-2)
+SimMarket.testEqual(results{'lP', 'Coef'} , results{'lP', 'Theta'}, 2e-2)
 
-%% Test 6: Optimal IV
-display '**********************  Test 6  *************************'
+%% Test 7: Optimal IV
+display '**********************  Test 7  *************************'
 m = SimMarket();
 m.demand = RCDemand;
 m.demand.var.nonlinear = 'x';
@@ -148,13 +148,13 @@ results = m.estimate()
 
 testVals = [results{'p','Coef'}, results{'rc_x','Coef'}];
 correctVals = [-0.969984767147493,1.044593651632106];
-testSameResults(testVals, correctVals, 6);
+testSameResults(testVals, correctVals, 7);
 
-testtrue(results{'rc_x','Coef'} , results{'rc_x', 'Theta'}, 1e-1 )
+SimMarket.testEqual(results{'rc_x','Coef'} , results{'rc_x', 'Theta'}, 1e-1 )
 
-%% Test 7: LSDV/FE
+%% Test 8: LSDV/FE
 % Four tests, comparing LSDV/FE for NL/FE
-display '**********************  Test 7  *************************'
+display '**********************  Test 8  *************************'
 results = cell(2,1);
 for d = 1:2
     paneltype = {'lsdv', 'fe'};
@@ -185,14 +185,40 @@ for d = 1:2
     disp(results{2})
     display '************************************************************'
     % Loop over cols and rows
-%     testtrue(results{1}{'p','Coef'}, results{2}{'p','Coef'}, 1e-2)
-%     testtrue(results{1}{'p','Std_err'}, results{2}{'p','Std_err'}, 1e-2)
+%     SimMarket.testEqual(results{1}{'p','Coef'}, results{2}{'p','Coef'}, 1e-2)
+%     SimMarket.testEqual(results{1}{'p','Std_err'}, results{2}{'p','Std_err'}, 1e-2)
 end
 
+%% Test 9: Exogenous nonlinear price constant, testing findCosts
+display '**********************  Test 9  *************************'
 
-%% Test 8: Nonlinear price, testing findCosts
-% Should be improved
-display '**********************  Test 8  *************************'
+m = SimMarket();
+m.demand = RCDemand;
+m.demand.var.nonlinear = 'p constant';
+m.demand.alpha = .2;
+m.demand.sigma = [0.01; 1];
+
+m.demand.settings.optimalIV = false;
+
+m.model.endog = false;
+m.model.randproducts = false;
+m.model.simulatePrices = true; % Simulate price
+
+m.model.markets = 200;
+m.model.products = 10;
+m.model.x_vcv = [.2, 1];
+m.create();
+display(m.model)
+
+results = m.estimate()
+SimMarket.testEqual(results{'rc_p','Coef'} , results{'rc_p', 'Theta'}, 2e-1 )
+
+m.findCosts()
+meanCosts = mean(m.data.c)
+SimMarket.testEqual( meanCosts ,  m.model.c, 1e-2 )
+
+%% Test 10: Nonlinear price, testing findCosts
+display '**********************  Test 10  *************************'
 
 m = SimMarket();
 m.demand = RCDemand;
@@ -202,43 +228,19 @@ m.demand.sigma = .1;
 
 m.demand.settings.paneltype = 'lsdv';
 m.demand.var.nonlinear = 'p';
+m.demand.var.instruments = 'nprod nprod2 c';
+m.demand.settings.optimalIV = true;
 
 m.model.endog = true;
 m.model.randproducts = true;
 m.model.markets = 200;
-m.model.products = 10;
-m.model.x_vcv = [.2, 1];
-m.model.c = 0.9;
+m.model.products = 5;
 m.create();
 display(m.model)
 
 results = m.estimate()
-testtrue(results{'p','Coef'} , results{'p', 'Theta'}, 2e-1 )
+SimMarket.testEqual(results{'rc_p','Coef'} , results{'rc_p', 'Theta'}, 4e-2 )
 
 m.findCosts()
 meanCosts = mean(m.data.c)
-testtrue( meanCosts ,  0.9, 1e-1 )
-
-%% Test 9: Nonlinear price, testing findCosts
-% Succeeds at the 1% level
-display '**********************  Test 9  *************************'
-
-m = SimMarket();
-m.demand = RCDemand;
-m.demand.var.nonlinear = 'p constant';
-m.demand.alpha = 1;
-m.demand.sigma = [0.1; 1];
-
-m.demand.settings.optimalIV = false;
-
-m.model.endog = false;
-m.model.randproducts = false;
-m.model.markets = 200;
-m.model.products = 10;
-m.model.x_vcv = [.2, 1];
-m.model.c = 0.9;
-m.create();
-display(m.model)
-
-results = m.estimate()
-testtrue(results{'p','Coef'} , results{'p', 'Theta'}, 1e-2 )
+SimMarket.testEqual( meanCosts ,  m.model.c, 1e-3 )
