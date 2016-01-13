@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>SimMarket 0.2 Reference</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-01-10"><meta name="DC.source" content="reference_doc.m"><style type="text/css">
+      --><title>SimMarket 0.2 Reference</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-01-13"><meta name="DC.source" content="reference_doc.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -79,7 +79,7 @@ est =
 
   Estimate with properties:
 
-        data: [500x17 table]
+        data: [500x11 table]
      panelid: []
      results: [1x1 struct]
            y: []
@@ -103,12 +103,12 @@ ans =
 
   SettingsClass with properties:
 
-         market: []
+          panel: []
+           exog: []
     instruments: []
           endog: []
-           exog: []
-          panel: []
          depvar: []
+         market: []
 
 </pre><p>The est.settings structure has the following fields</p><pre>           robust: 1 - robust estimation true/false
         paneltype: 'none' - panel estimate: 'fe'/'lsdv'/'none'
@@ -119,10 +119,10 @@ ans =
 
   SettingsClass with properties:
 
+         paneltype: 'fe'
             robust: 1
     estimateMethod: 'ols'
             nocons: 0
-         paneltype: 'fe'
 
 </pre><p>The method <tt>Estimate.estimate()</tt> generates a result table as output. It also populates the structure <tt>Estimate.results</tt> with various results</p><p>estimateDescription: 'Linear Estimate'               other: [x]              params: Structure with the estimate and var-covar matrix            estimate: Estimate table                 var: Table with variable names used            settings: Table with settings</p><pre class="codeinput">est.settings.paneltype = <span class="string">'none'</span>;
 est.var.exog = <span class="string">'w'</span>;
@@ -155,12 +155,12 @@ ans =
         names        values
     _____________    ______
 
-    'market'         []    
+    'panel'          []    
+    'exog'           'w'   
     'instruments'    []    
     'endog'          []    
-    'exog'           'w'   
-    'panel'          []    
     'depvar'         'c'   
+    'market'         []    
 
 
 ans = 
@@ -168,10 +168,10 @@ ans =
          names          values
     ________________    ______
 
+    'paneltype'         'none'
     'robust'            [   1]
     'estimateMethod'    'ols' 
     'nocons'            [   0]
-    'paneltype'         'none'
 
 </pre><p>In estimating, Estimate creates the following properties that can be used in calculations. To generate these properties without estimating, the method <tt>Estimate.init()</tt> is invoked.</p><pre>       y: []
        X: []
@@ -199,7 +199,7 @@ demand =
        sigma: []
            d: []
     marketid: []
-        data: [500x9 table]
+        data: [500x8 table]
      panelid: []
      results: [1x1 struct]
            y: []
@@ -217,16 +217,16 @@ ans =
 
   SettingsClass with properties:
 
-         market: []
-          nests: []
-    instruments: []
        quantity: []
-     marketsize: []
+          nests: []
           price: []
-          endog: []
-           exog: []
           panel: []
+           exog: []
+    instruments: []
+          endog: []
          depvar: []
+         market: []
+     marketsize: []
 
 </pre><p>NLDemand has the following additional properties:</p><pre>    alpha: The calibrated or estimated alpha parameter
     sigma: A vector with sigmas
@@ -239,11 +239,11 @@ ans =
 
   SettingsClass with properties:
 
+         paneltype: 'lsdv'
             robust: 1
-    estimateMethod: 'gls'
                ces: 0
+    estimateMethod: 'gls'
             nocons: 0
-         paneltype: 'fe'
 
 </pre><p><b>Methods</b></p><p>The method <tt>NLDemand.estimate()</tt> performs a linear panel estimate based on the settings.</p><pre class="codeinput">methods(NLDemand)
 </pre><pre class="codeoutput">
@@ -267,7 +267,7 @@ demand =
        sigma: []
            d: []
     marketid: []
-        data: [500x9 table]
+        data: [500x8 table]
      panelid: []
      results: [1x1 struct]
            y: []
@@ -285,19 +285,19 @@ ans =
 
   SettingsClass with properties:
 
-                 market: []
-                  nests: []
-            instruments: []
                quantity: []
-             marketsize: []
+                  nests: []
                   price: []
           nonlinearlogs: []
-                  endog: []
-                   exog: []
-              nonlinear: []
-                  panel: []
     nonlineartriangular: []
+                  panel: []
+              nonlinear: []
+                   exog: []
+            instruments: []
+                  endog: []
                  depvar: []
+                 market: []
+             marketsize: []
 
 </pre><p>RCDemand with properties:</p><pre>  sigma: The calibrated or estimated nonlinear parameters</pre><p>Settings</p><p>RCDemand.settings has properties:</p><pre>            ces: 0 - CES or Unit logit demand
         maxiter: 100 - Maximum number of iterations in optimization
@@ -314,18 +314,18 @@ ans =
 
   SettingsClass with properties:
 
-           maxiter: 100
-            robust: 1
-    estimateMethod: 'gls'
-         quaddraws: 10
-              nind: 100
-         optimalIV: 0
-               ces: 0
-       marketdraws: 0
-            sigma0: []
-            nocons: 0
          paneltype: 'lsdv'
+            sigma0: []
+              nind: 100
+            robust: 1
+           maxiter: 100
         drawmethod: 'hypercube'
+               ces: 0
+         optimalIV: 0
+       marketdraws: 0
+         quaddraws: 10
+    estimateMethod: 'gls'
+            nocons: 0
 
 </pre><p>RCDemand.config</p><pre>                hessian: 0
                    test: []
@@ -341,17 +341,17 @@ ans =
 
   SettingsClass with properties:
 
-                 fpmaxit: 1000
+              randstream: []
+                    test: []
+                 quietly: 1
+                 hessian: 0
                tolerance: 1.0000e-09
+                 fpmaxit: 1000
+              guessdelta: 1
+            fptolerance2: 1.0000e-14
              restartFval: 1000
     restartMaxIterations: 1
-                    test: []
-            fptolerance2: 1.0000e-14
             fptolerance1: 1.0000e-14
-                 quietly: 1
-              randstream: []
-              guessdelta: 1
-                 hessian: 0
 
 </pre><p><b>Methods</b></p><p>The method <tt>RCDemand.estimate()</tt> performs a BLP estimate based on the settings specified in the demand object.</p><pre class="codeinput">methods(RCDemand)
 </pre><pre class="codeoutput">
@@ -375,13 +375,13 @@ ans =
 
   SettingsClass with properties:
 
-         market: []
-           firm: []
+          panel: []
+           exog: []
     instruments: []
           endog: []
-           exog: []
-          panel: []
          depvar: []
+         market: []
+           firm: []
 
 </pre><p><tt>Market.var.firm</tt> is the only property that has to be set to calculate costs or equilibrium.</p><pre class="codeinput">market.var.firm = <span class="string">'productid'</span>;
 </pre><p>An estimated or calibrated demand is associated with the marktet either by providing it in the constructor or adding it to the <tt>Market.demand</tt> property:</p><pre class="codeinput">market.demand = demand;
@@ -395,15 +395,15 @@ ans =
 
   SettingsClass with properties:
 
-             conduct: 0
-              dampen: 1
-              robust: 1
-    weightedAverages: 1
-      estimateMethod: 'ols'
-         valueShares: 0
-              nocons: 0
            paneltype: 'fe'
                maxit: 3000
+              dampen: 1
+    weightedAverages: 1
+             conduct: 0
+              robust: 1
+         valueShares: 0
+      estimateMethod: 'ols'
+              nocons: 0
 
 </pre><p><b>Methods</b></p><p><tt>Market.findCosts()</tt> calculates costs based on a demand specification Prices and quantities used are copied from the demand specification</p><pre class="language-matlab">market.findCosts()
 </pre><p><tt>Market.equilibrium()</tt> calculates a market equilibrium based on a demand specification, costs, and a specification of ownership and conduct (using <tt>Market.var.firm</tt> and <tt>Market.settings.conduct</tt>.</p><pre class="codeinput">methods(Market)
@@ -435,53 +435,57 @@ m =
     demand: []
     market: []
 
-</pre><p>The market model is specified with the parameters in <tt>SimMarket.model</tt>:</p><pre>        endog: 0 - Endogenous prices and quanities true/false
- randproducts: 0 - Exogenously random products in market true/false
-simulatePrices: 1 - Simulate prices or let them be randomly drawn as
+</pre><p>The market model is specified with the parameters in <tt>SimMarket.model</tt>:</p><pre>         endog: 0 - Endogenous prices and quanities true/false
+randomProducts: 0 - Exogenously random products in market true/false
+pricesFromCosts: 1 - Simulate prices or let them be randomly drawn as
                    in Nevo code true/false
-      markets: 100 - Number of markets generated
-     products: 5 - (Maximum) number of products in each market.
-        types: [] - Number of types for each categorical
-         firm: [] - Vector of ownership for each producty
-         beta: [1 0] -
-            x: [5 0] - Expected value for p and other demand shifters
-        x_vcv: [1 1] - Variance, can be specified as a matrix for
+       markets: 100 - Number of markets generated
+      products: 5 - (Maximum) number of products in each market.
+         types: [] - Number of types for each categorical
+          firm: [] - Vector of ownership for each producty
+          beta: [1 0] -
+             x: [5 0] - Expected value for p and other demand shifters
+         x_vcv: [1 1] - Variance, can be specified as a matrix for
                        multicollinearity
-            c: 4 - Costs
-        c_vcv: 1
-        gamma: 0 - Cost shifter parameter
-epsilon_sigma: 0.1 - Sd of individual unobservables
-     sigma_xi: 0.1 - Sd of panel unobservables
-  endog_sigma: 0.1 - Endogeneity parameter for non simulated prices
-    prob_prod: 0.8 - Probability that product exists in a market</pre><pre class="codeinput">m.model
+             c: 4 - Costs
+         c_vcv: 1
+         gamma: 0 - Cost shifter parameter
+ epsilon_sigma: 0.1 - Sd of individual unobservables
+      sigma_xi: 0.1 - Sd of panel unobservables
+   endog_sigma: 0.1 - Endogeneity parameter for non simulated prices
+     prob_prod: 0.8 - Probability that product exists in a market</pre><pre class="codeinput">m.model
 </pre><pre class="codeoutput">
 ans = 
 
   SettingsClass with properties:
 
-             types: []
-     epsilon_sigma: 0.1000
-                 x: [5 0]
-             x_vcv: [1 1]
-             c_vcv: 1
-              firm: []
-          sigma_xi: 0.1000
-              beta: [1 0]
-             endog: 0
-         prob_prod: 0.8000
-       endog_sigma: 0.1000
-                 c: 4
-    simulatePrices: 1
-          products: 5
-             gamma: 0
-           markets: 100
-      randproducts: 0
+           products: 5
+    pricesFromCosts: 1
+               beta: [1 0]
+           sigma_xi: 0.1000
+          prob_prod: 0.8000
+              x_vcv: [1 1]
+            markets: 100
+                  x: [5 0]
+              c_vcv: 1
+              endog: 0
+     randomProducts: 0
+      epsilon_sigma: 0.1000
+              gamma: 0
+        endog_sigma: 0.1000
+                  c: 4
+              types: []
+               firm: []
 
 </pre><p><b>Methods</b></p><div><ul><li>SimMarket - Create a new simulation object, optionally with demand spec</li><li>create - Creates market - should return dataset.</li><li>estimate -  Estimate and compare, used in testing framework</li><li>findCosts - Calculate costs, used in testing framework</li></ul></div><pre class="codeinput">methods(SimMarket)
 </pre><pre class="codeoutput">
 Methods for class SimMarket:
 
 SimMarket  copy       create     estimate   findCosts  means      
+
+Static methods:
+
+testEqual  
 
 Call "methods('handle')" for methods of SimMarket inherited from handle.
 
@@ -751,25 +755,25 @@ m = SimMarket()
 %% 
 % The market model is specified with the parameters in |SimMarket.model|:
 % 
-%          endog: 0 - Endogenous prices and quanities true/false
-%   randproducts: 0 - Exogenously random products in market true/false
-% simulatePrices: 1 - Simulate prices or let them be randomly drawn as
+%           endog: 0 - Endogenous prices and quanities true/false
+%  randomProducts: 0 - Exogenously random products in market true/false
+% pricesFromCosts: 1 - Simulate prices or let them be randomly drawn as
 %                     in Nevo code true/false
-%        markets: 100 - Number of markets generated
-%       products: 5 - (Maximum) number of products in each market.
-%          types: [] - Number of types for each categorical
-%           firm: [] - Vector of ownership for each producty
-%           beta: [1 0] - 
-%              x: [5 0] - Expected value for p and other demand shifters
-%          x_vcv: [1 1] - Variance, can be specified as a matrix for
+%         markets: 100 - Number of markets generated
+%        products: 5 - (Maximum) number of products in each market.
+%           types: [] - Number of types for each categorical
+%            firm: [] - Vector of ownership for each producty
+%            beta: [1 0] - 
+%               x: [5 0] - Expected value for p and other demand shifters
+%           x_vcv: [1 1] - Variance, can be specified as a matrix for
 %                         multicollinearity
-%              c: 4 - Costs
-%          c_vcv: 1
-%          gamma: 0 - Cost shifter parameter
-%  epsilon_sigma: 0.1 - Sd of individual unobservables
-%       sigma_xi: 0.1 - Sd of panel unobservables
-%    endog_sigma: 0.1 - Endogeneity parameter for non simulated prices
-%      prob_prod: 0.8 - Probability that product exists in a market       
+%               c: 4 - Costs
+%           c_vcv: 1
+%           gamma: 0 - Cost shifter parameter
+%   epsilon_sigma: 0.1 - Sd of individual unobservables
+%        sigma_xi: 0.1 - Sd of panel unobservables
+%     endog_sigma: 0.1 - Endogeneity parameter for non simulated prices
+%       prob_prod: 0.8 - Probability that product exists in a market       
 m.model
 
 %% 
