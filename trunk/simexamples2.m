@@ -35,7 +35,6 @@ market = Market(demand);
 market.var.firm = 'productid';
 
 display 'Test that mean calculated costs are close to actual'
-market.c
 market.findCosts( );
 cc = [dt1.c, market.c];
 % meanCosts = SimMarket.testEqual(mean(dt1.c), mean(market.c), 1)

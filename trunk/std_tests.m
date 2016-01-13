@@ -158,7 +158,7 @@ SimMarket.testEqual(results{'rc_x','Coef'} , results{'rc_x', 'True_val'}, 1e-1 )
 % Four tests, comparing LSDV/FE for NL/FE
 display '**********************  Test 8  *************************'
 results = cell(2,1);
-for d = 1:1
+for d = 1:2
     paneltype = {'lsdv', 'fe'};
     for i = 1:2
         m = SimMarket();
@@ -166,21 +166,33 @@ for d = 1:1
             m.demand = NLDemand;
         else
             m.demand = RCDemand;
-            m.demand.var.nonlinear = 'constant';
-            m.demand.sigma = 1;
+            m.demand.var.nonlinear = 'p';
+            m.demand.sigma = .2;
         end
-        m.demand.alpha = 0.2;
-        m.model.beta = [1; -5];
-        m.model.x = [5,5];
+        m.demand.alpha = 1;
+        m.demand.var.instruments = 'c nprod nprod2';
+%         m.model.beta = [1; -5];
+%         m.model.x = [1,0];
+%         m.model.x_vcv = [.2,1];
 %         m.model.markets = 100;
-%        m.model.endog = false;
-%         m.model.randomProducts = false;
+        m.model.endog = true;
+        m.model.randomProducts = true;
 %        m.model.pricesFromCosts = false;
         
         m.create();
 
         m.estDemand.settings.paneltype = paneltype{i};
         results{i} = m.estimate();
+        market = Market(m.estDemand);
+        market.var.firm = 'productid';
+       
+        display 'Test that mean calculated costs are close to actual'
+        market.findCosts( );
+         SimMarket.testEqual(mean(m.data.c), mean(market.c), 1e-1)
+        
+        display 'Test that mean equilibrium prices are close to starting vals'
+        market.equilibrium( )
+        SimMarket.testEqual(mean(m.data.p), mean(market.p), 1e-4)
     end
     display '*********** Results of LSDV and FE estimation **************'
     disp(results{1})

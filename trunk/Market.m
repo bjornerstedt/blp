@@ -31,7 +31,7 @@ classdef Market < Estimate % matlab.mixin.Copyable
                 error('var.firm has to be specified');
             end
             if isempty(obj.firm)
-                obj.firm = obj.demand.data{:, obj.var.firm};
+                [~, ~, obj.firm] = unique(obj.demand.data{:, obj.var.firm});
             end
 
             % Market 'inherits' variables from Demand, to avoid unnecessary
@@ -48,6 +48,9 @@ classdef Market < Estimate % matlab.mixin.Copyable
             % Can probably join these in a table directly, for sim
             obj.p = obj.demand.p;
             obj.q = obj.demand.q; 
+            % Simulation outside sample
+%             obj.p = obj.demand.data{obj.demand.var.price};
+%             obj.q = obj.demand.data{obj.demand.var.quantity};
             % With simulated demand, obj.share has not been set
             if ~isempty(obj.demand.share)
                 obj.p0 = obj.demand.p;

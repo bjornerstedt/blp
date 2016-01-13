@@ -79,7 +79,7 @@ classdef NLDemand < Estimate
             % These conditions should always hold!:
             if ~isempty(obj.results) && isfield(obj.results,'estimate') && ...
                     ~isempty(obj.results.estimate)
-                price = obj.X(:, 1);
+                price = obj.p;
                 priceName = obj.getPriceName();
                 if isempty(obj.nestlist)
                     est = obj.results.estimate{priceName, 1}';

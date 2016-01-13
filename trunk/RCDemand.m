@@ -307,7 +307,7 @@ classdef RCDemand < NLDemand
             if any(nonlinprice) 
                 % For CES, logprice rather than price.
                 % Does not work for FE!!!
-                obj.x2(:, nonlinprice) = obj.X(:, 1);
+                obj.x2(:, nonlinprice) = obj.p;
             end
             obj.randdraws(selection);
             if ~isempty(selection)
@@ -417,7 +417,7 @@ classdef RCDemand < NLDemand
             if isempty(obj.d)
                 % Create starting values for findDelta
                 obj.edelta = obj.findDelta(obj.sigma);
-                obj.d = log(obj.edelta) + obj.alpha*obj.X(:, 1);
+                obj.d = log(obj.edelta) + obj.alpha*obj.Xorig(:, 1);
                 for t = 1:max(obj.marketid)
                     obj.period{t}.d = obj.d(obj.dummarket(:, t));
                 end

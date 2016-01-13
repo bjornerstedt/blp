@@ -284,8 +284,11 @@ classdef SimMarket < matlab.mixin.Copyable
     methods(Static)
         function vals = testEqual(x,y,z)
             diff = abs((y - x)/y);
-            assert(diff < z, 'Percentage diff is %f', diff);
             vals = [y, x, diff];
+            if diff > z
+                disp(vals)
+                error('True, calculated and percentage diff are greater than %f', z);
+            end
         end
     end
 end

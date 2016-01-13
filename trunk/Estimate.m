@@ -123,8 +123,7 @@ classdef Estimate  < matlab.mixin.Copyable
                 end
                 T = obj.data(:, [obj.var.panel, varlist] );
                 panel = strsplit(strtrim(obj.var.panel));
-                obj.panelid =  T{:, panel }; % Panelid should be created better
-                obj.panelid(1,1);
+                [~, ~,obj.panelid] =  unique(T{:, panel }); % Panelid should be created better
             else
                 T = obj.data(:, varlist);             
             end
@@ -250,8 +249,11 @@ classdef Estimate  < matlab.mixin.Copyable
             y = obj.y;
             X = obj.X;
             Z = obj.Z;
-            dgf = (size(obj.X,1) - size(obj.X,2));
-            
+            if strcmpi( obj.settings.paneltype, 'fe') 
+                dgf = (size(obj.X,1) - size(obj.X,2)) - max(obj.panelid);
+            else
+                dgf = (size(obj.X,1) - size(obj.X,2));
+            end
             W = inv(Z'*Z);
             mid = Z*W*Z';
             sst = inv(X'*mid*X);
