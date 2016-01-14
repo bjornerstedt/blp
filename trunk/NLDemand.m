@@ -262,7 +262,7 @@ classdef NLDemand < Estimate
             beta = [theta; beta];
             xi = obj.y - obj.X * beta;
         end
-       
+           
     end
     
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    

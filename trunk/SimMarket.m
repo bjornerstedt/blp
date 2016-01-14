@@ -102,7 +102,7 @@ classdef SimMarket < matlab.mixin.Copyable
             R = array2table(splitapply(@mean, obj.data{:, cols}, ...
                 obj.data.(index)), 'VariableNames', cols);
         end
-        
+
     end
     methods (Access = protected, Hidden = true )
         function init(obj)
