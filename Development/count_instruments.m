@@ -25,6 +25,40 @@ typeNames = {'type1', 'type2'};
 firm = {'firm'};
 % firm = [];
 
-% demand.data has to be set.
-[instruments, names] = m.demand.countInstruments(market, [firm, typeNames], {'constant', 'type1'}, m.data)
+instruments = Estimate.countInstruments(m.data, market, [firm, typeNames], {'constant', 'type1'})
 
+
+demand = NLDemand();
+demand.alpha = 0.5;
+demand.sigma = 0.5;
+demand.var.nests = 'type';
+
+m3 = SimMarket();
+m3.demand = demand;
+m3.model.types = 2;
+
+m3.market = Market;
+m3.market.settings.conduct = 0.5;
+m3.model.markets = 200;
+m3.model.firm = [1,1,1,2,2];
+
+m3.model.endog = true;
+m3.model.randomProducts = true;
+
+m3.model.gamma = 1;
+m3.create();
+dt3 = m3.data;
+dt3.inst = Estimate.countInstruments(dt3, 'marketid', {'firm', 'type'});
+
+demand = NLDemand(dt3);
+
+demand.var.market = 'marketid';
+demand.var.panel = 'productid';
+demand.var.price = 'p';
+demand.var.quantity = 'q';
+demand.var.marketsize = 'constant';
+demand.var.exog = 'x';
+
+demand.var.nests = 'type';
+demand.var.instruments = 'c inst nprod2';
+result = demand.estimate()

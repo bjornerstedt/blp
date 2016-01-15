@@ -288,12 +288,14 @@ dt2 = m2.data;
 
 %% Nested logit Monte-Carlo
 % A minimal nested logit demand specification with the nesting variable
-% |type| is created as follows:
+% |type| is created as follows: the demand parameters alpha and sigma are
+% set, and the nest characteristic is associated with the data variable
+% |type|.
 
 demand = NLDemand();
 demand.alpha = 0.5;
 demand.sigma = 0.5;
-% demand.var.nests = 'type';
+demand.var.nests = 'type';
 
 %%
 % The market created can be specified by modifying the model characteristics. 
@@ -334,21 +336,20 @@ m3.market.settings.conduct = 0.5;
 m3.model.firm = [1,1,1,2,2];
 
 m3.model.endog = true;
-% m3.model.randomProducts = true;
+m3.model.randomProducts = true;
 
 %%
 % We add a cost shifter |w| by specifying the |model.gamma| parameter.
-
 m3.model.gamma = 1;
 m3.create();
 dt3 = m3.data;
 
 %%
-% To estimate this model, the nesting variable |type| has to be specified.
-% The same count instruments as above are used. Note that the 2SLS FE panel
-% estimate will have price and log group shares as endogenous variables.
-
-demand = NLDemand(dt3);
+% As before, we can estimate the model by first creating a demand object and
+% then specifying a set of parameters. Here we wait with associating the
+% dataset dt3 with the demand, as we want to add a set of instruments to
+% the dataset first.
+demand = NLDemand;
 
 demand.var.market = 'marketid';
 demand.var.panel = 'productid';
@@ -357,8 +358,22 @@ demand.var.quantity = 'q';
 demand.var.marketsize = 'constant';
 demand.var.exog = 'x';
 
+%%
+% We can create an array of count instruments by using the utility method
+% |Estimate.countInstruments()|. It creates count instruments by market as
+% specified in the 'marketid' column, here creating counts by market and
+% all combinations of firms and type. Note that a column of a Matlab table
+% can be an array instead of a column vector. Here the count instruments
+% are all put in the column |dt3.inst| of the
+dt3.inst = Estimate.countInstruments(dt3, 'marketid', {'firm', 'type'});
+demand.var.instruments = 'inst';
+demand.data = dt3;
+%%
+% To estimate this model, the nesting variable |type| has to be specified.
+% The same count instruments as above are used. Note that the 2SLS FE panel
+% estimate will have price and log group shares as endogenous variables.
+
 demand.var.nests = 'type';
-demand.var.instruments = 'c w';
 demand.settings.paneltype = 'lsdv';
 result = demand.estimate()
 
@@ -368,6 +383,8 @@ result = demand.estimate()
 
 market = Market(demand);
 market.var.firm = 'firm';
+market.settings.conduct = 0.5;
+
 market.findCosts();
 market.y = market.c;
 market.var.exog = 'w';

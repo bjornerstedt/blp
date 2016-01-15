@@ -195,9 +195,9 @@ classdef SimMarket < matlab.mixin.Copyable
                 % probability prob_prod of a product existing in a period
                 prodsel = logical(binornd(1, obj.model.prob_prod, n, 1));
                 obj.data = obj.data(prodsel, :);
-                % Create count instrument
-                nprod = accumarray(obj.data.marketid, obj.data.constant);
-                obj.data.nprod = nprod(obj.data.marketid,:);
+                % TODO: Create count instruments for nests
+                instruments = Estimate.countInstruments(obj.data, 'marketid', []);
+                obj.data.nprod = instruments(:, 1);
                 obj.data.nprod2 = obj.data.nprod .^ 2;
             end
         end

@@ -48,39 +48,7 @@ classdef Estimate  < matlab.mixin.Copyable
             R = obj.createResults(beta, varcovar, obj.vars);            
             obj.createVarcovar(varcovar);
         end
-   
-        function [instruments, names] = countInstruments(obj, market, typeNames, varargin)
-        % countInstruments(market, typeNames, sumVars, dataTable) 
-        % sums vars by market over firm and typenames 
-        % Market has to be specified, as the function is invoked prior to
-        % the creation of marketid in init.
-            instruments = table;
-            k = 1;
-            if nargin == 4
-                dataTable = obj.data;
-            else
-                dataTable = varargin{2};
-            end
-            if nargin >= 3
-                sumVar = dataTable{ :, varargin{1}};                
-            else
-                sumVar = dataTable.('constant');
-            end
-            for s = 1:size(sumVar, 2);
-                for i = 0:length(typeNames)
-                    sels = nchoosek(1:length(typeNames), i);
-                    for j = 1:size(sels, 1)
-                        sel = [market, typeNames(sels(j,:))]
-                        [~, ~, index] = unique(dataTable(:, sel));
-                        count = accumarray(index, sumVar(:, s) );
-                        instruments.(sprintf('num%d',k)) = count(index) - sumVar(:, s);
-                        k = k + 1;
-                    end
-                end
-            end
-            names = instruments.Properties.VariableNames;
-        end
-        
+          
         function fexist = set(obj, prefstruct)
         % Set settings or config parameters with struct or cell array of
         % struct
@@ -346,6 +314,35 @@ classdef Estimate  < matlab.mixin.Copyable
             end
         end
                 
+    end
+    
+    methods( Static )
+        function instruments = countInstruments(data, market, typeNames, varargin)
+        % countInstruments(market, typeNames, sumVars, dataTable) 
+        % sums vars by market over firm and typenames 
+        % Market has to be specified, as the function is invoked prior to
+        % the creation of marketid in init.
+            instruments = table;
+            k = 1;
+            if nargin == 4
+                sumVar = data{ :, varargin{1}};                
+            else
+                sumVar = data.('constant');
+            end
+            for s = 1:size(sumVar, 2);
+                for i = 0:length(typeNames)
+                    sels = nchoosek(1:length(typeNames), i);
+                    for j = 1:size(sels, 1)
+                        sel = [market, typeNames(sels(j,:))]
+                        [~, ~, index] = unique(data(:, sel));
+                        count = accumarray(index, sumVar(:, s) );
+                        instruments.(sprintf('inst%d',k)) = count(index) - sumVar(:, s);
+                        k = k + 1;
+                    end
+                end
+            end
+            instruments = table2array(instruments);
+        end
     end
     
     methods(Static , Hidden = true )
