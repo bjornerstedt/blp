@@ -45,12 +45,10 @@ market2.equilibrium();
 compare(market, market2)
 
 %%%% Test that results are equal
-SimMarket.testEqual( mean(pk.PX), mean(pkS.PX), 1e-7)
-SimMarket.testEqual( mean(pk.Ptablets), mean(pkS.Ptablets), 1e-7)
-SimMarket.testEqual( mean(pk.BL0), mean(pkS.BL0), 1e-3)
-SimMarket.testEqual( mean(market.c(pk.year == 2008 & pk.month == 12)), ...
-    mean(pkS.M_costs(pk.year == 2008 & pk.month == 12)), 1e-4)
-SimMarket.testEqual( mean(market2.p(pk.year == 2008 & pk.month == 12)), ...
-    mean(pkS.M_price2(pk.year == 2008 & pk.month == 12)), 1e-5)
+SimMarket.testEqual( pk.Ptablets, pk.M_price, 1e-6);
+SimMarket.testEqual( pk.BL0, pk.M_BL0, 1e-3);
+SimMarket.testEqual( market.c(pk.year == 2008 & pk.month == 12), ...
+    pk.M_costs(pk.year == 2008 & pk.month == 12), 1e-3);
+SimMarket.testEqual( market2.p(pk.year == 2008 & pk.month == 12), ...
+    pk.M_price2(pk.year == 2008 & pk.month == 12), 1e-4);
 %%%%
-
