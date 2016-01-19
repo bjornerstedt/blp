@@ -31,7 +31,10 @@ classdef Market < Estimate % matlab.mixin.Copyable
                 error('var.firm has to be specified');
             end
             if isempty(obj.firm)
-                [~, ~, obj.firm] = unique(obj.demand.data{:, obj.var.firm});
+                obj.firm = obj.demand.data{:, obj.var.firm};
+                if ~iscategorical(obj.firm)
+                    [~, ~, obj.firm] = unique(obj.firm);
+                end
             end
 
             % Market 'inherits' variables from Demand, to avoid unnecessary
@@ -269,14 +272,15 @@ classdef Market < Estimate % matlab.mixin.Copyable
             args.parse(varargin{:});
             if ~strcmpi(args.Results.GroupingVariables, 'Firm')
                 varnames = {args.Results.GroupingVariables, obj.var.market};
-                var = obj.data{:, varnames};
+                var = obj.data(:, varnames);
             else
                 varnames = {'Firm', obj.demand.var.market};
-                var = [obj.firm, obj.marketid];
+                var = table(obj.firm, obj.marketid);
+                var.Properties.VariableNames = varnames;
             end
             
             %%%%%% Specific code
-            res = array2table([var, obj.p, obj.c]);
+            res = [var, array2table([obj.p, obj.c]) ];
             res.Lerner = (obj.p - obj.c) ./ obj.p ;
             tableCols = {'Price', 'Costs', 'Lerner'};
             

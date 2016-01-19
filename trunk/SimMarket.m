@@ -282,12 +282,15 @@ classdef SimMarket < matlab.mixin.Copyable
 
     end
     methods(Static)
-        function vals = testEqual(x,y,z)
+        function vals = testEqual(x, y, sensitivity)
+        % testEqual(x, y, sens) tests whether x and y are within 
+        % sensitivity sens in percentage terms
             diff = abs((y - x)/y);
             vals = [y, x, diff];
-            if diff > z
+            if diff > sensitivity
                 disp(vals)
-                error('True, calculated and percentage diff are greater than %f', z);
+                error('True, calculated and percentage diff are greater than %f',...
+                    sensitivity);
             end
         end
     end

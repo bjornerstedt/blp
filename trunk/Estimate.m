@@ -103,7 +103,11 @@ classdef Estimate  < matlab.mixin.Copyable
                 names.instruments = [];
                 obj.settings.estimateMethod = 'ols';
             end
-            names.exog = strsplit(strtrim(obj.var.exog));
+            if ~isempty(obj.var.exog)
+                names.exog = strsplit(strtrim(obj.var.exog));
+            else
+                names.exog = [];
+            end
             if ~isempty(obj.var.endog)
                 names.endog = strsplit(strtrim(obj.var.endog));
             else
@@ -317,7 +321,7 @@ classdef Estimate  < matlab.mixin.Copyable
     end
     
     methods( Static )
-        function instruments = countInstruments(data, market, typeNames, varargin)
+        function [instruments, names] = countInstruments(data, market, typeNames, varargin)
         % countInstruments(market, typeNames, sumVars, dataTable) 
         % sums vars by market over firm and typenames 
         % Market has to be specified, as the function is invoked prior to
@@ -327,13 +331,15 @@ classdef Estimate  < matlab.mixin.Copyable
             if nargin == 4
                 sumVar = data{ :, varargin{1}};                
             else
-                sumVar = data.('constant');
+                sumVar = ones(size(data,1), 1);
             end
+            names = cell(0);
             for s = 1:size(sumVar, 2);
                 for i = 0:length(typeNames)
                     sels = nchoosek(1:length(typeNames), i);
                     for j = 1:size(sels, 1)
-                        sel = [market, typeNames(sels(j,:))]
+                        sel = [market, typeNames(sels(j,:))];
+                        names = [names; {sel}];
                         [~, ~, index] = unique(data(:, sel));
                         count = accumarray(index, sumVar(:, s) );
                         instruments.(sprintf('inst%d',k)) = count(index) - sumVar(:, s);
