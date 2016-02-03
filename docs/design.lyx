@@ -149,6 +149,97 @@ Simulate on existing data
 Create new data
 \end_layout
 
+\begin_layout Subsection
+Requirements
+\end_layout
+
+\begin_layout Subsubsection
+Estimate
+\end_layout
+
+\begin_layout Standard
+For estimation, Estimate.var.panel has to be set unles Estimate.settings.paneltype
+ == 'none'.
+\end_layout
+
+\begin_layout Subsubsection
+Demand classes
+\end_layout
+
+\begin_layout Standard
+For NLDemand in init: 
+\end_layout
+
+\begin_layout Enumerate
+obj.var.market and obj.var.price must be set
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+In RCDemand obj.var.nonlinear must be set
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+either 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+obj.var.quantity has to be in the data - estimation 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+obj.var.marketsize and obj.var.exog must be set
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+obj.alpha has to be set - simulation
+\end_layout
+
+\end_deeper
+\begin_layout Subsubsection
+Market class
+\end_layout
+
+\begin_layout Standard
+The Market class has direct and indirect requirements.
+ In init
+\end_layout
+
+\begin_layout Enumerate
+obj.var.firm and obj.demand have to be set
+\end_layout
+
+\begin_layout Enumerate
+From obj.demand, it gets
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+obj.demand.p
+\end_layout
+
+\begin_layout Enumerate
+obj.demand.q
+\end_layout
+
+\begin_layout Enumerate
+obj.demand.share.s
+\end_layout
+
+\begin_layout Enumerate
+obj.demand.marketid
+\end_layout
+
+\begin_layout Enumerate
+obj.demand.panelid - not currently used, but can be used for panel estimates
+ of costs
+\end_layout
+
+\end_deeper
 \begin_layout Section
 Calibration of simulated market
 \end_layout

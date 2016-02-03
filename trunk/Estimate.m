@@ -112,17 +112,13 @@ classdef Estimate  < matlab.mixin.Copyable
                 endog = strsplit(strtrim(obj.var.endog));
             end
             obj.Xorig = [];
-            if ~isempty(obj.var.depvar) && obj.isvar(obj.var.depvar, obj.data)
-                obj.y = obj.data{:, obj.var.depvar};
-            end            
             created = obj.initAdditional( );                       
-            % Handle panel
             if ~strcmpi(obj.settings.paneltype, 'none')
                 if isempty(obj.var.panel) || ~obj.isvar(obj.var.panel, obj.data)
                     error('var.panel has to be specified')
                 end
                 panel = strsplit(strtrim(obj.var.panel));
-                [~, ~,obj.panelid] =  unique(obj.data{:, panel }); % Panelid should be created better
+                [~, ~,obj.panelid] =  unique(obj.data{:, panel }); 
             end
             % Can have log model here.
             if obj.settings.nocons || strcmpi(obj.settings.paneltype, 'fe')
@@ -228,7 +224,8 @@ classdef Estimate  < matlab.mixin.Copyable
                 varcovar = invXX*(xiX'*xiX)*invXX;
             else
                 if strcmpi(obj.settings.paneltype, 'fe')
-                    dgf = (size(obj.X,1) - size(obj.X,2)) - max(obj.panelid);
+                    dgf = (size(obj.X,1) - size(obj.X,2)) - ...
+                        length(unique(obj.panelid));
                 else
                     dgf = (size(obj.X,1) - size(obj.X,2));
                 end
@@ -241,7 +238,7 @@ classdef Estimate  < matlab.mixin.Copyable
             X = obj.X;
             Z = obj.Z;
             if strcmpi( obj.settings.paneltype, 'fe') 
-                dgf = (size(obj.X,1) - size(obj.X,2)) - max(obj.panelid);
+                dgf = (size(obj.X,1) - size(obj.X,2)) - length(unique(obj.panelid));
             else
                 dgf = (size(obj.X,1) - size(obj.X,2));
             end

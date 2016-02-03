@@ -25,45 +25,37 @@ classdef Market < Estimate
             if isempty(obj.demand)
                 error('Demand object must be specified')
             end
-            obj.demand.init(); % init selection??
-            % Set unless new firm has been set for example as post merger
-            % ownership.
+            obj.demand.init();
             if isempty(obj.var.firm) 
                 error('var.firm has to be specified');
             end
+            % Set unless new firm has been set for example as post merger
+            % ownership.
             if isempty(obj.firm)
                 obj.firm = obj.demand.data{:, obj.var.firm};
                 if ~iscategorical(obj.firm)
                     [~, ~, obj.firm] = unique(obj.firm);
                 end
             end
-
-            % Market 'inherits' variables from Demand, to avoid unnecessary
-            % specification
-            obj.data = obj.demand.data;
-            % This is for cost estimation:
-            if ~isempty(obj.var.exog)
+            if ~isempty(obj.data)
                 init@Estimate(obj);
+                obj.panelid = obj.demand.panelid;
             end
             % Use weighting of averages as in demand unless set by user
             if isempty(obj.settings.valueShares)
                 obj.settings.valueShares = obj.demand.useValueShares();
             end
-            % Can probably join these in a table directly, for sim
+            % Copied, can be null
             obj.p = obj.demand.p;
             obj.q = obj.demand.q; 
-            % Simulation outside sample
-%             obj.p = obj.demand.data{obj.demand.var.price};
-%             obj.q = obj.demand.data{obj.demand.var.quantity};
+            obj.marketid = obj.demand.marketid;
             % With simulated demand, obj.share has not been set
             if ~isempty(obj.demand.share)
-                obj.p0 = obj.demand.p;
-                obj.s = obj.demand.share.s;   % alt: obj.demand.actualDemand()
+                obj.p0 = obj.p;
+                obj.s = obj.demand.actualDemand();
             else
                 obj.p0 = obj.c;                
             end
-            obj.marketid = obj.demand.marketid;
-            obj.panelid = obj.demand.panelid;            
         end
         
         function initSimulation(obj, market_number)
@@ -78,23 +70,22 @@ classdef Market < Estimate
         function exitflag = equilibrium(obj, varargin)
             obj.init();
             if nargin > 1
-                selection = varargin{1};
+                selection = varargin{1} & ~isnan(obj.c);
             else
-                selection = logical(ones(size(obj.marketid)));
-            end
-            selection = selection & ~isnan(obj.c);
+                selection = ~isnan(obj.c);
+            end           
+            marketid_list = unique(obj.marketid(selection));
             options = optimoptions(@fsolve,... 
                 'MaxFunEvals',obj.settings.maxit,'Display', 'off');
             obj.p = nan(size(obj.marketid));
             obj.s = nan(size(obj.marketid));
-            marketid_list = unique(obj.marketid(selection));
             convCount = 0;
             for i = 1:length(marketid_list)
-                selection = obj.marketid == marketid_list(i);
                 t = marketid_list(i);
+                selection = obj.marketid == t;
                 obj.initSimulation(t);
                 [pt, ~, exitflag, output] = fsolve( ...
-                    @(x)obj.foc(x, obj.c(obj.marketid == t)), ...
+                    @(x)obj.foc(x, obj.c(selection)), ...
                     obj.p0(selection), options);
                 obj.p(selection) = pt;
                 obj.s(selection) = obj.demand.shares(pt);
@@ -107,79 +98,29 @@ classdef Market < Estimate
                 convCount, length(marketid_list)));
             obj.results.convCount = convCount;
         end
-
-		function f = fixedPoint(obj, maxit)
-			convergence = 1 ;
-			P = obj.p0;
-            sensitivity = 10^-6;
-			dist = sensitivity + 1;
-			i = 0;
-			diff = 0;
-			for i = 1:maxit 
-                if dist < sensitivity
-                    break;
-                end
-				%for linear logit set Q=S, for CES logit set Q=S./P xxx
-				Pn = obj.c + obj.margins( P);
-				if isnan(max(Pn))
-					i = maxit;
-					convergence = 0;
-					warning( 'Could not invert the share Jacobian.' );
-					break;
-				end 
-				diff = Pn - P;
-				dist = dot(diff, diff);
-		% 	diff = foc(obj.D, P);
-		% 	dist = dot(diff, diff);
-				if min(P) < 0 
-					convergence = 0;
-					warning( 'Negative prices in price vector' );
-					break;
-				end 			
-				P = obj.settings.dampen * Pn + (1 - obj.settings.dampen) * P;
-			end 
-			if i >= maxit 
-				warning( 'Max number of iterations exceeded.' );
-				convergence = 0;
-			end 
-			S = obj.demand.shares( P ); %This function should be called demand
-			diff = dot(S, S);
-			if diff < sensitivity 
-				warning('Converging to small shares.' );
-				convergence = 0;
-			end 
-			if min(P) < 0 || min(S) < 0  
-				warning( 'Negative prices or shares.' );
-				convergence = 0;
-			end 
-			%st_numscalar('r(maxpricediff)', max(abs(diff)) );
-			diff = obj.foc( P);
-			%st_numscalar('r(fixedpointdiff)', cross(diff, diff) )	;
-			obj.p = P;
-			obj.s = S;
-			f = [i,convergence];
-		end 
-    
+  
         function findCosts(obj, varargin)
+        % findCosts([selection]) calculates costs for selection
             obj.init();
             if nargin > 1
                 selection = varargin{1};
+                marketid_list = unique(obj.marketid(selection));
             else
-                selection = logical(ones(size(obj.marketid)));
+                selection = ones(size(obj.marketid));
+                marketid_list = unique(obj.marketid);
             end
             obj.c = nan(size(obj.marketid));
-            marketid_list = unique(obj.marketid(selection));
             obj.results.findCosts.cond = [];
             for i = 1:length(marketid_list)
-                msel = obj.marketid == marketid_list(i);
                 t = marketid_list(i);
+                msel = obj.marketid == t;
                 obj.initSimulation(t);
                 [sj, cnd] = linsolve( obj.RR .* obj.demand.shareJacobian([]), ...
                     -obj.s(msel) );
                 obj.c(msel) = obj.p(msel) - sj;
                 obj.results.findCosts.cond = min([obj.results.findCosts.cond, cnd]);
             end
-            obj.results.findCosts.minCosts = min(obj.c(selection));
+            obj.results.findCosts.minCosts = sum(obj.c(selection) < 0);
             if obj.results.findCosts.minCosts < 0
                 warning('Calculated negative costs')
             end
@@ -188,9 +129,22 @@ classdef Market < Estimate
             end
         end
 
+		function f = foc(obj,  P, ct)
+			S = obj.demand.shares( P );
+            ct = ct + obj.gamma * S; % Scale effects
+			f = ( obj.RR .* obj.demand.shareJacobian( P )) * (P - ct) + S;
+		end 
+
+        function theta = estimate(obj, varargin)
+            obj.data = obj.demand.data;
+            obj.init(varargin{:});
+            theta = estimate@Estimate(obj, varargin{:});
+ 		end 
+
         function theta = estimateGMM(obj, theta)
             % Simultaneous 2SLS estimate of demand and costs over alpha
-            
+            obj.data = obj.demand.data;
+            obj.init();
             WC = inv(obj.X' * obj.X);
             W = inv(obj.demand.Z' * obj.demand.Z);
             options = optimoptions(@fminunc, 'Algorithm', 'quasi-newton', 'MaxIter',50);
@@ -217,24 +171,6 @@ classdef Market < Estimate
             xi = obj.c - obj.X * gamma;
         end
         
-		function f = foc(obj,  P, ct)
-			S = obj.demand.shares( P );
-            ct = ct + obj.gamma * S; % Scale effects
-			f = ( obj.RR .* obj.demand.shareJacobian( P )) * (P - ct) + S;
-		end 
-
-		function f = focNum(obj,  P)
-			S = obj.demand.shares( P );
-            func = @(p)(obj.demand.shares(p));
-            jac = jacobian(func, P);
-			f = ( obj.RR .* jac ) * (P - obj.c) + S;
-		end 
-
-		function f = margins(obj,  P)
-			S = obj.demand.shares( P );
-			f = linsolve( (-obj.RR) .* (obj.demand.shareJacobian( S , P)) , S );
-        end 
-
 		function R = estimateCosts(obj)
             obj.init();
             obj.findCosts();
@@ -274,7 +210,7 @@ classdef Market < Estimate
             args.parse(varargin{:});
             if ~strcmpi(args.Results.GroupingVariables, 'Firm')
                 varnames = {args.Results.GroupingVariables, obj.var.market};
-                var = obj.data(:, varnames);
+                var = obj.demand.data(:, varnames);
             else
                 varnames = {'Firm', obj.demand.var.market};
                 var = table(obj.firm, obj.marketid);
@@ -319,7 +255,7 @@ classdef Market < Estimate
             args.parse(varargin{:});
             if ~strcmpi(args.Results.GroupingVariables, 'Firm')
                 varnames = {args.Results.GroupingVariables, 'Marketid'};
-                var = obj.data(:, varnames);
+                var = obj.demand.data(:, varnames);
             else
                 varnames = {'Firm', 'Marketid'};
                 var = table(obj.firm, obj.marketid, 'VariableNames', varnames);
@@ -378,6 +314,70 @@ classdef Market < Estimate
             obj.settings.weightedAverages = true;
             obj.settings.valueShares = false;
         end      
+        
+		function f = focNum(obj,  P)
+			S = obj.demand.shares( P );
+            func = @(p)(obj.demand.shares(p));
+            jac = jacobian(func, P);
+			f = ( obj.RR .* jac ) * (P - obj.c) + S;
+		end 
+
+		function f = margins(obj,  P)
+			S = obj.demand.shares( P );
+			f = linsolve( (-obj.RR) .* (obj.demand.shareJacobian( S , P)) , S );
+        end
+        
+        function f = fixedPoint(obj, maxit)
+			convergence = 1 ;
+			P = obj.p0;
+            sensitivity = 10^-6;
+			dist = sensitivity + 1;
+			i = 0;
+			diff = 0;
+			for i = 1:maxit 
+                if dist < sensitivity
+                    break;
+                end
+				%for linear logit set Q=S, for CES logit set Q=S./P xxx
+				Pn = obj.c + obj.margins( P);
+				if isnan(max(Pn))
+					i = maxit;
+					convergence = 0;
+					warning( 'Could not invert the share Jacobian.' );
+					break;
+				end 
+				diff = Pn - P;
+				dist = dot(diff, diff);
+		% 	diff = foc(obj.D, P);
+		% 	dist = dot(diff, diff);
+				if min(P) < 0 
+					convergence = 0;
+					warning( 'Negative prices in price vector' );
+					break;
+				end 			
+				P = obj.settings.dampen * Pn + (1 - obj.settings.dampen) * P;
+			end 
+			if i >= maxit 
+				warning( 'Max number of iterations exceeded.' );
+				convergence = 0;
+			end 
+			S = obj.demand.shares( P ); %This function should be called demand
+			diff = dot(S, S);
+			if diff < sensitivity 
+				warning('Converging to small shares.' );
+				convergence = 0;
+			end 
+			if min(P) < 0 || min(S) < 0  
+				warning( 'Negative prices or shares.' );
+				convergence = 0;
+			end 
+			%st_numscalar('r(maxpricediff)', max(abs(diff)) );
+			diff = obj.foc( P);
+			%st_numscalar('r(fixedpointdiff)', cross(diff, diff) )	;
+			obj.p = P;
+			obj.s = S;
+			f = [i,convergence];
+        end
         
         function newmarket = clone(obj)
             newmarket = copy(obj);
