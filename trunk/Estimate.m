@@ -90,35 +90,32 @@ classdef Estimate  < matlab.mixin.Copyable
         end
         
        function selection = init(obj, varargin)
-            % INIT: Initialize estimation of logit, with selection as
-            % optional argument. Create a always true selection to reset.
+            % init([selection]): Initialize estimation of logit, with selection as
+            % optional argument. 
+            % Creates X, y and Z, as well as panelid
             args = inputParser;
             args.addParameter('selection', [],  @islogical );
             args.parse(varargin{:});
             selection = args.Results.selection;
+            exog = [];
+            endog = [];
+            instruments = [];
             if ~isempty(obj.var.instruments)
-                names.instruments = strsplit(strtrim(obj.var.instruments));
+                instruments = strsplit(strtrim(obj.var.instruments));
             else
-                names.instruments = [];
                 obj.settings.estimateMethod = 'ols';
             end
             if ~isempty(obj.var.exog)
-                names.exog = strsplit(strtrim(obj.var.exog));
-            else
-                names.exog = [];
+                exog = strsplit(strtrim(obj.var.exog));
             end
             if ~isempty(obj.var.endog)
-                names.endog = strsplit(strtrim(obj.var.endog));
-            else
-                names.endog = [];
+                endog = strsplit(strtrim(obj.var.endog));
             end
-            
             obj.Xorig = [];
-            obj.y = [];
-            names = obj.initAdditional( names, selection);                       
-            if ~isempty(obj.var.depvar) 
+            if ~isempty(obj.var.depvar) && obj.isvar(obj.var.depvar, obj.data)
                 obj.y = obj.data{:, obj.var.depvar};
             end            
+            created = obj.initAdditional( );                       
             % Handle panel
             if ~strcmpi(obj.settings.paneltype, 'none')
                 if isempty(obj.var.panel) || ~obj.isvar(obj.var.panel, obj.data)
@@ -126,15 +123,13 @@ classdef Estimate  < matlab.mixin.Copyable
                 end
                 panel = strsplit(strtrim(obj.var.panel));
                 [~, ~,obj.panelid] =  unique(obj.data{:, panel }); % Panelid should be created better
-            else
             end
-            % Do not add panel to T - requires rewriting Estimate.demean.
             % Can have log model here.
             if obj.settings.nocons || strcmpi(obj.settings.paneltype, 'fe')
-                obj.vars =[names.endog, names.exog];
+                obj.vars =[created, endog, exog];
                 constant = [];
             else
-                obj.vars =[names.endog, names.exog, { 'constant'}];
+                obj.vars =[created, endog, exog, { 'constant'}];
                 constant = ones(size(obj.data, 1), 1);
             end
             switch lower(obj.settings.paneltype)
@@ -157,9 +152,9 @@ classdef Estimate  < matlab.mixin.Copyable
                     error('Unknown paneltype')
             end
             newvars = [constant, obj.lsdv];
-            obj.Xorig = [obj.data{: , [names.endog, names.exog]}, newvars];
+            obj.Xorig = [obj.Xorig, obj.data{: , [ endog, exog]}, newvars];
             if ~isempty(obj.var.instruments)
-                obj.Zorig = [obj.data{: , [names.exog, names.instruments]}, newvars];
+                obj.Zorig = [obj.data{: , [exog, instruments]}, newvars];
             end
             if strcmpi(obj.settings.paneltype, 'fe')
                 obj.X = obj.demean(obj.Xorig);
@@ -185,8 +180,9 @@ classdef Estimate  < matlab.mixin.Copyable
     
     methods(Access = protected, Hidden = true)
         
-        function names = initAdditional(obj, names, selection)
+        function created = initAdditional(obj)
             % Additional initialisation in subclasses
+            created = [];
         end
                
         function createVarcovar(obj, varcovar)

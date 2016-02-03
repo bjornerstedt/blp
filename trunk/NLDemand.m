@@ -275,27 +275,26 @@ classdef NLDemand < Estimate
             end
         end
                     
-       function names = initAdditional(obj, names, selection)
+       function created = initAdditional(obj)
        % Invoked from init@Estimate to create some logit specific params
+       % Creates marketid, dummarket and p
+       % If obj.var.quantity is defined and in the data, it creates ms, q,
+       % shares, Xorig and y
+       % Returns the names of created variables, used in estimation output
             if ~isempty(obj.var.nests)
                 obj.nestlist = strsplit(strtrim(obj.var.nests));
             end
+            lsnames = {[], {'lsjg'}, {'lsjh', 'lshg'}};
             if ~isempty(obj.var.quantity) && obj.isvar(obj.var.quantity, obj.data)
-                lsnames = {[],{'lsjg'},{'lsjh', 'lshg'}};
-                names.endog = [obj.getPriceName(), lsnames{length(obj.nestlist)+1}, names.endog];
+                created = [obj.getPriceName(), lsnames{length(obj.nestlist)+1}];
             else
                 if isempty(obj.alpha)
                     error('Either quantities or alpha have to be specified')
                 end
-                names.endog = [obj.getPriceName(), names.endog];
+                created = [obj.getPriceName()];
             end
             if isempty(obj.var.market) || isempty(obj.var.price) 
                 error('Demand.var.market and price must be specified in model');
-            end
-            if isempty(selection)
-                T = obj.data;
-            else
-                T = obj.data(selection, :);
             end
             [~,~,id] = unique(obj.data{:, strsplit(strtrim(obj.var.market))}, 'rows');
             obj.marketid = id;
@@ -304,7 +303,6 @@ classdef NLDemand < Estimate
             
             % quantity is empty for simulated market
             if ~isempty(obj.var.quantity) && obj.isvar(obj.var.quantity, obj.data)
-                obj.var.depvar = 'ls';
                 if isempty(obj.var.marketsize) || isempty(obj.var.exog) 
                     error(['Demand.var.exog and marketsize', ...
                         ' must be specified in model']);
@@ -315,15 +313,15 @@ classdef NLDemand < Estimate
                  % unless selection has been reset
                 if ~obj.isvar(obj.var.depvar, obj.data) % isempty(obj.share) 
                     obj.share = obj.generateShares(obj.data); 
-                    % Not clean !!
-                    % obj.data needs shares because depvar uses variable
-                    obj.data = [obj.data, obj.share];
                 end
-            end
-            if obj.settings.ces
-                obj.data.lP = log(obj.data{:,obj.var.price});
-            else
-%                 obj.y = obj.p;
+%                 obj.var.depvar = 'ls';
+                obj.y = obj.share.ls;
+                sh = obj.share{:, lsnames{length(obj.nestlist)+1}};
+                if obj.settings.ces
+                    obj.Xorig = [log(obj.p), sh];
+                else
+                    obj.Xorig = [obj.p, sh];
+                end
             end
         end
         
