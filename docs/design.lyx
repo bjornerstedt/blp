@@ -68,6 +68,95 @@
 
 \begin_body
 
+\begin_layout Title
+SimMarket Design
+\end_layout
+
+\begin_layout Author
+Jonas Björnerstedt
+\end_layout
+
+\begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Standard
+The purpose of this document is to collect documentation of various design
+ issues in SimMarket.
+ It does not describe how to use the program or basic programming issues
+ that are best described by the code itself.
+ The purpose is to provide a background for more challenging issues that
+ can be hard to understand from reading the program code.
+\end_layout
+
+\begin_layout Section
+Initialization
+\end_layout
+
+\begin_layout Standard
+Initialization of the Estimate and derived classes (Market and Demand classes),
+ is performed with the init() method.
+ This method has as its purpose to create two sets of variables
+\end_layout
+
+\begin_layout Enumerate
+Estimation variables, optionally restricted to a subset of the data
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+X, Z and y matrices
+\end_layout
+
+\begin_layout Enumerate
+Xorig and Zorig for non-demeaned calculations when fixed effects estimation
+ is used.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Organization variables, defined for all data.
+ Panelid is defined for all to allow estimation and simulation to be performed
+ on different samples of the data.
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+obj.panelid - panel identifier
+\end_layout
+
+\begin_layout Enumerate
+obj.marketid - in Demand and Market classes this identifies markets 
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+Note that init is used both in initializing estimation and simulation.
+ Three scenarios have slightly different setup requirements.
+\end_layout
+
+\begin_layout Enumerate
+Estimate on data
+\end_layout
+
+\begin_layout Enumerate
+Simulate on existing data
+\end_layout
+
+\begin_layout Enumerate
+Create new data
+\end_layout
+
+\begin_layout Section
+Calibration of simulated market
+\end_layout
+
+\begin_layout Standard
+Some calculation on how to calibrate a market to get reasonable costs.
+\end_layout
+
 \begin_layout Standard
 The FOC:
 \begin_inset Formula 

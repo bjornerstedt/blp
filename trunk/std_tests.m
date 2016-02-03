@@ -1,11 +1,10 @@
 clear
-
-% Put these last to avoid testi
-testSameResults = @(x,y,i)true;
-testtrue = @(x,y,z)true;
+% Simulated Testing
 
 testSameResults = @(x,y,i)assert(all( abs(x - y) < 10e-6), 'Test %d failed' , i);
-testtrue = @(x,y,z)assert(abs((x - y)/y)<z, 'Percentage diff is %f', abs((x - y)/y));
+% Uncomment to avoid testing
+% testSameResults = @(x,y,i)true;
+
 
 %% Test 1: NLDemand
 display '**********************  Test 1  *************************'

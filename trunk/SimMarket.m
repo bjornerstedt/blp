@@ -4,6 +4,7 @@ classdef SimMarket < matlab.mixin.Copyable
     % Simulate data based on model and estimate
     % Products exist with exog probability and count instruments based on the
     % number of products are used to handle endogeneity
+
     
     properties
         model
@@ -34,17 +35,24 @@ classdef SimMarket < matlab.mixin.Copyable
                 defmodel.types = [];
                 defmodel.firm = [];
                 
-                % p and x mean and sd:
+% beta does not include alpha:
                 defmodel.beta = [ 1, 0];
+% x is the expected values, const not included. The value for p only
+% matters if market is calculated, not simulated. 
                 defmodel.x = [5, 0];
                 defmodel.x_vcv = [1, 1];
-                defmodel.c = 4;
-                defmodel.c_vcv = 1;
+
                 defmodel.gamma = 0;
+                defmodel.c = 4; % Should be part of gamma
+                defmodel.w = 0;
+                defmodel.w_vcv = 1;
+                defmodel.eta = 1; % Cost func error term
+                % No fixed effects
                 
                 % Individual and product level shocks:
-                defmodel.epsilon_sigma = .1;
-                defmodel.sigma_xi = .1;
+                defmodel.epsilon = .1;
+                defmodel.xi = .1;
+                defmodel.varepsilon = 0; % Utility variation not observed by firms
                 
                 defmodel.endog_sigma = 0.1; % Degree of corr between x and epsilon
                 defmodel.prob_prod = .8;    % Prob of product existing in market
@@ -165,8 +173,8 @@ classdef SimMarket < matlab.mixin.Copyable
             end
             
             % epsilon_jt = varepsilon_jt + xi_j
-            obj.epsilon =  randn(n, 1) * obj.model.epsilon_sigma + ...
-                repmat(randn(obj.model.products, 1) * obj.model.sigma_xi, ...
+            obj.epsilon =  randn(n, 1) * obj.model.epsilon + ...
+                repmat(randn(obj.model.products, 1) * obj.model.xi, ...
                 obj.model.markets, 1);
             
             % Create random x var:
@@ -181,13 +189,13 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.data.d = x0 * obj.model.beta' + obj.epsilon;
             
             if obj.model.gamma ~= 0 % Otherwise existing tests fail
-                obj.data.w = randn(n, 1);
+                obj.data.w = obj.model.w + randn(n, 1) * obj.model.w_vcv;
                 obj.data.c = obj.data.constant * obj.model.c ...
                     + obj.model.gamma * obj.data.w ...
-                    + randn(n, 1) * obj.model.c_vcv;
+                    + randn(n, 1) * obj.model.eta;
             else
                 obj.data.c = obj.data.constant * obj.model.c ...
-                    + randn(n, 1) * obj.model.c_vcv;
+                    + randn(n, 1) * obj.model.eta;
             end
             
             % Random selection of products
@@ -220,12 +228,17 @@ classdef SimMarket < matlab.mixin.Copyable
                 inst = [];
             end
             obj.data = [obj.data, array2table(inst)];
-            
+            if obj.model.varepsilon > 0
+                obj.simDemand.d = obj.simDemand.d + ...
+                    randn(size(obj.data,1), 1) * obj.model.varepsilon;
+            end            
             obj.simDemand.init();
             obj.data.q = obj.simDemand.getDemand(obj.data.p);
-            
+            if obj.model.varepsilon > 0
+                obj.data.q = obj.data.q + ...
+                    randn(size(obj.data,1), 1) * obj.model.varepsilon;
+            end
             mr = obj.means({'p', 'q'}, 'productid') ;
-            
             display 'Average sum shares'
             disp(mean(accumarray(obj.data.marketid, obj.data.q)))
             if obj.model.endog
@@ -253,8 +266,13 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.market.equilibrium();
             
             obj.data.p = obj.market.p;
+            if obj.model.varepsilon > 0
+                obj.simDemand.d = obj.simDemand.d + ...
+                    randn(size(obj.data,1), 1) * obj.model.varepsilon;
+                obj.simDemand.init();
+            end
             obj.data.q = obj.simDemand.getDemand(obj.data.p);
-            
+           
             mr = obj.means({'p', 'q'}, 'productid') ;
             if obj.model.endog && isempty(obj.estDemand.var.instruments)
                 if obj.model.randomProducts

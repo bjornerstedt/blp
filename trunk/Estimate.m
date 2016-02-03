@@ -78,8 +78,8 @@ classdef Estimate  < matlab.mixin.Copyable
             obj.var = SettingsClass({'market','panel','depvar','exog', ...
                 'endog','instruments'});
             obj.settings = SettingsClass({'paneltype', 'nocons', ...
-                'estimateMethod', 'robust'});
-%            obj.config = SettingsClass({'quietly','nocons','estimateMethod'});
+                'estimateMethod', 'robust', 'logLinear'});
+%            obj.config = SettingsClass({'quietly','nocons ss','estimateMethod'});
             
             obj.config.quietly = true;
             obj.results.estimateDescription = 'Linear Estimate'; 
@@ -131,6 +131,8 @@ classdef Estimate  < matlab.mixin.Copyable
             else
                 T = obj.data(:, varlist);             
             end
+            % Do not add panel to T - requires rewriting Estimate.demean.
+            % Can have log model here.
             if obj.settings.nocons || strcmpi(obj.settings.paneltype, 'fe')
                 obj.vars =[names.endog, names.exog];
                 constant = [];
@@ -149,7 +151,6 @@ classdef Estimate  < matlab.mixin.Copyable
                     else
                         % obj.lsdv cannot be recreated on a selection as it
                         % screws up dummy count and numbering
-                        %                obj.lsdv = obj.lsdv(selection,:);
                     end
                 case 'fe'
                     T = obj.demean(T, varlist, panel);
@@ -356,10 +357,30 @@ classdef Estimate  < matlab.mixin.Copyable
             v = any(strcmp(x, y.Properties.VariableNames));
         end
         
+        function mn  = demean2(data, index )
+        %DEMEAN Subtract average value of vars
+        %   The index variables are the variables averages are taken over.
+            if istable(data)
+                data = table2array(data);
+            end
+            mn = zeros(max(index), size(data, 2));
+            for i = 1:size(data, 2)
+                mn(:, i) = accumarray(index, data(:, i) );
+            end
+            mn =  mn(index, :);
+            mn = data - mn;
+        end
+        
+        function R = mean(index, data)
+            [~,~, index] = unique(index);
+            R = accumarray(index, data);
+        end
+     
         function R = means(data, cols, index, varargin)
-        % means calculates means of cols over index. With optional weight
-        % variable, weighted means are calculated. Weights can either be
-        % specified as the variable name in the table data or as a vector.
+        % means(data, tableVars, indexVar, weightVar) calculates means of cols 
+        % over and index. With optional weight variable, weighted means are 
+        % calculated. Weights can either be specified as the variable name 
+        % in the table data or as a vector.
             [cats, ~, rowIdx] = unique(data( : , index), 'rows');
             if ~isempty(varargin) && ~isempty(varargin{1}) 
                 if ischar(varargin{1})

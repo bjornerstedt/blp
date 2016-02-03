@@ -373,11 +373,11 @@ classdef RCDemand < NLDemand
                 obj.iweight = ones(obj.settings.nind, 1) / obj.settings.nind ;
                 if isempty(obj.draws) % Can be set manually
                     if obj.settings.marketdraws
-                        obj.draws = Sampling.draw(obj.settings.drawmethod, ...
+                        obj.draws = Draws.draw(obj.settings.drawmethod, ...
                             K, max(obj.marketid) * obj.settings.nind, ...
                             obj.config.randstream);
                     else
-                        obj.draws = Sampling.draw(obj.settings.drawmethod, ...
+                        obj.draws = Draws.draw(obj.settings.drawmethod, ...
                             K, obj.settings.nind, obj.config.randstream);
                     end
                 end
@@ -396,7 +396,7 @@ classdef RCDemand < NLDemand
                     elseif obj.nonlintype(k) == 1 % log-normal
                         obj.v(:,:,k) = exp(wk(obj.marketid, :)); 
                     elseif obj.nonlintype(k) == 2 % triangular
-                        obj.v(:,:,k) = Sampling.triangular(wk(obj.marketid, :)); 
+                        obj.v(:,:,k) = Draws.triangular(wk(obj.marketid, :)); 
                     end              
                 end
             end

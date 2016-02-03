@@ -1,4 +1,4 @@
-classdef Sampling
+classdef Draws
     %SAMPLING Various sampling methods
     %   General methods with static invocation
     

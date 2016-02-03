@@ -1,4 +1,4 @@
-classdef Market < Estimate % matlab.mixin.Copyable
+classdef Market < Estimate 
     % MARKET Calculates market equilibrium
     %   Based on ownership structure and conduct.
     
@@ -8,6 +8,7 @@ classdef Market < Estimate % matlab.mixin.Copyable
         p %prices
         p0 %Initial prices
         c %Costs
+        gamma = 0 % Scale effects
         marketid % Protected?
         demand % Demand class        
     end
@@ -196,8 +197,8 @@ classdef Market < Estimate % matlab.mixin.Copyable
             
             [theta] = fminunc(@(x)objective(x, obj), theta, options);
             [~, beta ] = obj.demand.residuals(theta);
-            [~, gamma ] = obj.residuals();
-            theta = [beta; gamma];
+            [~, lambda ] = obj.residuals();
+            theta = [beta; lambda];
             
             function val = objective(theta, obj)
                 % Residuals as function of demand params:
@@ -218,6 +219,7 @@ classdef Market < Estimate % matlab.mixin.Copyable
         
 		function f = foc(obj,  P, ct)
 			S = obj.demand.shares( P );
+            ct = ct + obj.gamma * S; % Scale effects
 			f = ( obj.RR .* obj.demand.shareJacobian( P )) * (P - ct) + S;
 		end 
 

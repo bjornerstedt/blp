@@ -1,0 +1,67 @@
+---
+title: "Investigating Simultaneity"
+author: "Jonas Björnerstedt"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    number_sections: yes
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+square <- function(x) {
+  x^2/2+x+1
+}
+```
+
+> SimMarket linear parameter structure:
+beta = [ 1, 0];
+x = [5, 0];
+x_vcv = [1, 1];
+c = 4;
+c_vcv = 1;
+gamma = 0;
+epsilon_sigma = .1;
+sigma_xi = .1;
+endog_sigma = 0.1; % Degree of corr between x and epsilon
+prob_prod = .8;    % Prob of product existing in market    
+
+> epsilon = endog_sigma + sigma_xi
+eta = N( 0, c_vkv)
+
+> x = N(model.x, model.x_vcv)
+d = [x(2:end), 1] * beta' + epsilon
+
+> w = N(0, 1)
+c = modell.c + m
+
+## Introduction
+
+The purpose of this document is to 
+
+1. Calculate how simultaneity affects bias of OLS estimates. Why is the bias
+of OLS estimates so small in SimMarket?
+1. Can regional markets to some extent identify endogenous relationships?
+
+\begin{eqnarray*}
+q & = & d-ap+e\\
+p & = & c+mq+w
+\end{eqnarray*}
+
+
+Thus 
+
+```{r logit, echo=FALSE}
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+ggplot(data.frame(x=c(0, 2)), aes(x)) + 
+  stat_function(fun=square, colour="red") +
+  stat_function(fun=exp, colour="blue") 
+```
+
+

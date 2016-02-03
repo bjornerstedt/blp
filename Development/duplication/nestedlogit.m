@@ -1,14 +1,14 @@
+%% SimMarket mergersim comparison
 % Test that Stata and Matlab variable creation are identical
-
+% painkillers is a dataset with mergersim M_* variables included, created
+% in Stata by nestedlogit.do.
 clear
-pkS = readtable('test.csv','TreatAsEmpty','NA');
 load painkillers
 
 pk.Ptablets = pk.Ptablets./(pk.cpi/100);
 pk.PX = pk.PX./(pk.cpi/100);
     
-[~,~, index] = unique(pk.time);    
-pk.BL0 = repmat( 2*mean(accumarray(index, pk.X)), size(pk.X)) ;
+pk.BL0 = repmat( 2*mean(Estimate.mean(pk.time, pk.X)), size(pk.X)) ;
 
 instruments = Estimate.countInstruments(pk, 'time', {'firm', 'form', 'substance'});
 instruments(: , [4, 6]) = [];
@@ -31,6 +31,7 @@ demand.results
 
 market = Market(demand);
 market.var.firm = 'firm';
+
 % mergersim 1 has unweighted averages
 market.settings.weightedAverages = false;
 
@@ -44,11 +45,13 @@ market2.firm(market2.firm == 'AstraZeneca' ) = 'GSK';
 market2.equilibrium();
 compare(market, market2)
 
-%%%% Test that results are equal
+%% Test that results are equal
+% All individual prices and costs are within 0.1% of mergersim values
+
 SimMarket.testEqual( pk.Ptablets, pk.M_price, 1e-6);
 SimMarket.testEqual( pk.BL0, pk.M_BL0, 1e-3);
 SimMarket.testEqual( market.c(pk.year == 2008 & pk.month == 12), ...
     pk.M_costs(pk.year == 2008 & pk.month == 12), 1e-3);
 SimMarket.testEqual( market2.p(pk.year == 2008 & pk.month == 12), ...
     pk.M_price2(pk.year == 2008 & pk.month == 12), 1e-4);
-%%%%
+

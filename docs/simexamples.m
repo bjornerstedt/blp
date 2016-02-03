@@ -81,23 +81,27 @@ compare(market, market2, 'selection', dt2.marketid == 1)
 
 demand = NLDemand();
 demand.alpha = 0.5;
-demand.sigma = 0.5;
+% demand.sigma = 0.5;
 % demand.var.nests = 'type';
 
 m3 = SimMarket();
 m3.demand = demand;
-m3.model.types = 2;
+% m3.model.types = 2;
 
 m3.market = Market;
-m3.market.settings.conduct = 0.5;
-m3.model.markets = 200;
+% m3.market.settings.conduct = 0.5;
+m3.model.markets = 500;
 m3.model.firm = [1,1,1,2,2];
 
 m3.model.endog = true;
 m3.model.randomProducts = true;
-
+m3.model.epsilon = 1;
+m3.model.xi = 0;
+m3.model.varepsilon = 0;
 m3.model.gamma = 1;
-m3.create();
+m3.model.eta = 1;
+m3.market.gamma = 0;
+m3.create()
 dt3 = m3.data;
 
 demand = NLDemand(dt3);
@@ -109,8 +113,10 @@ demand.var.quantity = 'q';
 demand.var.marketsize = 'constant';
 demand.var.exog = 'x';
 
-demand.var.nests = 'type';
-demand.var.instruments = 'c w nprod';
+% demand.var.nests = 'type';
+% dt3.inst = Estimate.countInstruments(dt3, 'marketid', {'firm', 'type'});
+% demand.var.instruments = 'inst c';
+demand.data = dt3;
 result = demand.estimate()
 
 market = Market(demand);
