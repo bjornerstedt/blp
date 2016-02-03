@@ -297,10 +297,10 @@ classdef NLDemand < Estimate
             else
                 T = obj.data(selection, :);
             end
-            [~,~,id] = unique(T{:, strsplit(strtrim(obj.var.market))}, 'rows');
+            [~,~,id] = unique(obj.data{:, strsplit(strtrim(obj.var.market))}, 'rows');
             obj.marketid = id;
             obj.dummarket = logical(dummyvar(obj.marketid));
-            obj.p = T{:, obj.var.price}; % Used in simulation 
+            obj.p = obj.data{:, obj.var.price}; % Used in simulation 
             
             % quantity is empty for simulated market
             if ~isempty(obj.var.quantity) && obj.isvar(obj.var.quantity, obj.data)
@@ -309,22 +309,21 @@ classdef NLDemand < Estimate
                     error(['Demand.var.exog and marketsize', ...
                         ' must be specified in model']);
                 end
-                obj.ms = T{: , obj.var.marketsize};
-                obj.q = T{: , obj.var.quantity};
+                obj.ms = obj.data{: , obj.var.marketsize};
+                obj.q = obj.data{: , obj.var.quantity};
                  % init can be invoked several times, so only create once,
                  % unless selection has been reset
                 if ~obj.isvar(obj.var.depvar, obj.data) % isempty(obj.share) 
-                    obj.share = obj.generateShares(T); 
+                    obj.share = obj.generateShares(obj.data); 
                     % Not clean !!
                     % obj.data needs shares because depvar uses variable
                     obj.data = [obj.data, obj.share];
                 end
-                if ~isempty(selection)
-                    obj.share = obj.generateShares(T); 
-                end
             end
             if obj.settings.ces
                 obj.data.lP = log(obj.data{:,obj.var.price});
+            else
+%                 obj.y = obj.p;
             end
         end
         

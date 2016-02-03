@@ -113,19 +113,20 @@ classdef Estimate  < matlab.mixin.Copyable
                 names.endog = [];
             end
             
-            names = obj.initAdditional( names, selection);            
-            varlist = [obj.var.depvar, names.endog, names.exog, names.instruments];
-           
+            obj.Xorig = [];
+            obj.y = [];
+            names = obj.initAdditional( names, selection);                       
+            if ~isempty(obj.var.depvar) 
+                obj.y = obj.data{:, obj.var.depvar};
+            end            
             % Handle panel
             if ~strcmpi(obj.settings.paneltype, 'none')
                 if isempty(obj.var.panel) || ~obj.isvar(obj.var.panel, obj.data)
                     error('var.panel has to be specified')
                 end
-                T = obj.data(:, [obj.var.panel, varlist] );
                 panel = strsplit(strtrim(obj.var.panel));
-                [~, ~,obj.panelid] =  unique(T{:, panel }); % Panelid should be created better
+                [~, ~,obj.panelid] =  unique(obj.data{:, panel }); % Panelid should be created better
             else
-                T = obj.data(:, varlist);             
             end
             % Do not add panel to T - requires rewriting Estimate.demean.
             % Can have log model here.
@@ -134,12 +135,12 @@ classdef Estimate  < matlab.mixin.Copyable
                 constant = [];
             else
                 obj.vars =[names.endog, names.exog, { 'constant'}];
-                constant = ones(size(T, 1), 1);
+                constant = ones(size(obj.data, 1), 1);
             end
             switch lower(obj.settings.paneltype)
                 case 'lsdv'
                     if isempty(obj.lsdv) || isempty(selection)
-                        obj.lsdv = dummyvar(grp2idx(T{:, panel } ));
+                        obj.lsdv = dummyvar(grp2idx(obj.data{:, panel } ));
                         obj.lsdv = obj.lsdv(:, sum(obj.lsdv)~=0 );
                         if ~obj.settings.nocons
                             obj.lsdv = obj.lsdv(:, 2:end);
@@ -155,20 +156,10 @@ classdef Estimate  < matlab.mixin.Copyable
                 otherwise
                     error('Unknown paneltype')
             end
-            if ~isempty(obj.var.depvar)
-                obj.y = T{:, obj.var.depvar};
-            end
             newvars = [constant, obj.lsdv];
-            if ~isempty(selection)
-                newvars = newvars(selection, :);
-                T = T(selection, :);
-                Torig = obj.data(selection, :);
-            else
-                Torig = obj.data;
-            end
-            obj.Xorig = [T{: , [names.endog, names.exog]}, newvars];
+            obj.Xorig = [obj.data{: , [names.endog, names.exog]}, newvars];
             if ~isempty(obj.var.instruments)
-                obj.Zorig = [Torig{: , [names.exog, names.instruments]}, newvars];
+                obj.Zorig = [obj.data{: , [names.exog, names.instruments]}, newvars];
             end
             if strcmpi(obj.settings.paneltype, 'fe')
                 obj.X = obj.demean(obj.Xorig);
@@ -178,9 +169,16 @@ classdef Estimate  < matlab.mixin.Copyable
                 obj.X = obj.Xorig;
                 obj.Z =  obj.Zorig;
             end
-            if any(isnan(table2array(T)))
-                warning('NaN occurs in data')
+            if ~isempty(selection)                
+                obj.X = obj.X(selection, :);
+                obj.y = obj.y(selection);
+                obj.Z = obj.Z(selection, :);
+                obj.Xorig = obj.Xorig(selection, :);
+                obj.Zorig = obj.Zorig(selection, :);
             end
+%             if any(isnan(table2array(T)))
+%                 warning('NaN occurs in data')
+%             end
         end
         
     end
