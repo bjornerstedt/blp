@@ -18,7 +18,6 @@ classdef Estimate  < matlab.mixin.Copyable
     end
     properties (SetAccess = protected, Hidden = true )
         vars  % vars to display in output      
-        dummyvars = []
         period % Cell array used for period / market calcs
         lsdv
     end
@@ -113,9 +112,6 @@ classdef Estimate  < matlab.mixin.Copyable
             else
                 names.endog = [];
             end
-            if ~isempty(obj.dummyvars)
-                names.exog = [names.exog,  obj.dummyvars.Properties.VariableNames];
-            end
             
             names = obj.initAdditional( names, selection);            
             varlist = [obj.var.depvar, names.endog, names.exog, names.instruments];
@@ -153,7 +149,6 @@ classdef Estimate  < matlab.mixin.Copyable
                         % screws up dummy count and numbering
                     end
                 case 'fe'
-                    T = obj.demean(T, varlist, panel);
                     obj.lsdv = [];
                 case 'none'
                     obj.lsdv = [];
@@ -163,7 +158,7 @@ classdef Estimate  < matlab.mixin.Copyable
             if ~isempty(obj.var.depvar)
                 obj.y = T{:, obj.var.depvar};
             end
-            newvars = [constant, obj.lsdv, obj.dummyvars];
+            newvars = [constant, obj.lsdv];
             if ~isempty(selection)
                 newvars = newvars(selection, :);
                 T = T(selection, :);
@@ -171,11 +166,17 @@ classdef Estimate  < matlab.mixin.Copyable
             else
                 Torig = obj.data;
             end
-            obj.Xorig = [Torig{: , [names.endog, names.exog]}, newvars];
-            obj.X = [T{: , [names.endog, names.exog]}, newvars];
+            obj.Xorig = [T{: , [names.endog, names.exog]}, newvars];
             if ~isempty(obj.var.instruments)
                 obj.Zorig = [Torig{: , [names.exog, names.instruments]}, newvars];
-                obj.Z = [T{: , [names.exog, names.instruments]}, newvars];
+            end
+            if strcmpi(obj.settings.paneltype, 'fe')
+                obj.X = obj.demean(obj.Xorig);
+                obj.y = obj.demean(obj.y);
+                obj.Z =  obj.demean(obj.Zorig);
+            else
+                obj.X = obj.Xorig;
+                obj.Z =  obj.Zorig;
             end
             if any(isnan(table2array(T)))
                 warning('NaN occurs in data')
@@ -190,15 +191,6 @@ classdef Estimate  < matlab.mixin.Copyable
             % Additional initialisation in subclasses
         end
                
-        function f = addDummy(obj, name)
-            dummy = array2table(dummyvar(obj.data{:,{name}}));
-            dummy.Properties.VariableNames = ...
-                arrayfun(@(x) {sprintf('%s%d', name, x)}, 1:size(dummy,2));
-            dummy(:,1) = [];
-            obj.dummyvars = [obj.dummyvars, dummy];
-            f = dummy;
-        end
-        
         function createVarcovar(obj, varcovar)
             varsel = 1:length(obj.vars );
             varcovar = array2table(varcovar(varsel, varsel) );
@@ -289,21 +281,21 @@ classdef Estimate  < matlab.mixin.Copyable
             varcovar = inv(X'*mid*X);
         end
        
-        function f  = demean(obj, T, vars, indexvars )
-        %DEMEAN Subtract average value of vars
-        %   The index variables are the variables averages are taken over.
-            [uniqueRows,~,rowIdx]=unique(obj.data{:,indexvars},'rows');
-            if length(vars) > 0
-                T = T( :, [indexvars vars]);
-            else
-                vars = T.Properties.VariableNames;
+        function mn  = demean(obj, data )
+        %DEMEAN Subtract the mean value of vars over panel
+            if istable(data)
+                data = table2array(data);
             end
-            B = varfun(@mean, T,'GroupingVariables', indexvars);
-            B =  B{rowIdx, length(indexvars)+2:end};
-            T(: , indexvars) = []; 
-            B = array2table(table2array(T) - B );
-            B.Properties.VariableNames = vars;
-            f = B;
+            if isempty(data)
+                mn = [];
+                return
+            end
+            mn = zeros(max(obj.panelid), size(data, 2));
+            for i = 1:size(data, 2)
+                mn(:, i) = accumarray(obj.panelid, data(:, i), [], @mean );
+            end
+            mn =  mn(obj.panelid, :);
+            mn = data - mn;
         end
         
         function cpObj = copyElement(obj)
@@ -357,20 +349,7 @@ classdef Estimate  < matlab.mixin.Copyable
             v = any(strcmp(x, y.Properties.VariableNames));
         end
         
-        function mn  = demean2(data, index )
-        %DEMEAN Subtract average value of vars
-        %   The index variables are the variables averages are taken over.
-            if istable(data)
-                data = table2array(data);
-            end
-            mn = zeros(max(index), size(data, 2));
-            for i = 1:size(data, 2)
-                mn(:, i) = accumarray(index, data(:, i) );
-            end
-            mn =  mn(index, :);
-            mn = data - mn;
-        end
-        
+       
         function R = mean(index, data)
             [~,~, index] = unique(index);
             R = accumarray(index, data);
