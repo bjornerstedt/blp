@@ -26,6 +26,19 @@ classdef Draws
                     error('Incorrect settings.drawmethod specification')
             end
         end
+        
+%         function obj = Draws(varargin)
+%             args = inputParser;
+%             args.addOptional('names',  @ischar)
+%             args.addParameter('selection',[], @islogical);
+%             args.addParameter('GroupingVariables', 'Firm', @ischar);
+%             args.addParameter('weights', [], @ischar);
+%             args.parse(names, varargin{:});
+%         end
+
+        
+    end
+    methods(Static)
                     
         function draws = mlhs( N, D, varargin)
             if nargin > 2 
@@ -88,7 +101,6 @@ classdef Draws
             end
         end
         
-    end
-    
+    end   
 end
 

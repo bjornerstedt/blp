@@ -142,7 +142,7 @@ classdef RCDemand < NLDemand
             while ~finished && i <= obj.config.restartMaxIterations 
                 [sigma,fval,exitflag] = fminunc(func, obj.sigma, options);
                 if obj.settings.optimalIV && fval > obj.config.restartFval || exitflag <= 0
-                    obj.get_sigma();
+                    obj.getSigma();
                     if exitflag <= 0
                         disp('Restarting as minimization did not converge.');
                     else
@@ -167,6 +167,11 @@ classdef RCDemand < NLDemand
                 f = 1e+10;
                 if nargout > 1
                     g = 1e+10;
+                end
+                disp('Negative deltas found at observations')
+                err = find(isnan(del));
+                if length(err) < 11
+                    disp(err)
                 end
             else
                 [~, xi] = obj.lpart(del);
@@ -353,7 +358,7 @@ classdef RCDemand < NLDemand
                 newmarket.v = [];
                 for k = 1:size(obj.x2, 2)
                     temp = obj.v(newmarket.selection,:,k);
-                    newmarket.v = temp(1,:); 
+                    newmarket.v(k,:) = temp(1,:); 
                 end
                 newmarket.init();
                 obj.period{t} = newmarket;
@@ -373,14 +378,18 @@ classdef RCDemand < NLDemand
                 obj.iweight = ones(obj.settings.nind, 1) / obj.settings.nind ;
                 if isempty(obj.draws) % Can be set manually
                     if obj.settings.marketdraws
-                        obj.draws = Draws.draw(obj.settings.drawmethod, ...
-                            K, max(obj.marketid) * obj.settings.nind, ...
+                        obj.draws = Draws.draw( ...
+                            obj.settings.drawmethod, ...
+                            K, ...
+                            max(obj.marketid) * obj.settings.nind, ...
                             obj.config.randstream);
                     else
                         obj.draws = Draws.draw(obj.settings.drawmethod, ...
                             K, obj.settings.nind, obj.config.randstream);
                     end
                 end
+% With nind=100 and k=2, obj.draws is 100x2. With marketdraws 
+% each market comes consecutively: with 20 products it is a 2000x2 matrix.
                 for k = 1:K
                     % For each k, create draws for each market - wk (nind x nmkt)
                     if obj.settings.marketdraws
@@ -389,15 +398,20 @@ classdef RCDemand < NLDemand
                     else
                         wk = repmat( obj.draws(:, k)', max(obj.marketid), 1);
                     end
+% For each k, wk is a repetition of column k of obj.draws for all markets. 
+% For marketdraws, reshaping each column and transposing gives wk
+
+% obj.v is simply repeating each row in wk for each product
+                    
                     % Duplicate draws for all products in each market
                     % Each k can have a different type of distribution
-                    if obj.nonlintype(k) == 0
+%                     if obj.nonlintype(k) == 0
                         obj.v(:,:,k) = wk(obj.marketid, :);
-                    elseif obj.nonlintype(k) == 1 % log-normal
-                        obj.v(:,:,k) = exp(wk(obj.marketid, :)); 
-                    elseif obj.nonlintype(k) == 2 % triangular
-                        obj.v(:,:,k) = Draws.triangular(wk(obj.marketid, :)); 
-                    end              
+%                     elseif obj.nonlintype(k) == 1 % log-normal
+%                         obj.v(:,:,k) = exp(wk(obj.marketid, :)); 
+%                     elseif obj.nonlintype(k) == 2 % triangular, does not work
+%                 %        obj.v(:,:,k) = Draws.triangular(wk(obj.marketid, :)); 
+%                     end              
                 end
             end
             if ~isempty(selection)

@@ -200,6 +200,12 @@ obj.alpha has to be set - simulation
 \end_layout
 
 \end_deeper
+\begin_layout Standard
+To calculate shares() NLDemand needs obj.d, obj.alpha, obj.sigma and corresponding
+ obj.var.nests.
+ The method initSimulation requires obj.nestlist to be set
+\end_layout
+
 \begin_layout Subsubsection
 Market class
 \end_layout
@@ -214,7 +220,12 @@ obj.var.firm and obj.demand have to be set
 \end_layout
 
 \begin_layout Enumerate
-From obj.demand, it gets
+Estimation requires obj.var.depvar to be set.
+ Not the best 
+\end_layout
+
+\begin_layout Enumerate
+From obj.demand, it copies
 \end_layout
 
 \begin_deeper
@@ -227,10 +238,6 @@ obj.demand.q
 \end_layout
 
 \begin_layout Enumerate
-obj.demand.share.s
-\end_layout
-
-\begin_layout Enumerate
 obj.demand.marketid
 \end_layout
 
@@ -240,6 +247,29 @@ obj.demand.panelid - not currently used, but can be used for panel estimates
 \end_layout
 
 \end_deeper
+\begin_layout Standard
+From the obj.demand object, it requires
+\end_layout
+
+\begin_layout Enumerate
+obj.demand.share.s (alt: obj.demand.actualDemand() )
+\end_layout
+
+\begin_layout Enumerate
+obj.demand.shares(p) where market number has been set in obj.demand.initSimulation(m
+arketnumber)
+\end_layout
+
+\begin_layout Enumerate
+obj.demand.shareJacobian([]) and obj.s(sel) in findCosts.
+ Invoke obj.demand.initSimulation(market_number) first to set market number.
+ This two step process is used to avoid repeated initialization of market
+\end_layout
+
+\begin_layout Enumerate
+obj.demand.shareJacobian( P ) and obj.demand.shares(pt)
+\end_layout
+
 \begin_layout Section
 Calibration of simulated market
 \end_layout

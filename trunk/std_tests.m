@@ -207,9 +207,10 @@ display '**********************  Test 9  *************************'
 
 m = SimMarket();
 m.demand = RCDemand;
-m.demand.var.nonlinear = 'p constant';
+m.demand.var.nonlinear = 'p x';
 m.demand.alpha = 1;
-m.demand.sigma = [0.1; 1];
+m.demand.sigma = [0.5; 1];
+m.demand.settings.nind = 500;
 
 % m.demand.settings.optimalIV = false;
 % m.model.endog = false;
@@ -221,7 +222,7 @@ m.create();
 display(m.model)
 
 results = m.estimate()
-SimMarket.testEqual(results{'rc_p','Coef'} , results{'rc_p', 'True_val'}, 1e-1 )
+SimMarket.testEqual(results{'rc_p','Coef'} , results{'rc_p', 'True_val'}, 3e-2 )
 
 m.findCosts()
 meanCosts = mean(m.data.c)
@@ -234,23 +235,24 @@ m = SimMarket();
 m.demand = RCDemand;
 m.demand.settings.drawmethod = 'quadrature';
 m.demand.alpha = 1;
-m.demand.sigma = .1;
+m.demand.sigma = [0.2; 1];
 
 m.demand.settings.paneltype = 'lsdv';
-m.demand.var.nonlinear = 'p';
+m.demand.var.nonlinear = 'p x';
 m.demand.var.instruments = 'nprod nprod2 c';
 m.demand.settings.optimalIV = true;
-
+m.model.gamma = 1;
 m.model.endog = true;
 m.model.randomProducts = true;
 m.model.markets = 200;
-% m.model.products = 5;
+m.demand.config.guessdelta = false;
+m.model.products = 5;
 m.create();
 display(m.model)
 
 results = m.estimate()
-SimMarket.testEqual(results{'rc_p','Coef'} , results{'rc_p', 'True_val'}, 4e-2 )
+SimMarket.testEqual(results{'rc_p','Coef'} , results{'rc_p', 'True_val'}, 2e-1 )
 
 m.findCosts()
 meanCosts = mean(m.data.c)
-SimMarket.testEqual( meanCosts ,  m.model.c, 1e-3 )
+SimMarket.testEqual( meanCosts ,  m.model.c, 1e-2 )
