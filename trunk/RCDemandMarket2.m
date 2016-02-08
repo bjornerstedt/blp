@@ -201,7 +201,6 @@ classdef RCDemandMarket2  < matlab.mixin.Copyable
                 obj.x2(:, obj.nonlinprice) = p;
                 % Can update just nonlinprice
                 for k = 1:size( obj.x2, 2)
-%                    obj.vx(:,:,k) = bsxfun(@times, obj.x2(:,k), obj.v);
                      obj.vx(:,:,k) = bsxfun(@times, obj.x2(:,k), obj.v(k,:));
                 end
             end

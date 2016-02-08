@@ -2,8 +2,7 @@ classdef RCDemand < NLDemand
     % Random Coefficient demand class
     %   Simulation of shares and estimation of parameters beta and sigma.
    
-%     properties (SetAccess = protected, Hidden = true )
-    properties (SetAccess = protected )
+    properties (SetAccess = protected, Hidden = true )
         draws % Random draws (nind, nmkt, k) matrix k = # random params. 
         W
         x2 % nonlinear parameter vector
@@ -302,7 +301,7 @@ classdef RCDemand < NLDemand
                     obj.nonlinparams = [obj.nonlinparams, params];
                 end
             end
-            if isempty(obj.var.nonlinear)
+            if isempty(obj.nonlinparams)
                 error('Some variable has to be specified as nonlinear');
             end
             obj.getSigma();
@@ -312,6 +311,7 @@ classdef RCDemand < NLDemand
             nonlinprice = strcmp(obj.var.price, obj.nonlinparams);
             if any(nonlinprice) 
                 % For CES, logprice rather than price.
+                % Does not work for FE!!!
                 obj.x2(:, nonlinprice) = obj.p;
             end
             obj.randdraws();
@@ -343,7 +343,6 @@ classdef RCDemand < NLDemand
         
         function initPeriods(obj)
             md = RCDemandMarket(obj);
-            md.iweight = obj.draws.weights;
             obj.period = cell(max(obj.marketid), 1);
             for t = 1:max(obj.marketid)
                 newmarket = copy(md);
@@ -357,10 +356,9 @@ classdef RCDemand < NLDemand
                 end
                 newmarket.p = obj.p(newmarket.selection, 1);
                 newmarket.v = [];
-                if obj.settings.marketdraws
-                    newmarket.v = obj.draws.draws(:,:,t); 
-                else
-                    newmarket.v = obj.draws.draws; 
+                for k = 1:size(obj.x2, 2)
+                    temp = obj.v(newmarket.selection,:,k);
+                    newmarket.v(k,:) = temp(1,:); 
                 end
                 newmarket.init();
                 obj.period{t} = newmarket;
@@ -368,29 +366,61 @@ classdef RCDemand < NLDemand
         end
             
         function randdraws(obj)
-            % randdraws can only be run once, in order to 
-            if ~isempty(obj.draws)
-                return
-            end
+            K = size(obj.x2, 2); % Number of variables
+            obj.v = [];
             if strcmpi(obj.settings.drawmethod, 'quadrature')
-                obj.settings.marketdraws = false;
-                K = size(obj.x2, 2); % Number of variables
-                obj.draws = Draws('Accuracy', obj.settings.quaddraws);
-                obj.draws.quadrature(K, obj.settings.quaddraws);
+                [X, obj.iweight] = nwspgr('KPN', K, obj.settings.quaddraws);
                 obj.settings.nind = length(obj.iweight);
-            else
-                if obj.settings.marketdraws
-                    markets = max(obj.marketid);
-                else
-                    markets = 1;
+                for k = 1:K
+                    obj.v(:,:,k) = repmat(X(:,k)', size(obj.x2, 1), 1);
                 end
-                obj.draws = Draws('DrawMethod', obj.settings.drawmethod,... 
-                'Markets', markets, 'Individuals', obj.settings.nind,...
-                'RandStream', obj.config.randstream);
-                 obj.draws.draw( size(obj.x2, 2) );
+            else
+                % Inputs: method, K, nind, markets, marketdraws, randstream
+                % Outputs: iweight, v
+                markets = max(obj.marketid);
+                nind = obj.settings.nind;
+                method = obj.settings.drawmethod;
+                
+                obj.iweight = ones(nind, 1) / nind ;
+                if obj.settings.marketdraws
+                    draws = Draws.draw( ...
+                        method, ...
+                        K, ...
+                        markets * nind, ...
+                        obj.config.randstream);
+                else
+                    draws = Draws.draw(method, ...
+                        K, nind, obj.config.randstream);
+                end
+% With nind=100 and k=2, obj.draws is 100x2. With marketdraws 
+% each market comes consecutively: with 20 products it is a 2000x2 matrix.
+% Draws are done by individuals and markets for each k
+                for k = 1:K
+                    % For each k, create draws for each market - wk (nind x nmkt)
+                    if obj.settings.marketdraws
+                        wk = reshape( draws(:, k), nind, ...
+                            markets)';
+                    else
+                        wk = repmat( draws(:, k)', markets, 1);
+                    end
+% For each k, wk is a repetition of column k of obj.draws for all markets. 
+% For marketdraws, reshaping each column and transposing gives wk
+
+% obj.v is simply repeating each row in wk for each product
+                    
+                    % Duplicate draws for all products in each market
+                    % Each k can have a different type of distribution
+%                     if obj.nonlintype(k) == 0
+                        obj.v(:,:,k) = wk(obj.marketid, :);
+%                     elseif obj.nonlintype(k) == 1 % log-normal
+%                         obj.v(:,:,k) = exp(wk(obj.marketid, :)); 
+%                     elseif obj.nonlintype(k) == 2 % triangular, does not work
+%                 %        obj.v(:,:,k) = Draws.triangular(wk(obj.marketid, :)); 
+%                     end              
+                end
             end
         end
-    
+        
         function initquadrature0(obj)
             % This function is from revision 110 to generate and integrate
             % K different quadratures with weighting

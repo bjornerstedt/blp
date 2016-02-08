@@ -254,7 +254,6 @@ classdef SimMarket < matlab.mixin.Copyable
         end
         
         function mr = simulateDemand(obj, varargin)
-            obj.simDemand.init();
             if nargin > 1
                 obj.market.demand = varargin{1};
             else

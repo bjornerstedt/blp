@@ -1,66 +1,86 @@
-classdef Draws
+classdef Draws < matlab.mixin.Copyable
     %SAMPLING Various sampling methods
     %   General methods with static invocation
-    
-    methods(Static)
-        function w = draw(method, N, draws, varargin)
-            if nargin > 2 
-                rs = varargin{1};
-            else
-                rs = [];
-            end
-            switch lower(method)
-                case 'hypercube'
-                    w = Sampling.mlhs(draws, N, rs);
+    properties
+        settings
+        
+        names
+        draws
+        weights
+    end
+    methods
+        function draw(obj, K)
+            nind = obj.settings.individuals;
+            obj.weights = ones(nind, 1) / nind ;
+            drawcount = nind * obj.settings.markets;
+            rs = obj.settings.randstream;
+            switch lower(obj.settings.drawmethod)
+                 case 'hypercube'
+                    dm = Draws.mlhs(drawcount, K, rs);
                 case 'halton'
-                    w = Sampling.halton(N, draws);
+                    dm = Draws.halton(K, drawcount);
                 case 'halton2'
-                    w = Sampling.drawhalton(N, draws);
+                    dm = Draws.drawhalton(K, drawcount);
                 case 'random'
                     if isempty(rs)
-                        w = randn(draws, N);
+                        dm = randn(drawcount, K);
                     else
-                        w = rs.randn(draws, N);
+                        dm = rs.randn(drawcount, K);
                     end
                 otherwise
                     error('Incorrect settings.drawmethod specification')
             end
+            dm = dm';
+            if obj.settings.markets > 1
+                obj.draws = [];
+                for t = 1:obj.settings.markets
+                    obj.draws(:, :, t) = dm(: , (t - 1)*nind + (1:nind));
+                end
+            else
+                obj.draws = dm;
+            end
         end
         
-%         function obj = Draws(varargin)
-%             args = inputParser;
-%             args.addOptional('names',  @ischar)
-%             args.addParameter('selection',[], @islogical);
-%             args.addParameter('GroupingVariables', 'Firm', @ischar);
-%             args.addParameter('weights', [], @ischar);
-%             args.parse(names, varargin{:});
-%         end
-
+        function quadrature(obj, K, acc)
+            [X, obj.weights] = nwspgr('KPN', K, acc);
+            obj.draws = X';
+        end
+        
+        function obj = Draws(varargin)
+            args = inputParser;
+            args.addParameter('drawmethod', 'hypercube', @ischar);
+            args.addParameter('accuracy', 7, @isnumeric);
+            args.addParameter('individuals', 300, @isnumeric);
+            args.addParameter('markets', 1, @isnumeric);
+            args.addParameter('randstream', []);
+            args.parse(varargin{:});
+            obj.settings = args.Results;
+        end
         
     end
     methods(Static)
-                    
-        function draws = mlhs( N, D, varargin)
+                            
+        function draws = mlhs( K, D, varargin)
             if nargin > 2 
                 rs = varargin{1};
             else
                 rs = [];
             end
             if ~isempty(rs)
-                ordereddraws = zeros(N,D);
-                shuffleddraws = zeros(N,D);
+                ordereddraws = zeros(K,D);
+                shuffleddraws = zeros(K,D);
                 for i = 1:D
-                    ordereddraws(:,i) = ((1:N)-1)/N + rs.rand()/N;
-                    shuffle = rs.randperm(N);
+                    ordereddraws(:,i) = ((1:K)-1)/K + rs.rand()/K;
+                    shuffle = rs.randperm(K);
                     shuffleddraws(:,i) = ordereddraws(shuffle,i);
                 end
                 draws = norminv(shuffleddraws);
             else
-                ordereddraws = zeros(N,D);
-                shuffleddraws = zeros(N,D);
+                ordereddraws = zeros(K,D);
+                shuffleddraws = zeros(K,D);
                 for i = 1:D
-                    ordereddraws(:,i) = ((1:N)-1)/N + rand()/N;
-                    shuffle = randperm(N);
+                    ordereddraws(:,i) = ((1:K)-1)/K + rand()/K;
+                    shuffle = randperm(K);
                     shuffleddraws(:,i) = ordereddraws(shuffle,i);
                 end
                 draws = norminv(shuffleddraws);

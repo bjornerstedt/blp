@@ -182,20 +182,20 @@ for d = 1:2
 
         m.estDemand.settings.paneltype = paneltype{i};
         results{i} = m.estimate();
+        display(results{1})
+        display(results{2})
         market = Market(m.estDemand);
         market.var.firm = 'productid';
        
         display 'Test that mean calculated costs are close to actual'
         market.findCosts( );
-         SimMarket.testEqual(mean(m.data.c), mean(market.c), 1e-1)
+        SimMarket.testEqual(mean(m.data.c), mean(market.c), 1e-1)
         
         display 'Test that mean equilibrium prices are close to starting vals'
         market.equilibrium( )
         SimMarket.testEqual(mean(m.data.p), mean(market.p), 1e-4)
     end
     display '*********** Results of LSDV and FE estimation **************'
-    disp(results{1})
-    disp(results{2})
     display '************************************************************'
     % Loop over cols and rows
     SimMarket.testEqual(results{1}{'p','Coef'}, results{2}{'p','Coef'}, 1e-4)
@@ -211,9 +211,6 @@ m.demand.var.nonlinear = 'p x';
 m.demand.alpha = 1;
 m.demand.sigma = [0.5; 1];
 m.demand.settings.nind = 500;
-
-% m.demand.settings.optimalIV = false;
-% m.model.endog = false;
 
 % Increase in number of observations to get significance
 m.model.markets = 200;
