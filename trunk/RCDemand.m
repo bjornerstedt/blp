@@ -362,9 +362,9 @@ classdef RCDemand < NLDemand
                 newmarket.p = obj.p(newmarket.selection, 1);
                 newmarket.v = [];
                 if obj.settings.marketdraws
-                    newmarket.v = obj.draws.draws(:,:,t); 
+                    newmarket.v = obj.draws.draws(:,:,t)'; 
                 else
-                    newmarket.v = obj.draws.draws; 
+                    newmarket.v = obj.draws.draws'; 
                 end
                 newmarket.init();
                 obj.period{t} = newmarket;

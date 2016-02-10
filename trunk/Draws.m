@@ -12,7 +12,38 @@ classdef Draws < matlab.mixin.Copyable
         weights
     end
     methods
-        function [dm, wt] = generate(obj, distribution, K)
+        function [dm, wt] = generate(obj, varTypes, K)
+            function d = normalDist(d)
+                d = norminv(d);
+                % Truncation previously only used by halton
+                truncdist = 10;
+                d(d > truncdist) = truncdist;
+                d(d < -truncdist) = -truncdist;
+            end
+            function d = uniformDist(d)
+                % Draws should have zero expectation and variance 1
+                d = 2*sqrt(3) * (d - 1/2);
+            end
+            function d = triangularDist( d)
+                % Symmetric triangular distribution
+                low = sqrt(6) * ( sqrt(2 * d) - 1 );
+                high = sqrt(6) * ( 1 - sqrt(2 * (1 - d)) );
+                low(d >= 0.5) = 0;
+                high(d < 0.5) = 0;
+                d = high + low;
+            end
+            function d = logisticDist(d)
+                d = -sqrt(3)/pi * log(1 ./ d - 1);
+            end
+            function d = lognormalDist(d)
+                d = norminv(d);
+                mu2 = (1 + sqrt(5))/2;
+                sigma = sqrt(log(mu2));
+                d =  exp(sigma * d) - sqrt(mu2);
+            end
+            invCDF = {@normalDist, @uniformDist, [], ... 
+                @triangularDist, @logisticDist, @lognormalDist};
+            
             nind = obj.settings.individuals;
             wt = ones(nind, 1) / nind ;
             drawcount = nind * obj.settings.markets;
@@ -22,18 +53,27 @@ classdef Draws < matlab.mixin.Copyable
                     dm = Draws.mlhs(drawcount, K, rs);
                 case 'halton'
                     dm = Draws.halton(drawcount, K);
-                case 'halton2'
-                    dm = Draws.drawhalton(drawcount, K);
                 case 'random'
-                    % Note that these are normal rather than uniform draws
                     if isempty(rs)
-                        dm = randn(drawcount, K);
+                        dm = rand(drawcount, K);
                     else
-                        dm = rs.randn(drawcount, K);
+                        dm = rs.rand(drawcount, K);
                     end
                 otherwise
                     error('Incorrect settings.drawmethod specification')
             end
+            % Transform uniform to distribution using inverse CDF
+            if isempty(varTypes)
+                dm = normalDist(dm);
+            else
+                dn = zeros(size(dm));
+                for i = 1:length(varTypes)
+                    func = invCDF{varTypes{i}};
+                    dn(:, i) = func(dm(:, i));
+                end
+                dm = dn;
+            end
+            % Market draws
             if obj.settings.markets > 1
                 obj.draws = [];
                 for t = 1:obj.settings.markets
@@ -51,11 +91,11 @@ classdef Draws < matlab.mixin.Copyable
                 otherwise
                     error('Method not supported for quadrature.')
             end
-            [X, wt] = nwspgr(distmeth, K, obj.settings.accuracy);
+            [dm, wt] = nwspgr(distmeth, K, obj.settings.accuracy);
             if distribution == 2
                 % Standardize uniform distribution
+                dm = 2*sqrt(3) * (dm - 1/2);
             end
-            dm = X;
         end
         
         function [dm, wt] = empiricalDraws(obj, drwt)
@@ -75,9 +115,8 @@ classdef Draws < matlab.mixin.Copyable
             if strcmpi(obj.settings.drawmethod, 'quadrature')
                 [obj.draws, obj.weights] = obj.quadrature( 1, K);
             else
-                [obj.draws, obj.weights] = obj.generate( 1, K);
+                [obj.draws, obj.weights] = obj.generate( [], K);
             end
-            obj.draws = obj.draws';
         end
         
         function create(obj)
@@ -110,7 +149,7 @@ classdef Draws < matlab.mixin.Copyable
                         varTypes = [varTypes, repmat(speci(2), size(speci(1)))];
                     end
                 end
-                [dl{1, 1}, dl{1, 2}] = obj.generate( 2, length(vars) );
+                [dl{1, 1}, dl{1, 2}] = obj.generate( varTypes, length(vars) );
             end
             % Put in a local function and invoke for each quad/rand
             obj.draws = dl{1, 1};
@@ -120,23 +159,25 @@ classdef Draws < matlab.mixin.Copyable
                     obj.draws, obj.weights, dl{i, 1}, dl{i, 2});
             end
             % Market draws comes here
-            obj.draws = obj.draws';
         end
         
         function names = parse(obj, spec)
-            distnames = {'normal', 'uniform', 'empirical'};
-            if isstr(spec)
+            distnames = {'normal', 'uniform', 'empirical', 'triangular', ...
+                'logistic', 'lognormal'};
+            if ischar(spec) 
                 names = strsplit(strtrim(spec));
                 obj.names = names;
             elseif iscell(spec)
-                % Handle random draws differently: combine all but
-                % empirical to uniform, and inverse map CDF on each based
-                % on some kind of list.
+                % With one dist type convert to nested cell array if it is
+                % not:
+                if ischar(spec{1})
+                    spec = {spec};
+                end
                 names = {};
                 for i = 1:length(spec)
                     speci = spec{i};
-                    namesi = strsplit(strtrim(speci{1}));
-                    names =[ names, namesi];
+                    speci{1} = strsplit(strtrim(speci{1}));
+                    names =[ names, speci{1}];
                     if length(speci) == 1
                         speci{2} = 1;
                     else
@@ -167,7 +208,7 @@ classdef Draws < matlab.mixin.Copyable
     end
     methods(Static)
                             
-        function draws = mlhs( N, K, varargin)
+        function shuffleddraws = mlhs( N, K, varargin)
             if nargin > 2 
                 rs = varargin{1};
             else
@@ -181,7 +222,6 @@ classdef Draws < matlab.mixin.Copyable
                     shuffle = rs.randperm(N);
                     shuffleddraws(:,i) = ordereddraws(shuffle,i);
                 end
-                draws = norminv(shuffleddraws);
             else
                 ordereddraws = zeros(N,K);
                 shuffleddraws = zeros(N,K);
@@ -190,25 +230,12 @@ classdef Draws < matlab.mixin.Copyable
                     shuffle = randperm(N);
                     shuffleddraws(:,i) = ordereddraws(shuffle,i);
                 end
-                draws = norminv(shuffleddraws);
             end
         end
-        
-        function draws = triangular( unif)
-            low = sqrt(6)*(sqrt(2*unif) - 1);
-            high = sqrt(6)*(1 - sqrt(2*(1 - unif)) );
-            low(unif>=0.5) = 0;
-            high(unif<0.5) = 0;
-            draws = high+low;
-        end
-        
+                
         function w = halton( draws, vars)
-            truncdist = 10;
             hs = haltonset( vars, 'Skip', 10);
             w = net(hs, draws);
-            w = norminv(w);
-            w(w > truncdist) = truncdist;
-            w(w < -truncdist) = -truncdist;
         end
 
         function [X, W] = gridCombine(X1, W1, X2, W2)
@@ -241,23 +268,6 @@ classdef Draws < matlab.mixin.Copyable
                 quadw = quadw .* reshape(wt, 1, N^K);
             end
             quadw = quadw'; % Facilitates weighted sum
-        end
-        
-        % Replication of Mathias draws
-        function hm = drawhalton(draws, vars)
-            prim = [109 11 101 11 13 103 41 43 47 79 97 73 107 ...
-                89 3 7 13 17 19 23 29 31 37 53 59 61 67 71 83 113];
-            % prim=[2 3 5];
-            hm=[];
-            for h = 1:vars
-                hm1=halton(10+(draws), prim(h));
-                hm1=norminv(hm1);
-                %CENSOR normal halton draws to 10 and -10
-                hm1=hm1.*(hm1 <= 10)+10.*(hm1>10);
-                hm1=hm1.*(hm1 >= -10)-10.*(hm1<-10);
-                help=hm1(11:size(hm1,1),1);
-                hm=[hm reshape(help',draws,1)];
-            end
         end
         
     end   

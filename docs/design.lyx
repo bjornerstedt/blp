@@ -369,5 +369,291 @@ Negative costs can also arise due to variability in
 .
 \end_layout
 
+\begin_layout Section
+Distributions and draws
+\end_layout
+
+\begin_layout Standard
+Distributions are generated from random draws using the inverse CDF.
+\end_layout
+
+\begin_layout Subsection
+Logistic distribution
+\end_layout
+
+\begin_layout Standard
+For the logistic distribution, we have the CDF:
+\begin_inset Formula 
+\[
+y=\frac{1}{1+e^{-\frac{x-\mu}{s}}}
+\]
+
+\end_inset
+
+ where the variance is given by 
+\begin_inset Formula 
+\[
+\frac{s^{2}\pi^{2}}{3}
+\]
+
+\end_inset
+
+In order for the variance to be 1, we have 
+\begin_inset Formula $\mu=0$
+\end_inset
+
+ and 
+\begin_inset Formula 
+\[
+s=\frac{\sqrt{3}}{\pi}
+\]
+
+\end_inset
+
+It has skewness 0 and kurtosis 1.2.
+ Inverting the CDF
+\begin_inset Formula 
+\[
+x=-log\left(\frac{1}{y}-1\right)\frac{\sqrt{3}}{\pi}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Triangular distribution
+\end_layout
+
+\begin_layout Standard
+Let the triangular distribution have a support 
+\begin_inset Formula $\left[a,b\right]$
+\end_inset
+
+ with a max at 
+\begin_inset Formula $c$
+\end_inset
+
+.
+ The CDF at b has to be 1, which implies that the height is given by:
+\begin_inset Formula 
+\[
+\left(c-a\right)h+\left(b-c\right)h=2
+\]
+
+\end_inset
+
+ and thus 
+\begin_inset Formula 
+\[
+h=\frac{2}{b-a}
+\]
+
+\end_inset
+
+Let 
+\begin_inset Formula $c=\left(b-a\right)/2$
+\end_inset
+
+.
+ Then the mean is 0 if 
+\begin_inset Formula $a=-b$
+\end_inset
+
+ and 
+\begin_inset Formula $c=0$
+\end_inset
+
+ 
+\begin_inset Formula 
+\[
+\frac{a+b+c}{3}=\frac{a+b}{2}
+\]
+
+\end_inset
+
+and the variance is 1
+\begin_inset Formula 
+\[
+\frac{a^{2}+b^{2}+c^{2}-ab-ac-bc}{18}=1
+\]
+
+\end_inset
+
+if 
+\begin_inset Formula $b=\sqrt{6}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+The CDF is given by
+\begin_inset Formula 
+\[
+\frac{\left(x-a\right)^{2}}{\left(b-a\right)\left(c-a\right)}=\frac{\left(x+b\right)^{2}}{2b^{2}}
+\]
+
+\end_inset
+
+for 
+\begin_inset Formula $-b\le x\le0$
+\end_inset
+
+ and 
+\begin_inset Formula 
+\[
+1-\frac{\left(b-x\right)^{2}}{\left(b-a\right)\left(b-c\right)}=1-\frac{\left(b-x\right)^{2}}{2b^{2}}
+\]
+
+\end_inset
+
+ for positive 
+\begin_inset Formula $x$
+\end_inset
+
+.
+ At 
+\begin_inset Formula $x=0$
+\end_inset
+
+, the CDF has the value 1/2.
+ The inverse CDF for 
+\begin_inset Formula $y<1/2$
+\end_inset
+
+ is given by
+\begin_inset Formula 
+\[
+x^{2}=\sqrt{2}b\sqrt{y}-b=\sqrt{12y}-\sqrt{6}
+\]
+
+\end_inset
+
+and for 
+\begin_inset Formula $y<1/2$
+\end_inset
+
+ it is
+\begin_inset Formula 
+\[
+x=b-\sqrt{2}b\sqrt{1-y}=\sqrt{6}-\sqrt{12\left(1-y\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Log-normal distribution
+\end_layout
+
+\begin_layout Standard
+The standard normal distribution CDF can be expressed as
+\begin_inset Formula 
+\[
+y=\frac{1}{2}+\frac{1}{2}\mathrm{erf}\left[\frac{x}{\sqrt{2}}\right]=C\left[x\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The log-normal distribution has a CDF 
+\begin_inset Formula 
+\[
+y=\frac{1}{2}+\frac{1}{2}\mathrm{erf}\left[\frac{\log x-\mu}{\sqrt{2}\sigma}\right]=C\left[\frac{\log x-\mu}{\sigma}\right]
+\]
+
+\end_inset
+
+The inverse is given by:
+\begin_inset Formula 
+\[
+y=C\left[\frac{\log x}{\sigma}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+It has mean, setting 
+\begin_inset Formula $\mu=0$
+\end_inset
+
+ 
+\begin_inset Formula 
+\[
+e^{\mu+\sigma^{2}/2}=e^{\sigma^{2}/2}
+\]
+
+\end_inset
+
+and variance
+\begin_inset Formula 
+\[
+\left(e^{\sigma^{2}}-1\right)e^{2\mu+\sigma^{2}}=\left(e^{\sigma^{2}}-1\right)e^{\sigma^{2}}=\left(e^{\sigma^{2}}-1\right)e^{\sigma^{2}}=1
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The polynomial 
+\begin_inset Formula $z^{2}-z-1=0$
+\end_inset
+
+ has a positive solution 
+\begin_inset Formula $\frac{1+\sqrt{5}}{2}$
+\end_inset
+
+, and thus 
+\begin_inset Formula $\sigma$
+\end_inset
+
+ satisfies
+\begin_inset Formula 
+\[
+e^{\sigma^{2}}=\frac{1+\sqrt{5}}{2}
+\]
+
+\end_inset
+
+ and 
+\begin_inset Formula 
+\[
+\sigma=\sqrt{\log\left(\frac{1+\sqrt{5}}{2}\right)}
+\]
+
+\end_inset
+
+To get mean zero, we have to subtract the mean as given above:
+\begin_inset Formula 
+\[
+e^{\sigma^{2}/2}=\left(\frac{1+\sqrt{5}}{2}\right)^{1/2}
+\]
+
+\end_inset
+
+The inverse CDF is given by:
+\begin_inset Formula 
+\[
+x=e^{\sigma C^{-1}\left(y\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
 \end_body
 \end_document
