@@ -289,45 +289,49 @@ classdef RCDemand < NLDemand
         function init(obj, varargin)
             % init(data, selection) - both arguments optional    
             selection = init@NLDemand(obj, varargin{:});
-            obj.nonlinparams = [];
-            obj.nonlintype = [];
-            nonlin = {obj.var.nonlinear, obj.var.nonlinearlogs, ...
-                obj.var.nonlineartriangular};
-%             for i = 1:length(nonlin)
-            for i = 1:1 % HACK !!!!!!!!!!!!!!!!
-                nvars = strtrim(nonlin{i});
-                if ~isempty(nvars)
-                    params = strsplit(nvars);
-                    obj.nonlintype = ones(length(params),1)*(i - 1);
-                    obj.nonlinparams = [obj.nonlinparams, params];
-                end
+            % randdraws can only be run once, in order to not get new draws
+            % in simulation after estimation
+            if isempty(obj.draws)
+                obj.randdraws();
             end
-            if isempty(obj.var.nonlinear)
-                error('Some variable has to be specified as nonlinear');
-            end
-            obj.getSigma();
             obj.vars2 = ...
                 cellfun(@(x) {sprintf('rc_%s', x)}, obj.nonlinparams );
             obj.x2 = obj.data{:, obj.nonlinparams };
             nonlinprice = strcmp(obj.var.price, obj.nonlinparams);
-            if any(nonlinprice) 
-                % For CES, logprice rather than price.
-                obj.x2(:, nonlinprice) = obj.p;
+            if any(nonlinprice) && obj.settings.ces
+                obj.x2(:, nonlinprice) = log(obj.data{:, obj.var.price});
             end
-            obj.randdraws();
             if ~isempty(selection)
                 obj.x2 = obj.x2(selection, :); 
             end
             obj.initPeriods();
         end
         
+        function randdraws(obj)
+            if obj.settings.marketdraws
+                markets = max(obj.marketid);
+            else
+                markets = 1;
+            end
+            obj.draws = Draws('DrawMethod', obj.settings.drawmethod,...
+                'Markets', markets, 'Individuals', obj.settings.nind,...
+                'Accuracy', obj.settings.quaddraws, ...
+                'RandStream', obj.config.randstream);
+            if isempty(obj.var.nonlinear)
+                error('Some variable has to be specified as nonlinear');
+            end
+            obj.nonlinparams = obj.draws.parse( obj.var.nonlinear);
+            obj.getSigma();
+            obj.draws.create( );
+        end
+        
         function getSigma(obj)
-            % Only run once
+            % Only run once, but why? Remove in cleaning obj.sigm
             if isempty(obj.sigma)
                 if ~isempty(obj.settings.sigma0)
                     obj.sigma = obj.settings.sigma0;
                 elseif isempty(obj.config.randstream)
-                    obj.sigma = randn(length(obj.nonlinparams),1);
+                    obj.sigma = randn(length(obj.nonlinparams), 1);
                 else
                     obj.sigma = obj.config.randstream.randn(length(obj.nonlinparams),1);
                 end
@@ -366,58 +370,7 @@ classdef RCDemand < NLDemand
                 obj.period{t} = newmarket;
             end
         end
-            
-        function randdraws(obj)
-            % randdraws can only be run once, in order to 
-            if ~isempty(obj.draws)
-                return
-            end
-            if strcmpi(obj.settings.drawmethod, 'quadrature')
-                obj.settings.marketdraws = false;
-                K = size(obj.x2, 2); % Number of variables
-                obj.draws = Draws('Accuracy', obj.settings.quaddraws);
-                obj.draws.quadrature(K, obj.settings.quaddraws);
-                obj.settings.nind = length(obj.iweight);
-            else
-                if obj.settings.marketdraws
-                    markets = max(obj.marketid);
-                else
-                    markets = 1;
-                end
-                obj.draws = Draws('DrawMethod', obj.settings.drawmethod,... 
-                'Markets', markets, 'Individuals', obj.settings.nind,...
-                'RandStream', obj.config.randstream);
-                 obj.draws.draw( size(obj.x2, 2) );
-            end
-        end
-    
-        function initquadrature0(obj)
-            % This function is from revision 110 to generate and integrate
-            % K different quadratures with weighting
-            K = size(obj.x2, 2); % Number of variables
-            N = obj.settings.quaddraws; % Number of samples
-            if obj.config.hermquad
-                [X,W] = hermquad(N);
-            else
-                [X,W] = nwspgr('GQN', 1, N);
-            end
-            obj.v = [];
-            obj.vx = [];
-            obj.quadw = ones( 1, N^K);
-            for j = 1:K
-                vt = repmat(X', N^(K-j), N^(j-1) );
-                vrow = reshape(vt, 1, N^K);
-                obj.v(:,:,j) = repmat(vrow, size(obj.x2, 1) ,1);
-                wt = repmat(W', N^(K-j), N^(j-1) );
-                obj.quadw = obj.quadw .* reshape(wt, 1, N^K);
-            end
-            obj.quadw = obj.quadw'; % Facilitates weighted sum
-            
-            for k = 1:size(obj.x2, 2)
-                obj.vx(:,:,k) = bsxfun(@times, obj.x2(:,k), obj.v(:,:,k));
-            end
-        end
-        
+              
         function initSimulation(obj, market)
             % General init, move to estimate? Should NestedLogit have
             % similar code?
