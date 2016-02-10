@@ -43,42 +43,41 @@ classdef Draws < matlab.mixin.Copyable
             end
             invCDF = {@normalDist, @uniformDist, [], ... 
                 @triangularDist, @logisticDist, @lognormalDist};
+            % Transform uniform to distribution using inverse CDF
+            function dm = invTransform(dm)
+                if isempty(varTypes)
+                    dm = normalDist(dm);
+                else
+                    for i = 1:length(varTypes)
+                        func = invCDF{varTypes{i}};
+                        dm(:, i) = func(dm(:, i));
+                    end
+                end
+            end
             
             nind = obj.settings.individuals;
             wt = ones(nind, 1) / nind ;
-            drawcount = nind * obj.settings.markets;
-            rs = obj.settings.randstream;
             switch lower(obj.settings.drawmethod)
                 case 'hypercube'
-                    dm = Draws.mlhs(drawcount, K, rs);
+                    dm = obj.mlhs(nind, K);
                 case 'halton'
-                    dm = Draws.halton(drawcount, K);
+                    dm = Draws.halton(nind, K);
                 case 'random'
-                    if isempty(rs)
-                        dm = rand(drawcount, K);
-                    else
-                        dm = rs.rand(drawcount, K);
-                    end
+                    dm = obj.random(nind, K);
                 otherwise
                     error('Incorrect settings.drawmethod specification')
             end
-            % Transform uniform to distribution using inverse CDF
-            if isempty(varTypes)
-                dm = normalDist(dm);
-            else
-                dn = zeros(size(dm));
-                for i = 1:length(varTypes)
-                    func = invCDF{varTypes{i}};
-                    dn(:, i) = func(dm(:, i));
-                end
-                dm = dn;
-            end
             % Market draws
             if obj.settings.markets > 1
-                obj.draws = [];
+                dn = [];
+                dsh = rand(obj.settings.markets, size(dm, 2));
                 for t = 1:obj.settings.markets
-                    obj.draws(:, :, t) = dm(:, (t - 1)*nind + (1:nind));
+                    nv = bsxfun(@plus, dm, dsh(t, :));
+                    dn(:, :, t) = invTransform(nv - floor(nv));
                 end
+                dm = dn;
+            else
+                dm = invTransform(dm);
             end
         end
                 
@@ -107,6 +106,36 @@ classdef Draws < matlab.mixin.Copyable
             if abs(sum(wt) - 1) > 1e-6
                  error('Weights must be frequencies summing to 1')
             end 
+        end
+        
+        function dm = random(obj, N, K)
+            rs = obj.settings.randstream;
+            if isempty(rs)
+                dm = rand(N, K);
+            else
+                dm = rs.rand(N, K);
+            end
+        end
+        
+        function shuffleddraws = mlhs(obj, N, K)
+            rs = obj.settings.randstream;
+            if ~isempty(rs)
+                ordereddraws = zeros(N,K);
+                shuffleddraws = zeros(N,K);
+                for i = 1:K
+                    ordereddraws(:,i) = ((1:N)-1)/N + rs.rand()/N;
+                    shuffle = rs.randperm(N);
+                    shuffleddraws(:,i) = ordereddraws(shuffle,i);
+                end
+            else
+                ordereddraws = zeros(N,K);
+                shuffleddraws = zeros(N,K);
+                for i = 1:K
+                    ordereddraws(:,i) = ((1:N)-1)/N + rand()/N;
+                    shuffle = randperm(N);
+                    shuffleddraws(:,i) = ordereddraws(shuffle,i);
+                end
+            end
         end
         
         function create2(obj)
@@ -207,32 +236,7 @@ classdef Draws < matlab.mixin.Copyable
         
     end
     methods(Static)
-                            
-        function shuffleddraws = mlhs( N, K, varargin)
-            if nargin > 2 
-                rs = varargin{1};
-            else
-                rs = [];
-            end
-            if ~isempty(rs)
-                ordereddraws = zeros(N,K);
-                shuffleddraws = zeros(N,K);
-                for i = 1:K
-                    ordereddraws(:,i) = ((1:N)-1)/N + rs.rand()/N;
-                    shuffle = rs.randperm(N);
-                    shuffleddraws(:,i) = ordereddraws(shuffle,i);
-                end
-            else
-                ordereddraws = zeros(N,K);
-                shuffleddraws = zeros(N,K);
-                for i = 1:K
-                    ordereddraws(:,i) = ((1:N)-1)/N + rand()/N;
-                    shuffle = randperm(N);
-                    shuffleddraws(:,i) = ordereddraws(shuffle,i);
-                end
-            end
-        end
-                
+                                          
         function w = halton( draws, vars)
             hs = haltonset( vars, 'Skip', 10);
             w = net(hs, draws);

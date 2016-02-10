@@ -123,9 +123,10 @@ classdef RCDemand2 < RCDemand
                 end
                 newmarket.p = obj.p(newmarket.selection, 1);
                 newmarket.v = [];
-                for k = 1:size(obj.x2, 2)
-                    temp = obj.v(newmarket.selection,:,k);
-                    newmarket.v(k,:) = temp(1,:); 
+                if obj.settings.marketdraws
+                    newmarket.v = obj.draws.draws(:,:,t)'; 
+                else
+                    newmarket.v = obj.draws.draws'; 
                 end
                 newmarket.init();
                 obj.period{t} = newmarket;

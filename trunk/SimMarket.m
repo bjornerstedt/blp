@@ -23,7 +23,7 @@ classdef SimMarket < matlab.mixin.Copyable
             % Create model and demand. Alternatively model can be provided:
             % generate model with empty constructor, modify and provide as
             % argument to constructor.
-            obj.randdraws();
+            SimMarket.randDraws();
             if nargin > 0
                 obj.model = varargin{1};
             else
@@ -289,11 +289,7 @@ classdef SimMarket < matlab.mixin.Copyable
             end
             obj.estDemand.data = obj.data;
         end
-        
-        function randdraws(obj)
-            RandStream.setGlobalStream(RandStream('mt19937ar','Seed', 9));
-        end
-        
+                
         function cpObj = copyElement(obj)
         % Overrides copyElement method:
             % Make a shallow copy of all properties
@@ -304,6 +300,15 @@ classdef SimMarket < matlab.mixin.Copyable
 
     end
     methods(Static)
+        function randDraws(varargin)
+            if nargin > 0
+                seed = varargin{1};
+            else
+                seed = 9;
+            end
+            RandStream.setGlobalStream(RandStream('mt19937ar','Seed', seed));
+        end
+        
         function vals = testEqual(x, y, sensitivity)
         % testEqual(x, y, sens) tests whether x and y are within 
         % sensitivity sens in percentage terms

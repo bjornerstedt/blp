@@ -116,7 +116,7 @@ m.demand.sigma = 1;
 m.model.beta = [ 1; 4];
 % m.model.markets = 200;
 m.demand.var.nonlinear = 'constant';
-% m.model.endog = false;
+% m.model.endog = true;
 % m.model.randomProducts = false;
 % m.model.pricesFromCosts = false;
 
@@ -234,6 +234,7 @@ m.demand.settings.drawmethod = 'quadrature';
 m.demand.alpha = 1;
 m.demand.sigma = [0.2; 1];
 
+% m.demand.settings.ces = true;
 m.demand.settings.paneltype = 'lsdv';
 m.demand.var.nonlinear = 'p x';
 m.demand.var.instruments = 'nprod nprod2 c';
@@ -253,3 +254,30 @@ SimMarket.testEqual(results{'rc_p','Coef'} , results{'rc_p', 'True_val'}, 2e-1 )
 m.findCosts()
 meanCosts = mean(m.data.c)
 SimMarket.testEqual( meanCosts ,  m.model.c, 1e-2 )
+
+%% Test 11: Nonlinear price with CES, multiple distributions
+display '**********************  Test 11  *************************'
+
+m = SimMarket();
+m.demand = RCDemand;
+m.demand.settings.drawmethod = 'quadrature';
+m.demand.alpha = 1;
+m.demand.sigma = [0.2; 1];
+
+m.demand.var.nonlinear = {{'p', 'uniform'}, {'x'}};
+
+m.demand.settings.paneltype = 'lsdv';
+m.demand.var.instruments = 'nprod nprod2 c';
+m.demand.settings.optimalIV = true;
+m.model.gamma = 1;
+m.model.endog = true;
+m.model.randomProducts = true;
+m.model.markets = 200;
+m.demand.config.guessdelta = false;
+m.model.products = 5;
+m.create();
+display(m.model)
+
+results = m.estimate()
+SimMarket.testEqual(results{'rc_p','Coef'} , results{'rc_p', 'True_val'}, 5e-2 )
+
