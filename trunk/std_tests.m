@@ -89,22 +89,24 @@ testSameResults(testVals, correctVals, 4);
 
 %% Test 5: RCDemand - rc_x
 display '**********************  Test 5  *************************'
-m = SimMarket();
-m.demand = RCDemand;
-m.demand.alpha = 1;
-m.demand.sigma = 1;
-m.demand.var.nonlinear = 'x';
-sresults = m.create();
-display(m.model)
-
-results = m.estimate()
-testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
-correctVals = [0.030538586199379,4.980964755245374,-1.004698788631557,0.004361554728947];
-testSameResults(testVals, correctVals, 5);
-
-SimMarket.testEqual(results{'p','Coef'} , results{'p', 'True_val'}, 1e-2 )
-SimMarket.testEqual(results{'rc_x','Coef'} , results{'rc_x', 'True_val'}, 2e-2 )
-
+demchoice = {RCDemand, RCDemand2};
+for i = 1:2
+    m = SimMarket();
+    m.demand = demchoice{i};
+    m.demand.alpha = 1;
+    m.demand.sigma = 1;
+    m.demand.var.nonlinear = 'x';
+    sresults = m.create();
+    display(m.model)
+    
+    results = m.estimate()
+    testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
+    correctVals = [0.030538586199379,4.980964755245374,-1.004698788631557,0.004361554728947];
+    testSameResults(testVals, correctVals, 5);
+    
+    SimMarket.testEqual(results{'p','Coef'} , results{'p', 'True_val'}, 1e-2 )
+    SimMarket.testEqual(results{'rc_x','Coef'} , results{'rc_x', 'True_val'}, 2e-2 )
+end
 %% Test 6: CES RCDemand
 display '**********************  Test 6  *************************'
 m = SimMarket();

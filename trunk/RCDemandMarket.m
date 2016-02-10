@@ -42,7 +42,6 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
                 % Can update just nonlinprice
                 for k = 1:size( obj.x2, 2)
                     obj.vx(:,:,k) = bsxfun(@times, obj.x2(:,k), obj.v(k,:));
-%                     obj.vx(:,:,k) = bsxfun(@times, obj.x2(:,k), obj.v(:,:,k));
                 end
             end
             % obj.d set in init() or by user in simulating data:
@@ -51,7 +50,6 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
         end
        
         function sh = shareJacobian(obj, P)
-            % shareJacobian(p, [market_number])
             if isempty(P) 
                 P = obj.p;
             end

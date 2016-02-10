@@ -26,22 +26,22 @@ classdef RCDemand2 < RCDemand
                     end
                 else
                     if false
-                    f = xi' * xi;
-                    if nargout == 2
-                        obj.deltaJac = obj.deltaJacobian(sigma, obj.edelta);
-                        g = 2*obj.deltaJac' * xi;
-                    elseif nargout == 3
-                        [g, h] = obj.objectiveHessian(xi, del, sigma);
-                    end
+                        f = xi' * xi;
+                        if nargout == 2
+                            obj.deltaJac = obj.deltaJacobian(sigma, obj.edelta);
+                            g = 2*obj.deltaJac' * xi;
+                        elseif nargout == 3
+                            [g, h] = obj.objectiveHessian(xi, del, sigma);
+                        end
                     else
-                    xiX =  xi' * obj.X;
-                    f = xiX * xiX';
-                    if nargout == 2
-                        obj.deltaJac = obj.deltaJacobian(sigma, obj.edelta);
-                        g = 2*obj.deltaJac'* obj.X * xiX';
-                    elseif nargout == 3
-                        [g, h] = obj.objectiveHessian(xi, del, sigma);
-                    end
+                        f = xi' * xi;
+                        if nargout == 2
+                            obj.deltaJac = obj.deltaJacobian(sigma, obj.edelta);
+%                             g = 2*obj.deltaJac'* obj.X * xiX';
+                        g = 2*obj.deltaJac' * xi;
+                        elseif nargout == 3
+                            [g, h] = obj.objectiveHessian(xi, del, sigma);
+                        end
                     end
                 end
             end
@@ -110,6 +110,7 @@ classdef RCDemand2 < RCDemand
 
         function initPeriods(obj)
             md = RCDemandMarket2(obj);
+            md.iweight = obj.draws.weights;
             obj.period = cell(max(obj.marketid), 1);
             for t = 1:max(obj.marketid)
                 newmarket = copy(md);

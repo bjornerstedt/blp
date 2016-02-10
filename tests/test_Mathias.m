@@ -25,7 +25,7 @@ demand.var.exog = ['marketing1 sw sm month2 month3 month4 month5 month6 '...
     'month7 month8 month9 month10 month11 month12'];
 demand.var.price = 'Ptablets'; 
 demand.var.instruments = 'num numg numf numfg numhg numfgh';
-demand.settings.drawmethod = 'halton2';
+demand.settings.drawmethod = 'halton';
 demand.settings.nind = 500;
 demand.settings.paneltype = 'lsdv';
 demand.settings.marketdraws = true;

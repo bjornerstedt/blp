@@ -183,8 +183,6 @@ classdef RCDemand < NLDemand
                         g = 2* obj.deltaJac'* obj.ZWZ * xi;
                     end
                 else
-%                     xiX =  xi' * obj.X;
-%                     f = xiX * xiX';
                     f = xi' * xi;
                     if nargout > 1
                          obj.deltaJac = obj.deltaJacobian(sigma, obj.edelta);
@@ -320,6 +318,8 @@ classdef RCDemand < NLDemand
             if isempty(obj.var.nonlinear)
                 error('Some variable has to be specified as nonlinear');
             end
+            % The parse method could be included in create, but this will
+            % affect draw orders and thus all tests. A little work ...
             obj.nonlinparams = obj.draws.parse( obj.var.nonlinear);
             obj.getSigma();
             obj.draws.create( );

@@ -214,7 +214,6 @@ classdef RCDemandMarket2  < matlab.mixin.Copyable
         end
        
         function sh = shareJacobian(obj, P)
-            % shareJacobian(p, [market_number])
             if isempty(P) 
                 P = obj.p;
             end
@@ -292,7 +291,6 @@ classdef RCDemandMarket2  < matlab.mixin.Copyable
             obj.nlpart( sigma );
             if obj.config.compiled
                 edelta = findDeltaCpp(obj.s, obj.expmu, obj.iweight, edelta);
-%                 , tolerance, obj.config.fpmaxit);
             else
                 i = 0;
                 maxdev = 100;
