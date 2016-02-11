@@ -269,7 +269,7 @@ classdef NLDemand < Estimate
             end
         end
                     
-       function created = initAdditional(obj)
+       function  [Xorig, created] = initAdditional(obj)
        % Invoked from init@Estimate to create some logit specific params
        % Creates marketid, dummarket and p
        % If obj.var.quantity is defined and in the data, it creates ms, q,
@@ -300,6 +300,11 @@ classdef NLDemand < Estimate
             obj.dummarket = logical(dummyvar(obj.marketid));
             obj.p = obj.data{:, obj.var.price};  
             
+            if obj.settings.ces
+                Xorig = [log(obj.p)];
+            else
+                Xorig = [obj.p];
+            end
             % quantity is empty for simulated market
             if ~isempty(obj.var.quantity) && obj.isvar(obj.var.quantity, obj.data)
                 if isempty(obj.var.marketsize) || isempty(obj.var.exog) 
@@ -311,11 +316,7 @@ classdef NLDemand < Estimate
                 obj.share = obj.generateShares(obj.data);
                 obj.y = obj.share.ls;
                 sh = obj.share{:, lsnames{size(obj.nest, 2)+1}};
-                if obj.settings.ces
-                    obj.Xorig = [log(obj.p), sh];
-                else
-                    obj.Xorig = [obj.p, sh];
-                end
+                Xorig = [Xorig, sh];
             end
         end
         

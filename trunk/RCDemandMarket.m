@@ -58,7 +58,7 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
                 sigma_p = obj.sigma(obj.nonlinprice);
                 % obj.sim.v is the same for all products
                 dUi = obj.iweight .* (- obj.alpha + ...
-                    sigma_p * obj.v(1,:, obj.nonlinprice))';
+                    sigma_p * obj.v( obj.nonlinprice, :))';
             else
                 dUi = - obj.alpha*obj.iweight;
             end

@@ -292,12 +292,17 @@ classdef RCDemand < NLDemand
             if isempty(obj.draws)
                 obj.randdraws();
             end
-            obj.vars2 = ...
-                cellfun(@(x) {sprintf('rc_%s', x)}, obj.nonlinparams );
             obj.x2 = obj.data{:, obj.nonlinparams };
             nonlinprice = strcmp(obj.var.price, obj.nonlinparams);
             if any(nonlinprice) && obj.settings.ces
                 obj.x2(:, nonlinprice) = log(obj.data{:, obj.var.price});
+                nonlinparamsCES = obj.nonlinparams;
+                nonlinparamsCES{nonlinprice} = 'lP';
+                obj.vars2 = ...
+                    cellfun(@(x) {sprintf('rc_%s', x)}, nonlinparamsCES );
+            else
+                obj.vars2 = ...
+                    cellfun(@(x) {sprintf('rc_%s', x)}, obj.nonlinparams );
             end
             if ~isempty(selection)
                 obj.x2 = obj.x2(selection, :); 
@@ -378,7 +383,7 @@ classdef RCDemand < NLDemand
             if isempty(obj.d)
                 % Create starting values for findDelta
                 obj.edelta = obj.findDelta(obj.sigma);
-                obj.d = log(obj.edelta) + obj.alpha*obj.Xorig(:, 1);
+                obj.d = log(obj.edelta) + obj.alpha * obj.Xorig(:, 1);
                 for t = 1:max(obj.marketid)
                     obj.period{t}.d = obj.d(obj.dummarket(:, t));
                 end
@@ -504,6 +509,7 @@ classdef RCDemand < NLDemand
                 %                 deltaHat = [pHat, obj.X(:,2:end)] * obj.beta;
                 % The following code is an attempt to get optimal IV with
                 % FE to give the same result as LSDV
+                % Note that Xorig has log(p) for CES
                 pHat = obj.Zorig*((obj.Zorig'*obj.Zorig)\obj.Zorig'*obj.Xorig(:, 1));
                 deltaHat = [pHat, obj.Xorig(:, 2:end)] * obj.beta;
                 optInstr = obj.deltaJacobian(obj.sigma, exp(deltaHat));

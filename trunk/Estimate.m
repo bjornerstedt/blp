@@ -111,8 +111,8 @@ classdef Estimate  < matlab.mixin.Copyable
             if ~isempty(obj.var.endog)
                 endog = strsplit(strtrim(obj.var.endog));
             end
-            obj.Xorig = [];
-            created = obj.initAdditional( );                       
+            % initAdditional creates Xorig and returns names of created
+            [obj.Xorig, created] = obj.initAdditional( );
             if ~strcmpi(obj.settings.paneltype, 'none')
                 if isempty(obj.var.panel) || ~obj.isvar(obj.var.panel, obj.data)
                     error('var.panel has to be specified')
@@ -176,9 +176,10 @@ classdef Estimate  < matlab.mixin.Copyable
     
     methods(Access = protected, Hidden = true)
         
-        function created = initAdditional(obj)
+        function [Xorig, created] = initAdditional(obj)
             % Additional initialisation in subclasses
             created = [];
+            Xorig = [];
         end
                
         function createVarcovar(obj, varcovar)

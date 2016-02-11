@@ -140,6 +140,7 @@ m.demand.var.nonlinear = 'x';
 m.demand.alpha = 1;
 m.demand.sigma = 1;
 m.demand.settings.optimalIV = true;
+% m.demand.settings.ces = true; % This works
 
 m.model.endog = true;
 m.model.randomProducts = true;
@@ -204,29 +205,38 @@ for d = 1:2
     SimMarket.testEqual(results{1}{'p','Std_err'}, results{2}{'p','Std_err'}, 1e-4)
 end
 
+if false
 %% Test 9: Exogenous nonlinear price constant, testing findCosts
 display '**********************  Test 9  *************************'
 
 m = SimMarket();
 m.demand = RCDemand;
-m.demand.var.nonlinear = 'p x';
+m.demand.var.nonlinear = 'x p';
 m.demand.alpha = 1;
-m.demand.sigma = [0.5; 1];
+m.demand.sigma = [0.2; .2];
 m.demand.settings.nind = 500;
-
+m.demand.settings.ces = true; % This works
+% m.demand.settings.drawmethod = 'quadrature';
+ m.demand.settings.quaddraws = 15;
+%  m.demand.settings.marketdraws = true;
+m.demand.var.instruments = 'nprod nprod2 c';
+m.demand.settings.optimalIV = true;
+% m.model.gamma = 1;
+m.model.endog = true;
+m.model.randomProducts = true;
 % Increase in number of observations to get significance
-m.model.markets = 200;
-m.model.products = 10;
+m.model.markets = 500;
+% m.model.products = 10;
 m.create();
 display(m.model)
 
 results = m.estimate()
-SimMarket.testEqual(results{'rc_p','Coef'} , results{'rc_p', 'True_val'}, 3e-2 )
+SimMarket.testEqual(results{'rc_lP','Coef'} , results{'rc_lP', 'True_val'}, 3e-2 )
 
 m.findCosts()
 meanCosts = mean(m.data.c)
 SimMarket.testEqual( meanCosts ,  m.model.c, 1e-2 )
-
+end 
 %% Test 10: Nonlinear price, testing findCosts
 display '**********************  Test 10  *************************'
 
