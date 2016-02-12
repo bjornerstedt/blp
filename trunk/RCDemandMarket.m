@@ -5,7 +5,6 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
     properties
         selection 
         config
-        nind
         iweight
         v
         vx
@@ -25,7 +24,6 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
             % copy() function. Note that one could keep the common config
             % object, since all instances have same config. 
             obj.config = demand.config.getProperties();
-            obj.nind = demand.settings.nind;
             obj.alpha = demand.alpha;
             obj.sigma = demand.sigma;
             obj.config.ces = demand.settings.ces;
@@ -36,13 +34,9 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
             if obj.config.ces
                 p = log(p);
             end          
-            if any(obj.nonlinprice) && any( p ~= obj.p)
-                obj.p = p;
-                obj.x2(:, obj.nonlinprice) = p;
-                % Can update just nonlinprice
-                for k = 1:size( obj.x2, 2)
-                    obj.vx(:,:,k) = bsxfun(@times, obj.x2(:,k), obj.v(k,:));
-                end
+            if any(obj.nonlinprice) 
+                k = obj.nonlinprice;
+                obj.vx(:,:,k) = bsxfun(@times, p, obj.v(k,:));
             end
             % obj.d set in init() or by user in simulating data:
             edeltapred = exp(obj.d - obj.alpha * p); 
@@ -60,15 +54,15 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
                 dUi = obj.iweight .* (- obj.alpha + ...
                     sigma_p * obj.v( obj.nonlinprice, :))';
             else
-                dUi = - obj.alpha*obj.iweight;
+                dUi = - obj.alpha * obj.iweight;
             end
             sh = zeros(size(si,1));
             for i = 1:size(si,2)
                 shi = si(:, i);
-                sh = sh + dUi(i) *( diag(shi) - shi*shi' );
+                sh = sh + dUi(i) * (diag(shi) - shi * shi');
             end
             if obj.config.ces
-                sh = (sh - diag(S) ) * diag(1./P) ;
+                sh = (sh - diag(S) ) * diag(1 ./ P) ;
             end            
         end
         

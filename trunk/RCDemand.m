@@ -10,16 +10,13 @@ classdef RCDemand < NLDemand
         xi % Unobservable utility, residual
         vars2 % Nonlinear variable names in output (with rc_ prefix)
         nonlinparams = [] % Arrays for RC names and type of RC
-        nonlintype = [] % Array for type of RC
         oldsigma = 0 % Used in comparisons between minimization steps
         deltaJac % Used to guess new edelta
         isOptimalIV = false
         edelta % Saved between invocations of objective
-        v
-        iweight % quadrature weights     
         ZWZ
         inv_x1ZWZx1
-        estimationMatrix
+%         estimationMatrix
     end
     
     methods
@@ -293,6 +290,7 @@ classdef RCDemand < NLDemand
                 obj.randdraws();
             end
             obj.x2 = obj.data{:, obj.nonlinparams };
+            % log price in CES in x2:
             nonlinprice = strcmp(obj.var.price, obj.nonlinparams);
             if any(nonlinprice) && obj.settings.ces
                 obj.x2(:, nonlinprice) = log(obj.data{:, obj.var.price});
@@ -326,8 +324,8 @@ classdef RCDemand < NLDemand
             % The parse method could be included in create, but this will
             % affect draw orders and thus all tests. A little work ...
             obj.nonlinparams = obj.draws.parse( obj.var.nonlinear);
-            obj.getSigma();
             obj.draws.create( );
+            obj.getSigma();
         end
         
         function getSigma(obj)

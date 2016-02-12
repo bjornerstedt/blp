@@ -122,7 +122,7 @@ classdef Estimate  < matlab.mixin.Copyable
             end
             % Can have log model here.
             if obj.settings.nocons || strcmpi(obj.settings.paneltype, 'fe')
-                obj.vars =[created, endog, exog];
+                obj.vars = [created, endog, exog];
                 constant = [];
             else
                 obj.vars =[created, endog, exog, { 'constant'}];
@@ -147,18 +147,20 @@ classdef Estimate  < matlab.mixin.Copyable
                 otherwise
                     error('Unknown paneltype')
             end
-            newvars = [constant, obj.lsdv];
-            obj.Xorig = [obj.Xorig, obj.data{: , [ endog, exog]}, newvars];
+            obj.Xorig = [obj.Xorig, obj.data{:, [endog, exog]}, constant, obj.lsdv];
             if ~isempty(obj.var.instruments)
-                obj.Zorig = [obj.data{: , [exog, instruments]}, newvars];
+                obj.Zorig = [obj.data{:, [exog, instruments]}, constant, obj.lsdv];
             end
             if strcmpi(obj.settings.paneltype, 'fe')
                 obj.X = obj.demean(obj.Xorig);
                 obj.y = obj.demean(obj.y);
                 obj.Z =  obj.demean(obj.Zorig);
+                obj.results.dgf = (size(obj.X,1) - size(obj.X,2)) ...
+                    - length(unique(obj.panelid));
             else
                 obj.X = obj.Xorig;
                 obj.Z =  obj.Zorig;
+                obj.results.dgf = (size(obj.X,1) - size(obj.X,2));
             end
             if ~isempty(selection)                
                 obj.X = obj.X(selection, :);
@@ -217,60 +219,41 @@ classdef Estimate  < matlab.mixin.Copyable
         
        % Put beta and varcovar in obj only in estimate()
         function [beta, varcovar] = ols(obj)
-            invXX = inv(obj.X'*obj.X);
-            beta = invXX * (obj.X'*obj.y);
-            xi = obj.y - obj.X*beta;
+            invXX = inv(obj.X' * obj.X);
+            beta = invXX * (obj.X' * obj.y);
+            xi = obj.y - obj.X * beta;
             if obj.settings.robust
                 xiX =bsxfun(@times,xi,obj.X);
-                varcovar = invXX*(xiX'*xiX)*invXX;
+                varcovar = invXX * (xiX' * xiX) * invXX;
             else
-                if strcmpi(obj.settings.paneltype, 'fe')
-                    dgf = (size(obj.X,1) - size(obj.X,2)) - ...
-                        length(unique(obj.panelid));
-                else
-                    dgf = (size(obj.X,1) - size(obj.X,2));
-                end
-                varcovar = ((xi'*xi) ./ dgf) * inv(obj.X'*obj.X);
+                varcovar = ((xi' * xi) ./ obj.results.dgf) * inv(obj.X' * obj.X);
             end
         end
         
         function [beta, varcovar] = gls(obj)
-            y = obj.y;
-            X = obj.X;
-            Z = obj.Z;
-            if strcmpi( obj.settings.paneltype, 'fe') 
-                dgf = (size(obj.X,1) - size(obj.X,2)) - length(unique(obj.panelid));
-            else
-                dgf = (size(obj.X,1) - size(obj.X,2));
-            end
-            W = inv(Z'*Z);
-            mid = Z*W*Z';
-            sst = inv(X'*mid*X);
-            beta = sst * (X'*mid*y);
-            xi = y - X * beta;
+            W = inv(obj.Z' * obj.Z);
+            mid = obj.Z * W * obj.Z';
+            sst = inv(obj.X' * mid * obj.X);
+            beta = sst * (obj.X' * mid * obj.y);
+            xi = obj.y - obj.X * beta;
             % Add robust estimate
-            ser = (xi'*xi) ./ dgf;
+            ser = (xi' * xi) ./ obj.results.dgf;
             varcovar = ser * sst;
         end
         
-        function [beta, varcovar] = gmm(obj)
-            y = obj.y;
-            X = obj.X;
-            Z = obj.Z;
-            dgf = (size(obj.X,1) - size(obj.X,2));
-            
+        function [beta, varcovar] = gmm(obj)            
             % STAGE I: INITIAL WEIGHTING MATRIX
-            W = inv(Z'*Z);
-            mid = Z*W*Z';
-            btsls = inv(X'*mid*X) * (X'*mid*y);
-            xi = y - X*btsls;
+            W = inv(obj.Z' * obj.Z);
+            mid = obj.Z * W * obj.Z';
+            btsls = inv(obj.X' * mid * obj.X) * (obj.X' * mid * obj.y);
+            xi = obj.y - obj.X * btsls;
 
             % STAGE II: OPTIMAL WEIGHTING MATRIX
-            W = inv((bsxfun(@times,xi,Z))'*(bsxfun(@times,xi,Z)));
-            mid = Z*W*Z';
-            beta = inv(X'*mid*X)*(X'*mid*y);
-            xi = y - X*beta;
-            varcovar = inv(X'*mid*X);
+            W = inv((bsxfun(@times,xi,obj.Z))' * (bsxfun(@times,xi,obj.Z)));
+            mid = obj.Z * W * obj.Z';
+            beta = inv(obj.X' * mid * obj.X) * (obj.X' * mid * obj.y);
+            xi = obj.y - obj.X * beta;
+            varcovar = inv(obj.X' * mid * obj.X);
         end
        
         function mn  = demean(obj, data )

@@ -8,7 +8,7 @@ classdef NLDemand < Estimate
         marketid % Protected?
     end
     properties (SetAccess = protected, Hidden = true )
-        nestlist
+        nestCount = 0
         nest
         share
         p % Used for CES and simulation
@@ -40,7 +40,7 @@ classdef NLDemand < Estimate
             % Invoke init() for general initialization
             if isempty(obj.alpha)
                 obj.alpha = obj.beta(1);
-                pars = size(obj.nest, 2) + 1;
+                pars = obj.nestCount + 1;
                 if pars > 1
                     obj.sigma = obj.beta(2:pars);
                 end
@@ -51,7 +51,7 @@ classdef NLDemand < Estimate
             if ~isempty(obj.nest)
                 obj.G = dummyvar(obj.nest(obj.dummarket(:, market), 1))';
                 obj.GG = obj.G' * obj.G;
-                if size(obj.nest, 2) == 2
+                if obj.nestCount == 2
                     obj.H = dummyvar(obj.nest(obj.dummarket(:, market), 2))';
                     obj.HH = obj.H' * obj.H;
                     obj.GH =( (obj.G * obj.H') > 0);
@@ -73,15 +73,19 @@ classdef NLDemand < Estimate
             % These conditions should always hold!:
             if ~isempty(obj.results) && isfield(obj.results,'estimate') && ...
                     ~isempty(obj.results.estimate)
-                price = obj.p;
+                if obj.settings.ces
+                    price = log(obj.p);
+                else
+                    price = obj.p;
+                end
                 priceName = obj.getPriceName();
                 if isempty(obj.nest)
                     est = obj.results.estimate{priceName, 1}';
                     obj.d = obj.share.ls - price * est';
-                elseif size(obj.nest, 2) == 1
+                elseif obj.nestCount == 1
                     est = obj.results.estimate{[priceName, {'lsjg'}], 1}';
                     obj.d = obj.share.ls - [price, obj.share.lsjg] * est';
-                elseif size(obj.nest, 2) == 2
+                elseif obj.nestCount == 2
                     est = obj.results.estimate{[priceName, {'lsjh', 'lshg'}], 1}';
                     obj.d = obj.share.ls - [price, obj.share.lsjh, obj.share.lshg] * est';
                 end
@@ -98,7 +102,7 @@ classdef NLDemand < Estimate
                 P = log(P);
             end
             delta = obj.sim.d - obj.alpha .* P; % d is delta without price effect
-			if size(obj.nest, 2) == 2 
+			if obj.nestCount == 2 
                 sigma1 = obj.sigma(1);
                 sigma2 = obj.sigma(2);
 				ev=exp(delta ./ (1-sigma1));
@@ -110,7 +114,7 @@ classdef NLDemand < Estimate
 				it = sum(igs .^(1-sigma2));
 				s = ev .* (igh .^ ((sigma2-sigma1)/(1-sigma2)) ) .* ...
                     (ig .^ (-sigma2)) / (1+it);
-			elseif size(obj.nest, 2) == 1 
+			elseif obj.nestCount == 1 
                 sigma1 = obj.sigma(1);
 				ev=exp(delta ./ (1-sigma1));
 				igs = (obj.G * ev);
@@ -154,7 +158,7 @@ classdef NLDemand < Estimate
             else
                 S = obj.shares(P);
             end
-            other_effect =  - S*S';
+            other_effect =  - S * S';
 			if isempty(obj.nest) 	
 				own_effect = diag(S);
 				sj = -obj.alpha *( own_effect + other_effect );  
@@ -163,19 +167,19 @@ classdef NLDemand < Estimate
             
 				Sg = obj.GG * S;
 				own_effect = 1/(1 - sigma1)*diag(S);
-				if size(obj.nest, 2) == 2 
+				if obj.nestCount == 2 
                     sigma2 = obj.sigma(2);
-					gr_effect = -sigma2/(1 - sigma2)*obj.GG .* ((S ./ Sg)*S');
+					gr_effect = -sigma2/(1-sigma2) * obj.GG .* ((S ./ Sg) * S');
 					Sgh = obj.HH * S;
 					gr_effect = gr_effect - (1/(1-sigma1) - 1/(1-sigma2))* ...
-                        obj.HH .* ((S ./ Sgh)*S');
+                        obj.HH .* ((S ./ Sgh) * S');
 				else
-					gr_effect = -sigma1/(1 - sigma1)*obj.GG .* ((S ./ Sg)*S');
+					gr_effect = -sigma1/(1-sigma1) * obj.GG .* ((S ./ Sg) * S');
 				end 
 				sj = -obj.alpha*( own_effect + gr_effect + other_effect );  
 			end
             if obj.settings.ces
-                sj = (sj - diag(S) ) * diag(1./P) ;
+                sj = (sj - diag(S)) * diag(1./P) ;
             end
         end
         
@@ -190,15 +194,15 @@ classdef NLDemand < Estimate
             D = obj.shareJacobian(P)';
             E = diag(P) * D * diag( 1 ./ s );
             elas = [sumstats(eye(n), E)];
-            if size(obj.nest, 2) == 0
+            if obj.nestCount == 0
                 elas = [elas; sumstats(1 - eye(n), E)]
                 rowtit = {'e_ii', 'e_ij'};
-            elseif size(obj.nest, 2) == 1
+            elseif obj.nestCount == 1
                 elas = [elas; ...
                     sumstats(obj.GG - eye(n), E); ...
                     sumstats(1 - obj.GG, E)];
                 rowtit = {'e_ii', 'e_ij', 'e_ik'};
-            elseif size(obj.nest, 2) == 2
+            elseif obj.nestCount == 2
                 elas = [elas; ...
                     sumstats(obj.HH - eye(n), E); ...
                     sumstats(obj.GG - obj.HH , E); ...
@@ -279,16 +283,17 @@ classdef NLDemand < Estimate
                 error('Demand.var.market and price must be specified in model');
             end
             if ~isempty(obj.var.nests)
-                obj.nestlist = strsplit(strtrim(obj.var.nests));
+                nestlist = strsplit(strtrim(obj.var.nests));
+                obj.nestCount = length(nestlist);
                 obj.nest = [];
-                for i = 1:length(obj.nestlist)
-                    [~,~, nesti] = unique(obj.data{:, obj.nestlist(1:i)}, 'rows');
+                for i = 1:length(nestlist)
+                    [~,~, nesti] = unique(obj.data{:, nestlist(1:i)}, 'rows');
                     obj.nest = [obj.nest, nesti];
                 end
             end
             lsnames = {[], {'lsjg'}, {'lsjh', 'lshg'}};
             if ~isempty(obj.var.quantity) && obj.isvar(obj.var.quantity, obj.data)
-                created = [obj.getPriceName(), lsnames{size(obj.nest, 2)+1}];
+                created = [obj.getPriceName(), lsnames{obj.nestCount+1}];
             else
                 if isempty(obj.alpha)
                     error('Either quantities or alpha have to be specified')
@@ -315,7 +320,7 @@ classdef NLDemand < Estimate
                 obj.q = obj.data{: , obj.var.quantity};
                 obj.share = obj.generateShares(obj.data);
                 obj.y = obj.share.ls;
-                sh = obj.share{:, lsnames{size(obj.nest, 2)+1}};
+                sh = obj.share{:, lsnames{obj.nestCount+1}};
                 Xorig = [Xorig, sh];
             end
         end
@@ -351,17 +356,19 @@ classdef NLDemand < Estimate
             S.s = Q ./ obj.ms;
             S.s0 = 1 - ( subtotal ./ obj.ms );
             S.ls = log(S.s ./ S.s0);
-            market = strsplit(strtrim(obj.var.market));
-            if size(obj.nest, 2) >= 1
+            if obj.nestCount >= 1
+                market = strsplit(strtrim(obj.var.market));
+                nestlist = strsplit(strtrim(obj.var.nests));
                 groupsubtotal =  obj.subtotals(T, Q, ...
-                    [market obj.nestlist(1)]);
+                    [market nestlist(1)]);
                 S.lsjg = log( Q ./ groupsubtotal);
-            end
-            if size(obj.nest, 2) == 2
-                subgroupsubtotal =  obj.subtotals(T, Q, ...
-                    [market obj.nestlist]);
-                S.lsjh = log( Q ./ subgroupsubtotal);
-                S.lshg = log( subgroupsubtotal ./ groupsubtotal );
+                
+                if obj.nestCount == 2
+                    subgroupsubtotal =  obj.subtotals(T, Q, ...
+                        [market nestlist]);
+                    S.lsjh = log( Q ./ subgroupsubtotal);
+                    S.lshg = log( subgroupsubtotal ./ groupsubtotal );
+                end
             end
         end
         

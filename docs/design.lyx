@@ -90,13 +90,169 @@ The purpose of this document is to collect documentation of various design
 \end_layout
 
 \begin_layout Section
-Initialization
+Data structure and initialization
 \end_layout
 
 \begin_layout Standard
+The demand code is used in three basic ways
+\end_layout
+
+\begin_layout Enumerate
+Estimation: 
+\begin_inset Formula $p$
+\end_inset
+
+ and 
+\begin_inset Formula $q$
+\end_inset
+
+ known, unknown parameters, 
+\begin_inset Formula $d$
+\end_inset
+
+, and 
+\begin_inset Formula $c$
+\end_inset
+
+.
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Estimation is done on all markets but in RC, finddelta calculates on each
+ market at a time.
+\end_layout
+
+\begin_layout Enumerate
+findCosts calculates 
+\begin_inset Formula $c$
+\end_inset
+
+.
+ Note that this has to be always tested in order for the test of the mapping
+ to be complete
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Simulation: parameters known, 
+\begin_inset Formula $c$
+\end_inset
+
+ and 
+\begin_inset Formula $d$
+\end_inset
+
+ known, 
+\begin_inset Formula $p$
+\end_inset
+
+ and 
+\begin_inset Formula $q$
+\end_inset
+
+ unknown
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+In RC done on all markets at one time - share() splits per market
+\end_layout
+
+\begin_layout Enumerate
+In NL done market by market
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Generation: parameters known, 
+\begin_inset Formula $p$
+\end_inset
+
+ and 
+\begin_inset Formula $d$
+\end_inset
+
+ known, 
+\begin_inset Formula $q$
+\end_inset
+
+ unknown.
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+From p and d delta is generated, then shares
+\end_layout
+
+\begin_layout Enumerate
+With market simulations, 
+\begin_inset Formula $p$
+\end_inset
+
+ is unknown but 
+\begin_inset Formula $c$
+\end_inset
+
+ is known.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Standard
 Initialization of the Estimate and derived classes (Market and Demand classes),
- is performed with the init() method.
- This method has as its purpose to create two sets of variables
+ 
+\end_layout
+
+\begin_layout Enumerate
+Initialization is performed with the init() method.
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+init(selection) is invoked by equilibrium(selection), findCosts(selection),
+ estimate(selection), estimateGMM()
+\end_layout
+
+\begin_layout Enumerate
+init() is invoked by Market.init().
+ When is this necessary?:
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Estimation can be on selection.
+ But simulation outside selection is problematic, it requires that 
+\begin_inset Formula $d$
+\end_inset
+
+ is defined for new products.
+\end_layout
+
+\begin_layout Enumerate
+An alternative could be to test whether Demand.init has been run.
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout Enumerate
+initSimulation(market number) is used prior to each market simulation.
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+initSimulation is invoked by Market.initSimulation(), 
+\end_layout
+
+\begin_layout Enumerate
+which in turn is invoked by findCosts() and equilibrium()
+\end_layout
+
+\end_deeper
+\begin_layout Subsection
+Estimate class
 \end_layout
 
 \begin_layout Enumerate
@@ -124,14 +280,264 @@ Organization variables, defined for all data.
 
 \begin_deeper
 \begin_layout Enumerate
-obj.panelid - panel identifier
+obj.panelid - panel identifier (all data)
 \end_layout
 
 \begin_layout Enumerate
-obj.marketid - in Demand and Market classes this identifies markets 
+obj.vars - display vars
+\end_layout
+
+\begin_layout Enumerate
+obj.lsdv - LSDV, persistent local var of init.
+ Obsolete? (selection)
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Created if it does not exist or if there is no selection
+\end_layout
+
+\begin_layout Enumerate
+Drops zero dummies (on selection if set), ie simulation cannot be done outside
+ selection
 \end_layout
 
 \end_deeper
+\end_deeper
+\begin_layout Subsection
+NLDemand class
+\end_layout
+
+\begin_layout Enumerate
+obj.marketid and obj.dummarket - in Demand and Market classes this identifies
+ markets - selection
+\end_layout
+
+\begin_layout Enumerate
+obj.nestcount - nest variable names.
+ Obsolete?
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Used in estimate, shares, shareJacobian, elasticities, generateShares -
+ to get number of nests
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+obj.nest - nesting vars (no selection)
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Set in initAdditional
+\end_layout
+
+\begin_layout Enumerate
+Used in initSimulation, selects
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+obj.p - non-demeaned price (no log) (selection).
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+used in shareJacobian on selection
+\end_layout
+
+\begin_layout Enumerate
+used in generateShares, demand calc.
+\end_layout
+
+\begin_layout Enumerate
+used in estimate as log variable!
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+obj.ms - marketsize.
+ Used in share calcs and demand calc.
+ (selection)
+\end_layout
+
+\begin_layout Enumerate
+obj.share - created shares.
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Created in initAdditional if depvar does not exist! (selection)
+\end_layout
+
+\begin_layout Enumerate
+Used by estimate to create d
+\end_layout
+
+\begin_layout Enumerate
+actualDemand returns obj.share.s
+\end_layout
+
+\begin_layout Enumerate
+shareJacobian uses selection to calculate if isempty(P)
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+obj.G, H, GG, HH, GH
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Created by initSimulation
+\end_layout
+
+\begin_layout Enumerate
+Used by shares, shareJacobian and elasticities
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+obj.sim - structure with selection, d and market.
+ Only market is really needed.
+ Remove? 
+\end_layout
+
+\begin_layout Subsection
+RCDemand class
+\end_layout
+
+\begin_layout Enumerate
+obj.draws - a Draws class instance with nonlinear draws.
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Only created once - why? 
+\end_layout
+
+\begin_layout Enumerate
+What happens in copy? What do we want to happen?!
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+obj.period - list of RCDemandMarket class instances (selection)
+\end_layout
+
+\begin_layout Enumerate
+obj.x2 - nonlinear data matrix, with logprice in CES.
+ Not demeaned in FE.
+ (selection)
+\end_layout
+
+\begin_layout Enumerate
+obj.nonlinparams - list of all nonlinear.
+ Used by: RCDemandMarket, ...
+\end_layout
+
+\begin_layout Enumerate
+obj.vars2 - nonlin variable names.
+ Replace with function.
+\end_layout
+
+\begin_layout Subsection
+RCDemandMarket class
+\end_layout
+
+\begin_layout Enumerate
+obj.alpha and obj.sigma
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Set in constructor
+\end_layout
+
+\begin_layout Enumerate
+Used in shares and shareJacobian
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+obj.x2 - for estimation.
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Updated by shares with new price.
+ Change this behavior
+\end_layout
+
+\begin_layout Enumerate
+creates obj.vx in init
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+obj.v and obj.iweight
+\end_layout
+
+\begin_layout Enumerate
+obj.s - why?
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+findDelta: to find delta giving shares
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+obj.p - why? :
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+in shareJacobian: To calc on obj.p.
+ Needs non-log price, x2 has log price in CES.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+obj.d - why?:
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+in shares: to do share calc
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+obj.nonlinprice - from RCDemand nonlinparams - strcmp(demand.var.price, demand.nonli
+nparams)
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+shareJacobian to update price col in data in simulation.
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+Check that markets are updated with all changes.
+ 
+\end_layout
+
+\begin_layout Itemize
+When is init invoked?
+\end_layout
+
+\begin_layout Subsection
+Scenarios
+\end_layout
+
 \begin_layout Standard
 Note that init is used both in initializing estimation and simulation.
  Three scenarios have slightly different setup requirements.

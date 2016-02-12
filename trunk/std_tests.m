@@ -9,6 +9,7 @@ testSameResults = @(x,y,i)assert(all( abs(x - y) < 10e-6), 'Test %d failed' , i)
 %% Test 1: NLDemand
 display '**********************  Test 1  *************************'
 m = SimMarket();
+m.model.markets = 200;
 m.demand = NLDemand;
 m.demand.alpha = 1;
 
@@ -19,30 +20,36 @@ results = m.estimate()
 SimMarket.testEqual(results{'p','Coef'} , results{'p', 'True_val'}, 1e-2)
 
 testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
-correctVals = [0.021574061753928,4.980964755245374,-1.003422555598600,0.004304018905541];
+correctVals = [0.011584066958451,5.031660735481728,-1.002459854394107,0.003067662778767];
 
 testSameResults(testVals, correctVals, 1);
 
-%% Test 2: NLDemand - one nest
+m.findCosts()
+SimMarket.testEqual( mean(m.data.c) ,  m.model.c, 1e-2 )
+
+%% Test 2: NLDemand - one nest CES demand
 display '**********************  Test 2  *************************'
 m = SimMarket();
+m.model.markets = 200;
 m.demand = NLDemand;
+m.demand.settings.ces = true;
 m.demand.var.nests = 'type';
 m.demand.alpha = 2;
 m.demand.sigma = 0.5;
-
 m.model.types = 2;
 m.create();
 display(m.model)
 
 results = m.estimate()
 % Test that result is within 0.1% of true value
-SimMarket.testEqual(results{'p','Coef'} , results{'p', 'True_val'}, 1e-2)
+SimMarket.testEqual(results{'lP','Coef'} , results{'lP', 'True_val'}, 1e-2)
 
-testVals = [results{'p','Coef'}, results{'lsjg','Coef'}, results{'p','Std_err'}];
-correctVals = [-2.003706029185489,0.499863507432290,0.005375770177673];
+testVals = [results{'lP','Coef'}, results{'lsjg','Coef'}, results{'lP','Std_err'}];
+correctVals = [-1.997982777266492,0.506308608342166,0.014891089529195];
 
 testSameResults(testVals, correctVals, 2);
+m.findCosts()
+SimMarket.testEqual( mean(m.data.c) ,  m.model.c, 1e-2 )
 
 %% Test 3: NLDemand - two level nests
 display '**********************  Test 3 *************************'
@@ -82,9 +89,10 @@ results = m.estimate()
 assert(abs(m.estDemand.results.sigma0 - m.estDemand.sigma) > 0.3)
 
 SimMarket.testEqual(results{'p','Coef'} , results{'p', 'True_val'}, 1e-2 )
+SimMarket.testEqual(results{'rc_constant','Coef'} , results{'rc_constant', 'True_val'}, 1e-1 )
 
 testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
-correctVals = [0.027209827330165,4.980964755245374,-1.002058277997551,0.004437443811257];
+correctVals = [0.027209827330165,4.980964755245374,-1.002396191815819,0.004427962469071];
 testSameResults(testVals, correctVals, 4);
 
 %% Test 5: RCDemand - rc_x
@@ -101,11 +109,11 @@ for i = 1:2
     
     results = m.estimate()
     testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
-    correctVals = [0.030538586199379,4.980964755245374,-1.004698788631557,0.004361554728947];
+    correctVals = [0.030538586199379,4.980964755245374,-1.005205788003259,0.004425086528973];
     testSameResults(testVals, correctVals, 5);
     
     SimMarket.testEqual(results{'p','Coef'} , results{'p', 'True_val'}, 1e-2 )
-    SimMarket.testEqual(results{'rc_x','Coef'} , results{'rc_x', 'True_val'}, 2e-2 )
+    SimMarket.testEqual(results{'rc_x','Coef'} , results{'rc_x', 'True_val'}, 1e-1 )
 end
 %% Test 6: CES RCDemand
 display '**********************  Test 6  *************************'
@@ -127,7 +135,7 @@ display(m.model)
 
 results = m.estimate()
 testVals = [results{'lP', 'Coef'}, results{'rc_constant', 'Coef'}];
-correctVals = [-4.012600987612641,0.973319662065424];
+correctVals = [-4.014189676113176,0.988748863095228];
 testSameResults(testVals, correctVals, 6);
 
 SimMarket.testEqual(results{'lP', 'Coef'} , results{'lP', 'True_val'}, 1e-2)
@@ -151,7 +159,7 @@ display(m.model)
 results = m.estimate()
 
 testVals = [results{'p','Coef'}, results{'rc_x','Coef'}];
-correctVals = [-0.969984767147493,1.044593651632106];
+correctVals = [-0.970459257527457,1.045491432099829];
 testSameResults(testVals, correctVals, 7);
 
 SimMarket.testEqual(results{'rc_x','Coef'} , results{'rc_x', 'True_val'}, 1e-1 )
@@ -214,7 +222,7 @@ m.demand = RCDemand;
 m.demand.var.nonlinear = 'x p';
 m.demand.alpha = 1;
 m.demand.sigma = [0.2; .2];
-m.demand.settings.nind = 500;
+m.demand.settings.nind = 200;
 m.demand.settings.ces = true; % This works
 % m.demand.settings.drawmethod = 'quadrature';
  m.demand.settings.quaddraws = 15;
@@ -225,7 +233,7 @@ m.demand.settings.optimalIV = true;
 m.model.endog = true;
 m.model.randomProducts = true;
 % Increase in number of observations to get significance
-m.model.markets = 500;
+m.model.markets = 100;
 % m.model.products = 10;
 m.create();
 display(m.model)
