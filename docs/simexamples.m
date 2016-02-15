@@ -40,15 +40,16 @@ m2.demand = demand2;
 
 m2.model.endog = true;
 m2.model.randomProducts = true;
-m2.model.firm = [1,1,2,2,3];
+m2.model.firm = [1,1,2,3,3];
 m2.model.markets = 200;
 m2.create();
 
 dt2 = m2.data;
 %% RC Demand estimation
+dt2.firm2 = dt2.firm;
+dt2.firm2(dt2.firm2 == 2 ) = 1;
 
 demand2 = RCDemand(dt2);
-
 demand2.var.market = 'marketid';
 demand2.var.panel = 'productid';
 demand2.var.price = 'p';
@@ -65,18 +66,25 @@ result = demand2.estimate()
 market = Market(demand2);
 market.var.firm = 'firm';
 
-market.findCosts(dt2.marketid == 1);
+market.findCosts(dt2.marketid == 23);
 
 % Note that summary is of one market
-market.summary()
+market.summary('WeightedAverages', false)
+results1 = market.summary()
 
 market2 = copy(market);
-market2.firm(market2.firm == 2 ) = 1;
+market2.var.firm = 'firm2';
 market2.equilibrium();
 
-compare(market, market2)
-compare(market, market2, 'selection', dt2.marketid == 1)
+summary(market, market2, 'WeightedAverages', false)
+results2 = summary(market, market2, 'selection', dt2.marketid == 23)
 
+testVals = [ results1{1,'Lerner'}, results2{1,'PriceCh'}];
+correctVals = [0.556153926345531,0.016989575324104];
+
+SimMarket.testSame(testVals, correctVals, 1);
+
+return
 %% NL Demand with cost estimation
 
 demand = NLDemand();

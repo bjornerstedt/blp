@@ -147,6 +147,9 @@ classdef Estimate  < matlab.mixin.Copyable
                 otherwise
                     error('Unknown paneltype')
             end
+            if ~isempty(obj.var.depvar)
+                obj.y = obj.data{:, obj.var.depvar};
+            end
             obj.Xorig = [obj.Xorig, obj.data{:, [endog, exog]}, constant, obj.lsdv];
             if ~isempty(obj.var.instruments)
                 obj.Zorig = [obj.data{:, [exog, instruments]}, constant, obj.lsdv];
@@ -324,7 +327,6 @@ classdef Estimate  < matlab.mixin.Copyable
             v = any(strcmp(x, y.Properties.VariableNames));
         end
         
-       
         function R = mean(index, data)
             [~,~, index] = unique(index);
             R = accumarray(index, data);

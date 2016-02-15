@@ -122,7 +122,6 @@ classdef RCDemand2 < RCDemand
                 if ~isempty(obj.d)
                     newmarket.d = obj.d(newmarket.selection, 1);
                 end
-                newmarket.p = obj.p(newmarket.selection, 1);
                 newmarket.v = [];
                 if obj.settings.marketdraws
                     newmarket.v = obj.draws.draws(:,:,t)'; 

@@ -1,11 +1,6 @@
 clear
 % Simulated Testing
 
-testSameResults = @(x,y,i)assert(all( abs(x - y) < 10e-6), 'Test %d failed' , i);
-% Uncomment to avoid testing
-% testSameResults = @(x,y,i)true;
-
-
 %% Test 1: NLDemand
 display '**********************  Test 1  *************************'
 m = SimMarket();
@@ -22,7 +17,7 @@ SimMarket.testEqual(results{'p','Coef'} , results{'p', 'True_val'}, 1e-2)
 testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
 correctVals = [0.011584066958451,5.031660735481728,-1.002459854394107,0.003067662778767];
 
-testSameResults(testVals, correctVals, 1);
+SimMarket.testSame(testVals, correctVals, 1);
 
 m.findCosts()
 SimMarket.testEqual( mean(m.data.c) ,  m.model.c, 1e-2 )
@@ -47,7 +42,7 @@ SimMarket.testEqual(results{'lP','Coef'} , results{'lP', 'True_val'}, 1e-2)
 testVals = [results{'lP','Coef'}, results{'lsjg','Coef'}, results{'lP','Std_err'}];
 correctVals = [-1.997982777266492,0.506308608342166,0.014891089529195];
 
-testSameResults(testVals, correctVals, 2);
+SimMarket.testSame(testVals, correctVals, 2);
 m.findCosts()
 SimMarket.testEqual( mean(m.data.c) ,  m.model.c, 1e-2 )
 
@@ -71,7 +66,7 @@ SimMarket.testEqual(results{'p','Coef'} , results{'p', 'True_val'}, 1e-2)
 testVals = [results{'p','Coef'}, results{'lsjh','Coef'}, results{'p','Std_err'}];
 correctVals = [-1.994459335261852,0.601735881106264,0.004873164058653];
 
-testSameResults(testVals, correctVals, 3);
+SimMarket.testSame(testVals, correctVals, 3);
 
 %% Test 4: RCDemand - rc_constant
 % Estimate without instruments, with exogeneous p.
@@ -93,7 +88,7 @@ SimMarket.testEqual(results{'rc_constant','Coef'} , results{'rc_constant', 'True
 
 testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
 correctVals = [0.027209827330165,4.980964755245374,-1.002396191815819,0.004427962469071];
-testSameResults(testVals, correctVals, 4);
+SimMarket.testSame(testVals, correctVals, 4);
 
 %% Test 5: RCDemand - rc_x
 display '**********************  Test 5  *************************'
@@ -110,7 +105,7 @@ for i = 1:2
     results = m.estimate()
     testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
     correctVals = [0.030538586199379,4.980964755245374,-1.005205788003259,0.004425086528973];
-    testSameResults(testVals, correctVals, 5);
+    SimMarket.testSame(testVals, correctVals, 5);
     
     SimMarket.testEqual(results{'p','Coef'} , results{'p', 'True_val'}, 1e-2 )
     SimMarket.testEqual(results{'rc_x','Coef'} , results{'rc_x', 'True_val'}, 1e-1 )
@@ -136,7 +131,7 @@ display(m.model)
 results = m.estimate()
 testVals = [results{'lP', 'Coef'}, results{'rc_constant', 'Coef'}];
 correctVals = [-4.014189676113176,0.988748863095228];
-testSameResults(testVals, correctVals, 6);
+SimMarket.testSame(testVals, correctVals, 6);
 
 SimMarket.testEqual(results{'lP', 'Coef'} , results{'lP', 'True_val'}, 1e-2)
 
@@ -160,7 +155,7 @@ results = m.estimate()
 
 testVals = [results{'p','Coef'}, results{'rc_x','Coef'}];
 correctVals = [-0.970459257527457,1.045491432099829];
-testSameResults(testVals, correctVals, 7);
+SimMarket.testSame(testVals, correctVals, 7);
 
 SimMarket.testEqual(results{'rc_x','Coef'} , results{'rc_x', 'True_val'}, 1e-1 )
 

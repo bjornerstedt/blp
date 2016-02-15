@@ -11,7 +11,6 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
         x2
         expmu
         s
-        p
         d
         nonlinprice 
         alpha
@@ -44,9 +43,6 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
         end
        
         function sh = shareJacobian(obj, P)
-            if isempty(P) 
-                P = obj.p;
-            end
             [S, si] = obj.shares(P);
             if any(obj.nonlinprice) 
                 sigma_p = obj.sigma(obj.nonlinprice);

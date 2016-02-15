@@ -12,7 +12,6 @@ classdef RCDemandMarket2  < matlab.mixin.Copyable
         expmu
         edelta % While implementing Hessian at least...
         s
-        p
         d
         nonlinprice
         alpha
@@ -62,6 +61,7 @@ classdef RCDemandMarket2  < matlab.mixin.Copyable
         end
                 
         function [si, dsdelta, dssigma] = shareJacobians(obj, delta, sigma)
+            % NOTE SIMILAR NAME
             % sharecalc can be used instead if nlpart has been invoked
             [~, si] = obj.getShares(delta, sigma);
             wsi = si ./ size(si,2); 
@@ -207,9 +207,6 @@ classdef RCDemandMarket2  < matlab.mixin.Copyable
         end
        
         function sh = shareJacobian(obj, P)
-            if isempty(P) 
-                P = obj.p;
-            end
             [S, si] = obj.shares(P);
             if any(obj.nonlinprice) 
                 theta_p = obj.sigma(obj.nonlinprice);

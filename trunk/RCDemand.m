@@ -53,6 +53,9 @@ classdef RCDemand < NLDemand
                 
         function sh = shareJacobian(obj, P)
             % shareJacobian(p, [market_number])
+            if isempty(P) 
+                P = obj.p(obj.dummarket(:, obj.sim.market));
+            end
             sh = obj.period{obj.sim.market}.shareJacobian(P);          
         end
              
@@ -344,7 +347,6 @@ classdef RCDemand < NLDemand
                 if ~isempty(obj.d)
                     newmarket.d = obj.d(newmarket.selection, 1);
                 end
-                newmarket.p = obj.p(newmarket.selection, 1);
                 newmarket.v = [];
                 if obj.settings.marketdraws
                     newmarket.v = obj.draws.draws(:,:,t)'; 

@@ -1,4 +1,4 @@
-%% SimMarket 0.2 Users Guide
+%% SimMarket 0.3 Users Guide
 
 %% Demand estimation
 % Demand is estimated using the |NLDemand| and
@@ -68,6 +68,8 @@ result = demand.estimate()
 % more parameters that one can specify, however. In the following example,
 % we use count instruments |nprod| and |nprod2| and costs |c| in the data 
 % table |dt2| to identify the endogenous price variable.
+dt2.firm2 = dt2.firm;
+dt2.firm2(dt2.firm2 == 2 ) = 1;
 
 demand2 = RCDemand(dt2);
 
@@ -124,25 +126,27 @@ market.summary('Selection', dt2.marketid == 1)
 % Having determined costs, one can use the market class (with its
 % associated demand) to study variations in ownership, costs etc. The
 % simplest way to do this is to make a copy of the |Market| object |market| and
-% compute a new equilibrium with the copy, |market2|. 
+% compute a new equilibrium with the copy, |market2|. Before calculating
+% the equilibrium, we set the name of the variable specifying the new
+% ownership.
 
 market2 = copy(market);
-market2.firm(market2.firm == 2 ) = 1;
+market2.var.firm = 'firm2';
 market2.equilibrium();
 
 %%
 % The effects of the change in
 % the market conditions in the two settings can then be compared using 
-% |market.compare()| for all markets or for a selection.
-mergerResult = compare(market, market2)
-mergerResult = compare(market, market2, 'Selection', dt2.marketid == 1)
+% |market.summary()| for all markets or for a selection.
+mergerResult = summary(market, market2)
+mergerResult = summary(market, market2, 'Selection', dt2.marketid == 1)
 
 %%
 % Cost calculation and equilibrium simulation can be performed on a
 % selection rather than the whole dataset. To do this, a selection vector
 % is provided. In this example we restrict our attention to market 1 by
 % specifying |findCosts(dt2.marketid == 1)|. As costs have not been
-% calculated for other markets, both |market2.equilibrium()| and |compare|
+% calculated for other markets, both |market2.equilibrium()| and |summary|
 % calculate only for this market. 
 
 market = Market(demand2);
@@ -151,7 +155,7 @@ market.findCosts(dt2.marketid == 1);
 market2 = copy(market);
 market2.firm(market2.firm == 2 ) = 1;
 market2.equilibrium();
-mergerResult2 = compare(market, market2)
+mergerResult2 = summary(market, market2)
 
 %%
 % One can also explicitly restrict 
@@ -161,7 +165,7 @@ mergerResult2 = compare(market, market2)
 % the restriction with the |'Selection'| option.
 %
 %   market2.equilibrium(dt2.marketid == 1);
-%   mergerResult2 = compare(market, market2, 'Selection', dt2.marketid == 1)
+%   mergerResult2 = summary(market, market2, 'Selection', dt2.marketid == 1)
 
 %%
 % The |Market| class has a number of settings. Similarly to the demand

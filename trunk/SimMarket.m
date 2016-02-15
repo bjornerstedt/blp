@@ -308,6 +308,11 @@ classdef SimMarket < matlab.mixin.Copyable
             end
             RandStream.setGlobalStream(RandStream('mt19937ar','Seed', seed));
         end
+
+        
+        function vals = testSame(x,y,i)
+            assert(all( abs(x - y) < 10e-6), 'Test %d failed' , i);
+        end
         
         function vals = testEqual(x, y, sensitivity)
         % testEqual(x, y, sens) tests whether x and y are within 

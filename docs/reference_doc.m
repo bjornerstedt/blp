@@ -1,4 +1,4 @@
-%% SimMarket 0.2 Reference 
+%% SimMarket 0.3 Reference 
 % This is a preliminary version that includes output of structures for
 % comparisons.
 
@@ -239,14 +239,11 @@ methods(Market)
 %   m1.summary('selection', vec, 'GroupingVariables', 'productid'); 
 
 %%
-% The method |Market.compare()| can be used to compare two market equilibria 
+% The method |Market.summary()| can be used to compare two market equilibria 
 % m1 and m2. Aggregated prices and percentage price changes from m1 to m2 are shown. 
 % By default weighted average prices, grouped by firm are shown using
 %
-%   compare(m1, m2)
-% 
-% |compare| can take the same options as |summarise|.
-
+%   summary(m1, m2)
 %% SimMarket class
 % In addition to the associated demand object it creates a new demand object |m.estDemand|
 % that is used for estimation. 
