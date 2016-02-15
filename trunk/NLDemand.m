@@ -131,6 +131,9 @@ classdef NLDemand < Estimate
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
 		% Used in Market.findcosts()
         function S = actualDemand(obj)
+            if isempty(obj.share)
+                error('Shares have not been calculated')
+            end
             S = obj.share.s;	
         end
 

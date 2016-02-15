@@ -4,20 +4,14 @@ classdef Market < Estimate
     
     properties
         firm
-        q %quantities
         p %prices
-        p0 %Initial prices
         c %Costs
         gamma = 0 % Scale effects
-        marketid % Protected?
         demand % Demand class        
     end
     properties (SetAccess = protected, Hidden = true )
-        s %shares
+        marketid % Protected?
         RR %ownership tranformation with conduct
-        c1, p1, q1 %Views for bootstrapping
-        sel % market class with selection
-        sim % per market data, set in initSimulation
     end
     
     methods
@@ -47,15 +41,7 @@ classdef Market < Estimate
             end
             % Copied, can be null
             obj.p = obj.demand.p;
-            obj.q = obj.demand.q; 
             obj.marketid = obj.demand.marketid;
-            % With simulated demand, obj.share has not been set
-            if ~isempty(obj.demand.share)
-                obj.p0 = obj.p;
-                obj.s = obj.demand.actualDemand();
-            else
-                obj.p0 = obj.c;                
-            end
         end
         
         function initSimulation(obj, market_number)
@@ -74,11 +60,15 @@ classdef Market < Estimate
             else
                 selection = ~isnan(obj.c);
             end           
+            if ~isempty(obj.demand.share)
+                p0 = obj.p;
+            else
+                p0 = obj.c;                
+            end
             marketid_list = unique(obj.marketid(selection));
             options = optimoptions(@fsolve,... 
                 'MaxFunEvals',obj.settings.maxit,'Display', 'off');
             obj.p = nan(size(obj.marketid));
-            obj.s = nan(size(obj.marketid));
             convCount = 0;
             for i = 1:length(marketid_list)
                 t = marketid_list(i);
@@ -86,9 +76,9 @@ classdef Market < Estimate
                 obj.initSimulation(t);
                 [pt, ~, exitflag, output] = fsolve( ...
                     @(x)obj.foc(x, obj.c(selection)), ...
-                    obj.p0(selection), options);
+                    p0(selection), options);
                 obj.p(selection) = pt;
-                obj.s(selection) = obj.demand.shares(pt);
+%                 obj.s(selection) = obj.demand.shares(pt);
                 obj.results.iterations = output.iterations;
                 if exitflag == 1
                     convCount = convCount+1;
@@ -109,6 +99,7 @@ classdef Market < Estimate
                 selection = ones(size(obj.marketid));
                 marketid_list = unique(obj.marketid);
             end
+            quantity = obj.demand.actualDemand();
             obj.c = nan(size(obj.marketid));
             obj.results.findCosts.cond = [];
             for i = 1:length(marketid_list)
@@ -116,7 +107,7 @@ classdef Market < Estimate
                 msel = obj.marketid == t;
                 obj.initSimulation(t);
                 [sj, cnd] = linsolve( obj.RR .* obj.demand.shareJacobian([]), ...
-                    -obj.s(msel) );
+                    -quantity(msel) );
                 obj.c(msel) = obj.p(msel) - sj;
                 obj.results.findCosts.cond = min([obj.results.findCosts.cond, cnd]);
             end
@@ -185,12 +176,16 @@ classdef Market < Estimate
         end
         
         function res = getMarketShares(obj, varargin)
+            % getMarketShares([weights])
+            % Used as weights in summary and compare
+            
+            q = obj.simDemand.getDemand(obj.p);
             if nargin > 1 && ~isempty(varargin{1})
                 qu = varargin{1};
             elseif obj.settings.valueShares % Note that valueShares should be true for ces.
-                qu = obj.q * obj.p;
+                qu = q * obj.p;
             else
-                qu = obj.q;
+                qu = q;
             end
             qbar = accumarray(obj.marketid, qu, [], @sum);
             qbar = qbar(obj.marketid, :);
@@ -315,13 +310,6 @@ classdef Market < Estimate
             obj.settings.valueShares = false;
         end      
         
-		function f = focNum(obj,  P)
-			S = obj.demand.shares( P );
-            func = @(p)(obj.demand.shares(p));
-            jac = jacobian(func, P);
-			f = ( obj.RR .* jac ) * (P - obj.c) + S;
-		end 
-
 		function f = margins(obj,  P)
 			S = obj.demand.shares( P );
 			f = linsolve( (-obj.RR) .* (obj.demand.shareJacobian( S , P)) , S );
@@ -329,7 +317,11 @@ classdef Market < Estimate
         
         function f = fixedPoint(obj, maxit)
 			convergence = 1 ;
-			P = obj.p0;
+            if ~isempty(obj.demand.share)
+                P = obj.p;
+            else
+                P = obj.c;                
+            end
             sensitivity = 10^-6;
 			dist = sensitivity + 1;
 			i = 0;
@@ -375,7 +367,6 @@ classdef Market < Estimate
 			diff = obj.foc( P);
 			%st_numscalar('r(fixedpointdiff)', cross(diff, diff) )	;
 			obj.p = P;
-			obj.s = S;
 			f = [i,convergence];
         end
         

@@ -10,10 +10,11 @@ classdef RCDemand < NLDemand
         xi % Unobservable utility, residual
         vars2 % Nonlinear variable names in output (with rc_ prefix)
         nonlinparams = [] % Arrays for RC names and type of RC
+        
+        edelta % Saved between invocations of objective
         oldsigma = 0 % Used in comparisons between minimization steps
         deltaJac % Used to guess new edelta
         isOptimalIV = false
-        edelta % Saved between invocations of objective
         ZWZ
         inv_x1ZWZx1
 %         estimationMatrix
@@ -54,26 +55,7 @@ classdef RCDemand < NLDemand
             % shareJacobian(p, [market_number])
             sh = obj.period{obj.sim.market}.shareJacobian(P);          
         end
-        
-        function [elas] = groupElasticities(obj, P,  group)
-            group = obj.data{:, group};
-            if iscategorical(group)
-                [names,~,group] = unique(group);
-                names = matlab.lang.makeValidName(cellstr(char(names)));
-            else
-                names = [];
-            end
-            A = dummyvar(group)';
-            s = obj.shares(P);
-            D = obj.shareJacobian(P)';
-            elas = A*diag(P)* D * A' * diag( 1 ./(A*s) ) ;
-            elas = array2table(elas);
-            if ~isempty(names)
-                elas.Properties.RowNames = names;
-                elas.Properties.VariableNames = names;
-            end
-        end
-        
+             
         function s = sumstats(obj, j, E)
             e = j .* E;
             e(e==0)=[];
@@ -508,7 +490,7 @@ classdef RCDemand < NLDemand
                 % The following code is an attempt to get optimal IV with
                 % FE to give the same result as LSDV
                 % Note that Xorig has log(p) for CES
-                pHat = obj.Zorig*((obj.Zorig'*obj.Zorig)\obj.Zorig'*obj.Xorig(:, 1));
+                pHat = obj.Zorig*((obj.Zorig'*obj.Zorig)\obj.Zorig' * obj.Xorig(:, 1));
                 deltaHat = [pHat, obj.Xorig(:, 2:end)] * obj.beta;
                 optInstr = obj.deltaJacobian(obj.sigma, exp(deltaHat));
                 if strcmpi(obj.settings.paneltype, 'fe')
