@@ -10,6 +10,10 @@ pk.PX = pk.PX./(pk.cpi/100);
     
 pk.BL0 = repmat( 2*mean(Estimate.mean(pk.time, pk.X)), size(pk.X)) ;
 
+
+%% 
+% Instruments 
+
 instruments = Estimate.countInstruments(pk, 'time', {'firm', 'form', 'substance'});
 instruments(: , [4, 6]) = [];
 pk.instruments = instruments + 1;
@@ -23,27 +27,49 @@ demand.var.panel = 'product';
 demand.var.marketsize = 'BL0';
 demand.var.exog = ['marketing1 sw sm time month2 month3 month4 month5 month6 '...
     'month7 month8 month9 month10 month11 month12'];
+
 demand.var.instruments = 'instruments';
 
+%% Demand estimate
+demand.settings.estimateMethod = 'gmm';
 demand.estimate()
-demand.settings
-demand.results
+demand.settings.estimateMethod = '2sls';
+demand.estimate()
+return
+%% Demand Settings
+disp(demand.settings)
+display 'Demand Results:'
+disp(demand.results)
+
+%% Elasticities
+% Elasticities can be calculated for a market. The market selection has to
+% be a single market. It displays the unweighted average elasticities over
+% products in the period.
+
+demand.elasticities(pk.year == 2008 & pk.month == 12)
+demand.groupElasticities('substance', pk.year == 2008 & pk.month == 12)
+
+%% Market
+% Find costs. We set weightedAverages to false to replicate mergersim 1
+% behavior.
 
 market = Market(demand);
 market.var.firm = 'firm';
-
-% mergersim 1 has unweighted averages
 market.settings.weightedAverages = false;
 
 market.findCosts(pk.year == 2008 & pk.month == 12)
-
-market.results.findCosts
 market.summary()
 
+%% Merger 
+% The merger is calculated on a copy of market1, with new ownership.
+
 market2 = copy(market);
+market2.var.firm = [];
 market2.firm(market2.firm == 'AstraZeneca' ) = 'GSK'; 
 market2.equilibrium();
-compare(market, market2)
+
+display 'Merger results:'
+summary(market, market2)
 
 %% Test that results are equal
 % All individual prices and costs are within 0.1% of mergersim values

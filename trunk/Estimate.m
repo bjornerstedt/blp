@@ -25,11 +25,11 @@ classdef Estimate  < matlab.mixin.Copyable
     methods
         function R = estimate(obj, varargin)
             obj.init(varargin{:});
-            switch obj.settings.estimateMethod
+            switch lower(obj.settings.estimateMethod)
                 case 'ols'
                     [beta, varcovar] = obj.ols();
-                case 'gls' % Change name to 2sls Make default if obj.Z~=[]
-                    [beta, varcovar] = obj.gls();
+                case '2sls' % Change name to 2sls Make default if obj.Z~=[]
+                    [beta, varcovar] = obj.tsls();
                 case 'gmm'
                     [beta, varcovar] = obj.gmm();
                 otherwise
@@ -41,9 +41,9 @@ classdef Estimate  < matlab.mixin.Copyable
             varsel = 1:length(obj.vars );
                 varcovar = varcovar(varsel, varsel) ;
                 beta = beta(varsel, :);
-                obj.results.betadummies = obj.beta(length(obj.vars)+1:end);
+                obj.results.params.betadummies = obj.beta(length(obj.vars)+1:end);
             end
-            obj.results.other = [];
+%             obj.results.other = [];
             R = obj.createResults(beta, varcovar, obj.vars);            
             obj.createVarcovar(varcovar);
         end
@@ -165,6 +165,7 @@ classdef Estimate  < matlab.mixin.Copyable
                 obj.Z =  obj.Zorig;
                 obj.results.dgf = (size(obj.X,1) - size(obj.X,2));
             end
+            obj.results.observations = size(obj.X,1);
             if ~isempty(selection)                
                 obj.X = obj.X(selection, :);
                 obj.y = obj.y(selection);
@@ -233,7 +234,7 @@ classdef Estimate  < matlab.mixin.Copyable
             end
         end
         
-        function [beta, varcovar] = gls(obj)
+        function [beta, varcovar] = tsls(obj)
             W = inv(obj.Z' * obj.Z);
             Zprod = obj.Z * W * obj.Z';
             invZZ = inv(obj.X' * Zprod * obj.X);

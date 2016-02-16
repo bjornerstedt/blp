@@ -1,0 +1,295 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>nestedlogit</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-02-16"><meta name="DC.source" content="nestedlogit.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">SimMarket mergersim comparison</a></li><li><a href="#3">Demand estimate</a></li><li><a href="#4">Demand Settings</a></li><li><a href="#5">Elasticities</a></li><li><a href="#6">Market</a></li><li><a href="#7">Merger</a></li><li><a href="#8">Test that results are equal</a></li></ul></div><h2>SimMarket mergersim comparison<a name="1"></a></h2><p>Test that Stata and Matlab variable creation are identical painkillers is a dataset with mergersim M_* variables included, created in Stata by nestedlogit.do.</p><pre class="codeinput">clear
+load <span class="string">painkillers</span>
+
+pk.Ptablets = pk.Ptablets./(pk.cpi/100);
+pk.PX = pk.PX./(pk.cpi/100);
+
+pk.BL0 = repmat( 2*mean(Estimate.mean(pk.time, pk.X)), size(pk.X)) ;
+</pre><p>Instruments</p><pre class="codeinput">instruments = Estimate.countInstruments(pk, <span class="string">'time'</span>, {<span class="string">'firm'</span>, <span class="string">'form'</span>, <span class="string">'substance'</span>});
+instruments(: , [4, 6]) = [];
+pk.instruments = instruments + 1;
+
+demand = NLDemand(pk(pk.year &lt; 2009, :));
+demand.var.nests = <span class="string">'form substance'</span>;
+demand.var.price = <span class="string">'Ptablets'</span>;
+demand.var.quantity = <span class="string">'Xtablets'</span>;
+demand.var.market = <span class="string">'time'</span>;
+demand.var.panel = <span class="string">'product'</span>;
+demand.var.marketsize = <span class="string">'BL0'</span>;
+demand.var.exog = [<span class="string">'marketing1 sw sm time month2 month3 month4 month5 month6 '</span><span class="keyword">...</span>
+    <span class="string">'month7 month8 month9 month10 month11 month12'</span>];
+
+demand.var.instruments = <span class="string">'instruments'</span>;
+</pre><h2>Demand estimate<a name="3"></a></h2><pre class="codeinput">demand.estimate()
+</pre><pre class="codeoutput">
+ans = 
+
+                     Coef        Std_err      t_value 
+                  __________    __________    ________
+
+    Ptablets         -2.0408       0.15901     -12.835
+    lsjh              0.9271      0.013241      70.019
+    lshg              0.7908      0.011915      66.373
+    marketing1        8.9074        1.8361      4.8514
+    sw              -0.72458      0.079958      -9.062
+    sm               0.82212       0.15836      5.1914
+    time          0.00065087    0.00021591      3.0145
+    month2         -0.048157     0.0094331     -5.1051
+    month3          0.096617     0.0095343      10.134
+    month4         -0.089398     0.0089611     -9.9762
+    month5          -0.10573     0.0089693     -11.788
+    month6         -0.097979     0.0088901     -11.021
+    month7           -0.1686     0.0098679     -17.086
+    month8          -0.08765      0.008914     -9.8329
+    month9         -0.001541     0.0089163    -0.17283
+    month10         0.010051     0.0086086      1.1675
+    month11         -0.08697      0.008531     -10.195
+    month12          0.26794      0.010571      25.347
+    constant        -0.76284      0.056675      -13.46
+
+</pre><h2>Demand Settings<a name="4"></a></h2><pre class="codeinput">disp(demand.settings)
+display <span class="string">'Demand Results:'</span>
+disp(demand.results)
+</pre><pre class="codeoutput">  SettingsClass with properties:
+
+               ces: 0
+            nocons: 0
+         logLinear: []
+    estimateMethod: 'gls'
+         paneltype: 'lsdv'
+            robust: 1
+
+Demand Results:
+    estimateDescription: 'Nested Logit Demand'
+                    dgf: 7166
+           observations: 7240
+                 params: [1x1 struct]
+               estimate: [19x3 table]
+                    var: [10x2 table]
+               settings: [6x2 table]
+            totalShares: '  Mean: 0.513 Min: 0.438 Max: 0.663 ...'
+
+</pre><h2>Elasticities<a name="5"></a></h2><p>Elasticities can be calculated for a market. The market selection has to be a single market. It displays the unweighted average elasticities over products in the period.</p><pre class="codeinput">demand.elasticities(pk.year == 2008 &amp; pk.month == 12)
+demand.groupElasticities(<span class="string">'substance'</span>, pk.year == 2008 &amp; pk.month == 12)
+</pre><pre class="codeoutput">
+ans = 
+
+              Mean        Std          Min          Max  
+            ________    ________    __________    _______
+
+    e_ii     -12.181      4.4439       -23.666    -3.8736
+    e_ji      1.4445      2.3596    8.5647e-05     8.1416
+    e_ki     0.24447     0.44709    2.4642e-06      1.754
+    e_ll    0.017468    0.036002    2.6442e-07    0.16856
+
+
+ans = 
+
+                     ASA      Ibuprofen    Paracetamol
+                   _______    _________    ___________
+
+    ASA             -2.231    0.30367      0.75579    
+    Ibuprofen      0.47704    -3.6009       1.5533    
+    Paracetamol     1.4152     2.3065      -2.4121    
+
+</pre><h2>Market<a name="6"></a></h2><p>Find costs. We set weightedAverages to false to replicate mergersim 1 behavior.</p><pre class="codeinput">market = Market(demand);
+market.var.firm = <span class="string">'firm'</span>;
+market.settings.weightedAverages = false;
+
+market.findCosts(pk.year == 2008 &amp; pk.month == 12)
+market.summary()
+</pre><pre class="codeoutput">
+ans = 
+
+       Firm         Price      Costs      Lerner     MarketSh
+    ___________    _______    _______    ________    ________
+
+    AstraZeneca    0.48385    0.39065     0.19368     0.36084
+    Bayer          0.51618    0.47854    0.075558    0.005235
+    GSK             0.4996     0.4566    0.086913     0.11842
+    Meda           0.42667    0.38732      0.1073    0.040308
+    Nycomed        0.53884    0.49073     0.10054     0.09156
+    Pfizer         0.52227    0.40898     0.22934     0.38363
+
+</pre><h2>Merger<a name="7"></a></h2><p>The merger is calculated on a copy of market1, with new ownership.</p><pre class="codeinput">market2 = copy(market);
+market2.var.firm = [];
+market2.firm(market2.firm == <span class="string">'AstraZeneca'</span> ) = <span class="string">'GSK'</span>;
+market2.equilibrium();
+
+display <span class="string">'Merger results:'</span>
+summary(market, market2)
+</pre><pre class="codeoutput">Simulation converged for 1 of 1 markets
+Merger results:
+
+ans = 
+
+       Firm         Costs     Price1     Price2      PriceCh  
+    ___________    _______    _______    _______    __________
+
+    AstraZeneca    0.39065    0.48385    0.53342       0.10561
+    Bayer          0.47854    0.51618    0.51635    0.00036041
+    GSK             0.4566     0.4996    0.59936       0.20282
+    Meda           0.38732    0.42667    0.42709     0.0011632
+    Nycomed        0.49073    0.53884     0.5405     0.0034802
+    Pfizer         0.40898    0.52227    0.52599     0.0080143
+
+</pre><h2>Test that results are equal<a name="8"></a></h2><p>All individual prices and costs are within 0.1% of mergersim values</p><pre class="codeinput">SimMarket.testEqual( pk.Ptablets, pk.M_price, 1e-6);
+SimMarket.testEqual( pk.BL0, pk.M_BL0, 1e-3);
+SimMarket.testEqual( market.c(pk.year == 2008 &amp; pk.month == 12), <span class="keyword">...</span>
+    pk.M_costs(pk.year == 2008 &amp; pk.month == 12), 1e-3);
+SimMarket.testEqual( market2.p(pk.year == 2008 &amp; pk.month == 12), <span class="keyword">...</span>
+    pk.M_price2(pk.year == 2008 &amp; pk.month == 12), 1e-4);
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% SimMarket mergersim comparison
+% Test that Stata and Matlab variable creation are identical
+% painkillers is a dataset with mergersim M_* variables included, created
+% in Stata by nestedlogit.do.
+clear
+load painkillers
+
+pk.Ptablets = pk.Ptablets./(pk.cpi/100);
+pk.PX = pk.PX./(pk.cpi/100);
+    
+pk.BL0 = repmat( 2*mean(Estimate.mean(pk.time, pk.X)), size(pk.X)) ;
+
+
+%% 
+% Instruments 
+
+instruments = Estimate.countInstruments(pk, 'time', {'firm', 'form', 'substance'});
+instruments(: , [4, 6]) = [];
+pk.instruments = instruments + 1;
+
+demand = NLDemand(pk(pk.year < 2009, :));
+demand.var.nests = 'form substance';
+demand.var.price = 'Ptablets';
+demand.var.quantity = 'Xtablets';
+demand.var.market = 'time';
+demand.var.panel = 'product';
+demand.var.marketsize = 'BL0';
+demand.var.exog = ['marketing1 sw sm time month2 month3 month4 month5 month6 '...
+    'month7 month8 month9 month10 month11 month12'];
+
+demand.var.instruments = 'instruments';
+
+%% Demand estimate
+
+demand.estimate()
+
+%% Demand Settings
+disp(demand.settings)
+display 'Demand Results:'
+disp(demand.results)
+
+%% Elasticities
+% Elasticities can be calculated for a market. The market selection has to
+% be a single market. It displays the unweighted average elasticities over
+% products in the period.
+
+demand.elasticities(pk.year == 2008 & pk.month == 12)
+demand.groupElasticities('substance', pk.year == 2008 & pk.month == 12)
+
+%% Market
+% Find costs. We set weightedAverages to false to replicate mergersim 1
+% behavior.
+
+market = Market(demand);
+market.var.firm = 'firm';
+market.settings.weightedAverages = false;
+
+market.findCosts(pk.year == 2008 & pk.month == 12)
+market.summary()
+
+%% Merger 
+% The merger is calculated on a copy of market1, with new ownership.
+
+market2 = copy(market);
+market2.var.firm = [];
+market2.firm(market2.firm == 'AstraZeneca' ) = 'GSK'; 
+market2.equilibrium();
+
+display 'Merger results:'
+summary(market, market2)
+
+%% Test that results are equal
+% All individual prices and costs are within 0.1% of mergersim values
+
+SimMarket.testEqual( pk.Ptablets, pk.M_price, 1e-6);
+SimMarket.testEqual( pk.BL0, pk.M_BL0, 1e-3);
+SimMarket.testEqual( market.c(pk.year == 2008 & pk.month == 12), ...
+    pk.M_costs(pk.year == 2008 & pk.month == 12), 1e-3);
+SimMarket.testEqual( market2.p(pk.year == 2008 & pk.month == 12), ...
+    pk.M_price2(pk.year == 2008 & pk.month == 12), 1e-4);
+
+
+##### SOURCE END #####
+--></body></html>

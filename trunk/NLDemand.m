@@ -90,8 +90,10 @@ classdef NLDemand < Estimate
                     obj.d = obj.share.ls - [price, obj.share.lsjh, obj.share.lshg] * est';
                 end
                 obj.alpha = -est(1);
+                obj.results.alpha = obj.alpha;
                 if length(est) > 1
                     obj.sigma = est(2:end);
+                    obj.results.sigma = obj.sigma;
                 end
             end
         end
@@ -186,31 +188,65 @@ classdef NLDemand < Estimate
             end
         end
         
-        function [elas, varargout] = elasticities(obj, P)
-            function s = sumstats( j, E)
+        function [elas, varargout] = elasticities(obj, selection, varargin)
+            % [table, mat] = elasticities(selection, [price], finds the average
+            % elasticities by nesting. The second result is the complete
+            % matrix.
+            function s = sumstats( E, j)
+            % All the elasticities within the same group level are identical
+            % along rows. sumstats uses max to sele
                 e = j .* E;
-                e(e==0)=[];
+                % Because each row in E has a unique value, the following
+                % command will find it, whether it is positive or negative.
+                e = max(e,[], 2) + min(e,[],2);
                 s = [mean(e) std(e) min(e) max(e)];
             end
+            function s = avstats( E, j)
+            % All the elasticities within the same group level are identical
+            % along rows. sumstats uses max to sele
+                e = j .* E;
+                % Take row means of nonzero elements:
+                e = sum(e, 2) ./ sum(e ~= 0,2);
+                s = [mean(e) std(e) min(e) max(e)];
+            end
+            args = inputParser;
+            args.addRequired('selection', @islogical);
+            args.addParameter('price', obj.data{:, obj.var.price}, @isnumeric);
+            args.addParameter('group', [], @ischar);
+            args.parse(selection, varargin{:});            
+            P = args.Results.price;
+            marketId = unique(obj.marketid(selection));
+            if length(marketId) >1
+                error('Elasticities in multiple markets not supported')
+            end
+            obj.initSimulation(marketId);
+            P = P(obj.dummarket(:, marketId));
             s = obj.shares(P);
             n = length(s);
             D = obj.shareJacobian(P)';
             E = diag(P) * D * diag( 1 ./ s );
-            elas = [sumstats(eye(n), E)];
-            if obj.nestCount == 0
-                elas = [elas; sumstats(1 - eye(n), E)]
-                rowtit = {'e_ii', 'e_ij'};
+            elas = [sumstats(E, eye(n))];
+            if ~isempty(args.Results.group)
+                G = dummyvar( obj.data{:, args.Results.group} );
+                GG = G*G';
+                elas = [elas; ...
+                    obj.sumstats(E, GG - eye(n)); ...
+                    obj.sumstats(E, 1 - GG)];
+                rowtit = {'e_ii', 'e_ij', 'e_ik'};
+            elseif obj.nestCount == 0
+                elas = [elas; sumstats(E, 1 - eye(n))]
+                rowtit = {'e_ii', 'e_ji'};
             elseif obj.nestCount == 1
                 elas = [elas; ...
-                    sumstats(obj.GG - eye(n), E); ...
-                    sumstats(1 - obj.GG, E)];
-                rowtit = {'e_ii', 'e_ij', 'e_ik'};
+                    sumstats(E, obj.GG - eye(n)); ...
+                    sumstats(E, 1 - obj.GG)];
+                rowtit = {'e_ii', 'e_ji', 'e_ki'};
             elseif obj.nestCount == 2
                 elas = [elas; ...
-                    sumstats(obj.HH - eye(n), E); ...
-                    sumstats(obj.GG - obj.HH , E); ...
-                    sumstats(1 - obj.GG, E)];
-                rowtit = {'e_ii', 'e_ij', 'e_ik', 'e_il'};
+                    sumstats(E, obj.HH - eye(n)); ...
+                    sumstats(E, obj.GG - obj.HH ); ...
+                    sumstats(E, 1 - obj.GG)];
+                rowtit = {'e_ii', 'e_ji', 'e_ki', 'e_ll'};
             end
             elas = array2table(elas);
             elas.Properties.VariableNames = {'Mean', 'Std', 'Min', 'Max'};
@@ -220,8 +256,19 @@ classdef NLDemand < Estimate
             end
         end
         
-        function [elas] = groupElasticities(obj, P, group)
-            group = obj.data{:, group};
+        function [elas] = groupElasticities(obj, group, selection, varargin)
+            if nargin == 4
+                P = varargin{1};
+            else
+                P = obj.data{:, obj.var.price};
+            end
+            marketId = unique(obj.marketid(selection));
+            if length(marketId) >1
+                error('Elasticities in multiple markets not supported')
+            end
+            P = P(obj.dummarket(:, marketId));
+            obj.initSimulation(marketId);            
+            group = obj.data{obj.dummarket(:, marketId), group};
             if iscategorical(group)
                 [names,~,group] = unique(group);
                 names = matlab.lang.makeValidName(cellstr(char(names)));
@@ -245,7 +292,7 @@ classdef NLDemand < Estimate
             obj.settings.setParameters({'ces'});
             
             obj.settings.paneltype = 'lsdv';
-            obj.settings.estimateMethod = 'gls';
+            obj.settings.estimateMethod = '2sls';
             obj.settings.ces = false;
             
             obj.results.estimateDescription = 'Nested Logit Demand';             

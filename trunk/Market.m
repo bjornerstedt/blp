@@ -20,14 +20,16 @@ classdef Market < Estimate
                 error('Demand object must be specified')
             end
             obj.demand.init();
-            if isempty(obj.var.firm) 
-                error('var.firm has to be specified');
-            end
-            % Set unless new firm has been set for example as post merger
-            % ownership.
-            obj.firm = obj.demand.data{:, obj.var.firm};
-            if ~iscategorical(obj.firm)
-                [~, ~, obj.firm] = unique(obj.firm);
+            if isempty(obj.var.firm)
+                if isempty(obj.firm)
+                    error('var.firm has to be specified');
+                end
+                % obj.firm can be set directly if obj.var.firm is empty.
+            else
+                obj.firm = obj.demand.data{:, obj.var.firm};
+                if ~iscategorical(obj.firm)
+                    [~, ~, obj.firm] = unique(obj.firm);
+                end
             end
             if ~isempty(obj.data)
                 init@Estimate(obj);
@@ -110,8 +112,8 @@ classdef Market < Estimate
                 obj.c(msel) = obj.p(msel) - sj;
                 obj.results.findCosts.cond = min([obj.results.findCosts.cond, cnd]);
             end
-            obj.results.findCosts.minCosts = sum(obj.c(selection) < 0);
-            if obj.results.findCosts.minCosts < 0
+            obj.results.findCosts.negCostCount = sum(obj.c(selection) < 0);
+            if obj.results.findCosts.negCostCount < 0
                 warning('Calculated negative costs')
             end
             if min(obj.p(selection) - obj.c(selection)) < 0

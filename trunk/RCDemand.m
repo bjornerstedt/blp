@@ -59,37 +59,6 @@ classdef RCDemand < NLDemand
             sh = obj.period{obj.sim.market}.shareJacobian(P);          
         end
              
-        function s = sumstats(obj, j, E)
-            e = j .* E;
-            e(e==0)=[];
-            s = [mean(e) std(e) min(e) max(e)];
-        end
-        
-        function [elas, varargout] = elasticities(obj, P, varargin)
-            s = obj.shares(P);
-            n = length(s);
-            D = obj.shareJacobian(P)';
-            E = diag(P) * D * diag( 1 ./ s );
-            elas = obj.sumstats(eye(n), E);
-            if nargin == 0
-                elas = [elas; obj.sumstats(1 - eye(n), E)];
-                rowtit = {'e_ii', 'e_ij'};
-            else
-                G = dummyvar( obj.data{:, varargin{1}} );
-                GG = G*G';
-                elas = [elas; ...
-                    obj.sumstats(GG - eye(n), E); ...
-                    obj.sumstats(1 - GG, E)];
-                rowtit = {'e_ii', 'e_ij', 'e_ik'};
-            end
-            elas = array2table(elas);
-            elas.Properties.VariableNames = {'Mean', 'Std', 'Min', 'Max'};
-            elas.Properties.RowNames = rowtit;
-            if nargout > 0
-                varargout{1} = E;
-            end
-        end
-        
         function der = deltaJacobian(obj, sigma, edelta)
             der = zeros(size(obj.x2));
             for t = 1:max(obj.marketid)
@@ -209,6 +178,8 @@ classdef RCDemand < NLDemand
             
             obj.alpha = - obj.beta(strcmp(obj.getPriceName(), obj.vars));
             coef = [obj.beta; obj.sigma];  % vector of all parameters
+            obj.results.alpha = obj.alpha;
+            obj.results.sigma = obj.sigma;
             varsel = [1:length(obj.vars ), ...
                 (length(coef)-length(obj.vars2)+1):length(coef)];
             varcovar = obj.computeVariance();
@@ -368,16 +339,6 @@ classdef RCDemand < NLDemand
             end
         end
                                   
-        function demand = pack(obj, filename)
-            demand = RCDemand;
-            demand.settings = obj.settings;
-            demand.var = obj.var;
-            demand.config = obj.config;
-            demand.results = obj.results;
-            demand.beta = obj.beta;
-            demand.sigma = obj.sigma;
-        end
-        
         function obj = RCDemand(varargin)
             obj = obj@NLDemand(varargin{:});
             obj.var.setParameters({'nonlinear','nonlinearlogs','nonlineartriangular'});

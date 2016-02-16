@@ -31,7 +31,9 @@ use painkillers
 	
 	global exogvar marketing1 sw sm time month2-month12 // used for nested logit
 	mergersim init, nests(form substance) unit price(Ptablets1) quantity(Xtablets) marketsize(BL0) firm(firm)
-	xtivreg2 M_ls $exogvar (Ptablets1 M_lsjh M_lshg = num*) if year<2009, fe // robust
+
+	xtivreg2 M_ls $exogvar (Ptablets1 M_lsjh M_lshg = num*) if year<2009, fe gmm robust
+	xtivreg2 M_ls $exogvar (Ptablets1 M_lsjh M_lshg = num*) if year<2009, fe robust
 
 
 mergersim market if year==2008&month==12   
