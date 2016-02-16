@@ -235,13 +235,19 @@ classdef Estimate  < matlab.mixin.Copyable
         
         function [beta, varcovar] = gls(obj)
             W = inv(obj.Z' * obj.Z);
-            mid = obj.Z * W * obj.Z';
-            sst = inv(obj.X' * mid * obj.X);
-            beta = sst * (obj.X' * mid * obj.y);
+            Zprod = obj.Z * W * obj.Z';
+            invZZ = inv(obj.X' * Zprod * obj.X);
+            beta = invZZ * (obj.X' * Zprod * obj.y);
+            
+            % See docs/design.lyx, section Robust errors
             xi = obj.y - obj.X * beta;
-            % Add robust estimate
-            ser = (xi' * xi) ./ obj.results.dgf;
-            varcovar = ser * sst;
+            if obj.settings.robust
+                xiXhat = bsxfun(@times, xi, Zprod * obj.X);
+                varcovar = invZZ * (xiXhat' * xiXhat) * invZZ;
+                % TODO: Add dgf adjustment
+            else
+                varcovar = ((xi' * xi) ./ obj.results.dgf) * invZZ;
+            end
         end
         
         function [beta, varcovar] = gmm(obj)            
@@ -252,11 +258,16 @@ classdef Estimate  < matlab.mixin.Copyable
             xi = obj.y - obj.X * btsls;
 
             % STAGE II: OPTIMAL WEIGHTING MATRIX
-            W = inv((bsxfun(@times,xi,obj.Z))' * (bsxfun(@times,xi,obj.Z)));
+            xiZ = bsxfun(@times,xi,obj.Z);
+            W = inv(xiZ' * xiZ);
             mid = obj.Z * W * obj.Z';
             beta = inv(obj.X' * mid * obj.X) * (obj.X' * mid * obj.y);
             xi = obj.y - obj.X * beta;
+
+            % See docs/design.lyx, section Robust errors
+            % Note that second stage W is not used.
             varcovar = inv(obj.X' * mid * obj.X);
+            % TODO: Add dgf adjustment
         end
        
         function mn  = demean(obj, data )

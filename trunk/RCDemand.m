@@ -229,28 +229,23 @@ classdef RCDemand < NLDemand
         
         function varcovar = computeVariance(obj)
             derdel = obj.deltaJacobian(obj.sigma, obj.edelta);
-            if strcmpi(obj.settings.paneltype, 'fe')
-                dgf = (size(obj.X,1) - size(obj.X,2)) - max(obj.panelid);
-            else
-                dgf = (size(obj.X,1) - size(obj.X,2));
-            end
-            obj.results.params.dgf = dgf;
             if isempty(obj.Z)
-                % Homoscedastic errors
                 dertheta = [-obj.X derdel];
                 invXX = inv(dertheta' * dertheta);
                 if obj.settings.robust
                     xiX =bsxfun(@times, obj.xi, dertheta);
-                    varcovar = invXX*(xiX'*xiX)*invXX;
+                    varcovar = invXX * (xiX' * xiX) * invXX;
+                    % TODO: Add dgf adjustment
                 else
-                    varcovar = ((obj.xi'*obj.xi) ./ dgf) * invXX;
+                    varcovar = ((obj.xi' * obj.xi) ./ obj.results.dgf) * invXX;
                 end
             else
-                if obj.config.test
-                    pHat = obj.Z*((obj.Z'*obj.Z)\obj.Z'*obj.X(:, 1));
-                    deltaHat = [pHat, obj.X(:,2:end)] * obj.beta;
-                end
-                dertheta = [-obj.X derdel]'* obj.Z;
+%                 if obj.config.test
+%                     pHat = obj.Z*((obj.Z'*obj.Z)\obj.Z'*obj.X(:, 1));
+%                     deltaHat = [pHat, obj.X(:,2:end)] * obj.beta;
+%                 end
+
+                dertheta = [obj.X, derdel]'* obj.Z;
 % Robust estimation if test is set:
 %             if isfield(obj.config, 'test') && obj.config.test
 %                 xiZ = bsxfun(@times, obj.xi, obj.Z );
@@ -260,7 +255,8 @@ classdef RCDemand < NLDemand
                 if obj.settings.robust
                     varcovar = inv(dertheta * obj.W * dertheta');
                 else
-                    varcovar = (obj.xi' * obj.xi/dgf) .* inv(dertheta * obj.W * dertheta');
+                    varcovar = (obj.xi' * obj.xi / obj.results.dgf) .* ...
+                        inv(dertheta * obj.W * dertheta');
                 end
             end
         end

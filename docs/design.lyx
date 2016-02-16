@@ -84,10 +84,115 @@ Introduction
 The purpose of this document is to collect documentation of various calculations
  used in SimMarket.
  For a description of SimMarket design, view the design document.
-  It does not describe how to use the program or basic programming issues
+ It does not describe how to use the program or basic programming issues
  that are best described by the code itself.
  The purpose is to provide a background for more challenging issues that
  can be hard to understand from reading the program code.
+\end_layout
+
+\begin_layout Section
+Robust errors 
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Robust-errors"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Robust errors in 2SLS can be calculated as (5.34) in Wooldridge, p 106:
+\begin_inset Formula 
+\[
+\left(\hat{X}'\hat{X}\right)^{-1}\left(\sum_{i=1}^{N}\hat{u}_{i}\hat{x}_{i}'\hat{x}_{i}\hat{u}_{i}\right)\left(\hat{X}'\hat{X}\right)^{-1}
+\]
+
+\end_inset
+
+where
+\begin_inset Formula 
+\[
+\hat{X}=Z\left(Z'Z\right)^{-1}Z'X
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In the code we have 
+\begin_inset Formula $\hat{X}=Zprod*X$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+In the current version, we choose not to multiply this matrix by 
+\begin_inset Formula $N/\left(N-K\right)$
+\end_inset
+
+ as a dgf correction.
+ Residuals 
+\begin_inset Formula $\hat{u}_{i}$
+\end_inset
+
+ for observation 
+\begin_inset Formula $i$
+\end_inset
+
+ are as in (5.25) given by 
+\begin_inset Formula 
+\[
+\hat{u}_{i}=y_{i}-X_{i}\beta
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\left(\hat{X}'\hat{X}\right)^{-1}=\left(X'Z\left(Z'Z\right)^{-1}Z'X\right)^{-1}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In the homoscedastic case, this matrix is given by 
+\begin_inset Formula $invZZ=\left(X'*Zprod*X\right)^{-1}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+GMM errors
+\end_layout
+
+\begin_layout Standard
+With roubst se, the asymptotic variance is given by (8.37) in Wooldridge,
+ p 219.
+ Note that there is no dgf adjustment, and that the first stage residuals
+ can be used.
+ 
+\end_layout
+
+\begin_layout Standard
+Check the 3SLS in section 8.3.4.
+\end_layout
+
+\begin_layout Subsection
+Nonlinear GMM with optimal weighting matrix
+\end_layout
+
+\begin_layout Standard
+The GMM variance is given by (14.18) in Wooldridge, p 528.
+ 
 \end_layout
 
 \begin_layout Section
