@@ -389,7 +389,7 @@ classdef RCDemand < NLDemand
                 'marketdraws','nind','quaddraws','maxiter', 'sigma0'});
             obj.config = SettingsClass({'tolerance','fptolerance1','fptolerance2', ...
                 'restartMaxIterations','restartFval', 'test', 'fpmaxit',...
-                'randstream','hessian','guessdelta','quietly'});
+                'randstream','hessian','guessdelta','compiled','quietly'});
             
             obj.settings.paneltype = 'lsdv';
 
@@ -411,6 +411,7 @@ classdef RCDemand < NLDemand
             obj.config.randstream = []; % random stream for estimation in parallel 
             obj.config.guessdelta = true;
             obj.config.hessian = false;
+            obj.config.compiled = true; % Use c++ code
             obj.config.quietly = true;
             obj.results.estimateDescription = 'Random Coefficient Logit Demand'; 
             obj.results.sigma0 = []; 

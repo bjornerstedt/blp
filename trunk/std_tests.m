@@ -92,10 +92,11 @@ SimMarket.testSame(testVals, correctVals, 4);
 
 %% Test 5: RCDemand - rc_x
 display '**********************  Test 5  *************************'
-demchoice = {RCDemand, RCDemand2};
-for i = 1:2
+% demchoice = {RCDemand, RCDemand2};
+for i = 0:1
     m = SimMarket();
-    m.demand = demchoice{i};
+    m.demand = RCDemand;
+    m.demand.config.compiled = logical(i);
     m.demand.alpha = 1;
     m.demand.sigma = 1;
     m.demand.var.nonlinear = 'x';
@@ -154,7 +155,8 @@ display(m.model)
 results = m.estimate()
 
 testVals = [results{'p','Coef'}, results{'rc_x','Coef'}];
-correctVals = [-0.970459257527457,1.045491432099829];
+correctVals = [-0.970445612378203,1.045687504726134];
+
 SimMarket.testSame(testVals, correctVals, 7);
 
 SimMarket.testEqual(results{'rc_x','Coef'} , results{'rc_x', 'True_val'}, 1e-1 )

@@ -1,6 +1,6 @@
 classdef RCDemand2 < RCDemand   
+    % Add Hessian to RCDemand
     properties
-
     end
     
     methods
@@ -109,7 +109,7 @@ classdef RCDemand2 < RCDemand
 %         end      
 
         function initPeriods(obj)
-            md = RCDemandMarket2(obj);
+            md = RCDemandMarket(obj);
             md.iweight = obj.draws.weights;
             obj.period = cell(max(obj.marketid), 1);
             for t = 1:max(obj.marketid)
