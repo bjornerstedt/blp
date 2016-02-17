@@ -11,8 +11,6 @@ classdef NLDemand < Estimate
         nestCount = 0
         nest
         share
-        p % Used for CES and simulation
-        q 
         ms
         sim % Simulation data
         dummarket 
@@ -73,10 +71,9 @@ classdef NLDemand < Estimate
             % These conditions should always hold!:
             if ~isempty(obj.results) && isfield(obj.results,'estimate') && ...
                     ~isempty(obj.results.estimate)
+                price = obj.data{:, obj.var.price};  
                 if obj.settings.ces
-                    price = log(obj.p);
-                else
-                    price = obj.p;
+                    price = log(price);
                 end
                 priceName = obj.getPriceName();
                 if isempty(obj.nest)
@@ -157,12 +154,7 @@ classdef NLDemand < Estimate
             % shareJacobian([P])
             % When P is empty shareJacobian is on actual prices and shares
             % Restrict shares to market t:
-            if isempty(P)
-                S = obj.share.s(obj.sim.selection);
-                P = obj.p(obj.sim.selection);
-            else
-                S = obj.shares(P);
-            end
+            S = obj.shares(P);
             other_effect =  - S * S';
 			if isempty(obj.nest) 	
 				own_effect = diag(S);
@@ -352,13 +344,11 @@ classdef NLDemand < Estimate
             end
             [~,~,id] = unique(obj.data{:, strsplit(strtrim(obj.var.market))}, 'rows');
             obj.marketid = id;
-            obj.dummarket = logical(dummyvar(obj.marketid));
-            obj.p = obj.data{:, obj.var.price};  
-            
+            obj.dummarket = logical(dummyvar(obj.marketid));            
             if obj.settings.ces
-                Xorig = [log(obj.p)];
+                Xorig = [log(obj.data{:, obj.var.price})];
             else
-                Xorig = [obj.p];
+                Xorig = obj.data{:, obj.var.price};
             end
             % quantity is empty for simulated market
             if ~isempty(obj.var.quantity) && obj.isvar(obj.var.quantity, obj.data)
@@ -367,8 +357,7 @@ classdef NLDemand < Estimate
                         ' must be specified in model']);
                 end
                 obj.ms = obj.data{: , obj.var.marketsize};
-                obj.q = obj.data{: , obj.var.quantity};
-                obj.share = obj.generateShares(obj.data);
+                obj.share = obj.generateShares();
                 obj.y = obj.share.ls;
                 sh = obj.share{:, lsnames{obj.nestCount+1}};
                 Xorig = [Xorig, sh];
@@ -394,11 +383,13 @@ classdef NLDemand < Estimate
             end
         end
         
-        function S = generateShares(obj, T )
-            if obj.settings.ces
-                Q = obj.q .* obj.p;
+        function S = generateShares(obj)
+            p = obj.data{:, obj.var.price};
+            q = obj.data{: , obj.var.quantity};
+           if obj.settings.ces
+                Q = q .* p;
             else
-                Q = obj.q;
+                Q = q;
             end
             subtotal = accumarray(obj.marketid, Q);
             subtotal =  subtotal(obj.marketid,:);
@@ -409,12 +400,12 @@ classdef NLDemand < Estimate
             if obj.nestCount >= 1
                 market = strsplit(strtrim(obj.var.market));
                 nestlist = strsplit(strtrim(obj.var.nests));
-                groupsubtotal =  obj.subtotals(T, Q, ...
+                groupsubtotal =  obj.subtotals( Q, ...
                     [market nestlist(1)]);
                 S.lsjg = log( Q ./ groupsubtotal);
                 
                 if obj.nestCount == 2
-                    subgroupsubtotal =  obj.subtotals(T, Q, ...
+                    subgroupsubtotal =  obj.subtotals( Q, ...
                         [market nestlist]);
                     S.lsjh = log( Q ./ subgroupsubtotal);
                     S.lshg = log( subgroupsubtotal ./ groupsubtotal );
@@ -422,10 +413,10 @@ classdef NLDemand < Estimate
             end
         end
         
-        function f = subtotals(obj, T, sumvar, index )
-            %SUBTOTALS Sums sumvar in table T by index category variable list
+        function f = subtotals(obj, sumvar, index )
+            %SUBTOTALS Sums sumvar in data by index category variable list
             %   Mimics Stata by index: egen subtotal = total(sumvar)
-                [~, ~, rowIdx] = unique(T( : , index), 'rows');
+                [~, ~, rowIdx] = unique(obj.data( : , index), 'rows');
                 subtotal = accumarray(rowIdx, sumvar);
                 f =  subtotal(rowIdx,:);
         end
@@ -433,8 +424,11 @@ classdef NLDemand < Estimate
         % Standard error of the regression
         % Cameron & Trivedi p 287
         function sd = sdreg(obj)
+        % sdreg is not currently used. Note that to use, the p variable has
+        % to be restricted to selection
+            p = obj.data{:, obj.var.price};
             sm = obj.share.s - mean(obj.share.s);
-            sp = obj.shares(obj.p, 1); % Compute predicted shares
+            sp = obj.shares(p, 1); % Compute predicted shares
             e = obj.share.s - sp;
             sd = sqrt(e'*e ./(size(obj.X,1)-length(obj.vars2)-length(obj.vars2)));
         end   

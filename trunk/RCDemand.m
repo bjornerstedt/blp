@@ -13,7 +13,6 @@ classdef RCDemand < NLDemand
         edelta % Saved between invocations of objective
         deltaJac % Used to guess new edelta
         int % Internal variables
-%         estimationMatrix
     end
     
     methods
@@ -48,10 +47,6 @@ classdef RCDemand < NLDemand
         end
                 
         function sh = shareJacobian(obj, P)
-            % shareJacobian(p, [market_number])
-            if isempty(P) 
-                P = obj.p(obj.dummarket(:, obj.sim.market));
-            end
             sh = obj.period{obj.sim.market}.shareJacobian(P);          
         end
              
@@ -107,7 +102,7 @@ classdef RCDemand < NLDemand
         end
         
         function [f, g] = objective(obj, sigma)
-            %This function defines the objective over which to minimize
+            % This function defines the objective over which to minimize
             obj.edelta =  obj.findDelta(sigma);
             del = log(obj.edelta);
             
@@ -122,18 +117,17 @@ classdef RCDemand < NLDemand
                     disp(err)
                 end
             else
-                [~, xi] = obj.lpart(del);
+                xi = obj.int.annihalator * del;
                 if ~isempty(obj.Z)
                     f = xi' * obj.int.ZWZ * xi;
                     if nargout > 1
                         obj.deltaJac = obj.deltaJacobian(sigma, obj.edelta);
-                        g = 2* obj.deltaJac'* obj.int.ZWZ * xi;
+                        g = 2 * obj.deltaJac'* obj.int.ZWZ * xi;
                     end
                 else
                     f = xi' * xi;
                     if nargout > 1
                          obj.deltaJac = obj.deltaJacobian(sigma, obj.edelta);
-%                         g = 2*obj.deltaJac'* obj.X * xiX';
                         g = 2*obj.deltaJac' * xi;
                     end
                 end
@@ -150,6 +144,12 @@ classdef RCDemand < NLDemand
             else
                 R = est;
             end
+            % Create starting values for findDelta
+            obj.edelta = obj.findDelta(obj.sigma);
+            obj.d = log(obj.edelta) + obj.alpha * obj.Xorig(:, 1);
+            for t = 1:max(obj.marketid)
+                obj.period{t}.d = obj.d(obj.dummarket(:, t));
+            end
        end
         
         function R = estimationStep(obj, optIV, varargin)
@@ -160,8 +160,9 @@ classdef RCDemand < NLDemand
                 error('delta is NaN');
             end
             obj.sigma = abs(obj.sigma); % Works for symmetric or positive dist
-            [obj.beta, xi] = obj.lpart(delta);
-            
+            obj.beta = obj.int.estimationMatrix * delta;
+            xi = delta - obj.X * obj.beta;
+
             if strcmpi(obj.settings.paneltype, 'fe')
                 % xi is the residual of a regression of demeaned vars on
                 % delta, which is not demeaned
@@ -324,14 +325,6 @@ classdef RCDemand < NLDemand
             % General init, move to estimate? Should NestedLogit have
             % similar code?
             obj.sim.market = market; % HACK to get market based routines to work
-            if isempty(obj.d)
-                % Create starting values for findDelta
-                obj.edelta = obj.findDelta(obj.sigma);
-                obj.d = log(obj.edelta) + obj.alpha * obj.Xorig(:, 1);
-                for t = 1:max(obj.marketid)
-                    obj.period{t}.d = obj.d(obj.dummarket(:, t));
-                end
-            end
         end
                                   
         function obj = RCDemand(varargin)
@@ -374,16 +367,6 @@ classdef RCDemand < NLDemand
 %% Basic %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
     methods % (Access = private)
         function newedelta = findDelta(obj, sigma)
-            if isempty(obj.edelta)
-                % Create starting values for findDelta
-                if isempty(obj.share.s)
-                    obj.share.s = sum(bsxfun(@times, obj.dummarket, ...
-                        1 ./ sum(obj.dummarket) ), 2) .* 0.5;
-                    obj.edelta = obj.share.s .* 2;
-                else
-                    obj.edelta = obj.share.s ./ obj.share.s0;
-                end
-            end
             if max(abs(sigma - obj.int.oldsigma)) < 0.01
                 tolerance = obj.config.fptolerance2;
                 closeFlag = 0;
@@ -391,7 +374,6 @@ classdef RCDemand < NLDemand
                 tolerance = obj.config.fptolerance1;
                 closeFlag = 1;
             end
-            
             if obj.config.guessdelta && ~isempty(obj.deltaJac)
                 newdelta = log(obj.edelta) + ...
                     obj.deltaJac*(sigma - obj.int.oldsigma); 
@@ -399,7 +381,6 @@ classdef RCDemand < NLDemand
             else
                 edelta =  obj.edelta;
             end
-
             sel = logical(obj.dummarket);
             newedelta = zeros(size(edelta));
             for t = 1:max(obj.marketid)
@@ -412,24 +393,9 @@ classdef RCDemand < NLDemand
                 obj.int.oldsigma = sigma;
             end
         end       
-        
-        function [ bet, xi ] = lpart(obj, del )
-%             if strcmpi(obj.settings.paneltype, 'fe')
-%                 davt = accumarray(obj.panelid, del, [], @mean);
-%                 davt = davt(obj.panelid, :);
-%                 del = del - davt;
-%             end
-            if ~isempty(obj.Z)
-                bet = obj.int.xZWZxInv * (obj.X' * obj.int.ZWZ * del);
-            else
-                bet = obj.int.xZWZxInv * (obj.X' * del);
-            end
-%             bet = obj.estimationMatrix * del;
-
-            xi = del - obj.X * bet;
-        end
-        
+            
         function initEstimation(obj, optIV)
+        % initEstimation is invoked by estimateStep
             if ~optIV
                 if isempty(obj.W) && ~isempty(obj.Z) % W can be specified manually
                     obj.W = inv(obj.Z' * obj.Z);
@@ -464,18 +430,13 @@ classdef RCDemand < NLDemand
                 obj.W = inv(xiZ' * xiZ);
             end
             
-%             if ~isempty(obj.Z)
-%                 obj.int.ZWZ = obj.Z * obj.W * obj.Z';
-%                 obj.estimationMatrix = inv(obj.X'*obj.int.ZWZ*obj.X) * obj.X' * obj.int.ZWZ;
-%             else
-%                 obj.estimationMatrix = inv(obj.X'*obj.X) * obj.X';
-%             end
             if ~isempty(obj.Z)
                 obj.int.ZWZ = obj.Z * obj.W * obj.Z';
-                obj.int.xZWZxInv = inv(obj.X' * obj.int.ZWZ * obj.X);
+                obj.int.estimationMatrix = inv(obj.X'*obj.int.ZWZ*obj.X) * obj.X' * obj.int.ZWZ;
             else
-                obj.int.xZWZxInv = inv(obj.X' * obj.X);
+                obj.int.estimationMatrix = inv(obj.X'*obj.X) * obj.X';
             end
+            obj.int.annihalator = eye(size(obj.X, 1)) - obj.X * obj.int.estimationMatrix;
         end
         
     end

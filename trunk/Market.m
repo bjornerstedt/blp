@@ -19,6 +19,7 @@ classdef Market < Estimate
             if isempty(obj.demand)
                 error('Demand object must be specified')
             end
+            % Removes selection from demand:
             obj.demand.init();
             if isempty(obj.var.firm)
                 if isempty(obj.firm)
@@ -40,7 +41,7 @@ classdef Market < Estimate
                 obj.settings.valueShares = obj.demand.useValueShares();
             end
             % Copied, can be null
-            obj.p = obj.demand.p;
+            obj.p = obj.demand.data{:, obj.demand.var.price};
             obj.marketid = obj.demand.marketid;
         end
         
@@ -107,7 +108,7 @@ classdef Market < Estimate
                 t = marketid_list(i);
                 msel = obj.marketid == t;
                 obj.initSimulation(t);
-                [sj, cnd] = linsolve( obj.RR .* obj.demand.shareJacobian([]), ...
+                [sj, cnd] = linsolve( obj.RR .* obj.demand.shareJacobian(obj.p(msel)), ...
                     -quantity(msel) );
                 obj.c(msel) = obj.p(msel) - sj;
                 obj.results.findCosts.cond = min([obj.results.findCosts.cond, cnd]);

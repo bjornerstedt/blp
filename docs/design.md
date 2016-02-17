@@ -79,6 +79,13 @@ Demand classes),
     
 ## Selection
 
+Estimation can be done on a selection. This restricts not only the generated estimation
+matrices to the selection, but also obj.marketid and some other variables that are used 
+in the estimation process.
+
+Simulation, as invoked by Market, calls obj.demand.init() without a selection, recreating
+variables such as demand.marketid. 
+
 # Class parameters
 
 ## Estimate class
@@ -108,7 +115,7 @@ data.
 ## NLDemand class
 
 1. obj.marketid and obj.dummarket - in Demand and Market classes this identifies
-markets - selection
+markets - (selection)
 
 2. obj.nestcount - nest variable names. Obsolete?
 
@@ -120,14 +127,6 @@ markets - selection
     (a) Set in initAdditional
 
     (a) Used in initSimulation(), selects
-
-4. obj.p - non-demeaned price (no log) (selection). 
-
-    (a) used in shareJacobian on selection
-
-    (b) used in generateShares(), demand calc.
-
-    (c) used in estimate as log variable!
 
 5. obj.ms - marketsize. Used in share calcs and demand calc. (selection)
 
@@ -150,10 +149,12 @@ markets - selection
 8. obj.d
 
     (a) created by estimate()
+    
+    (a) Note that by construction, shares(obj.p) gives actual market shares obj.shares.s.
 
     (b) initSimulation() sets obj.sim.d from obj.d on selection
 
-    (c) obj.sim.d used in shares()
+    (c) obj.sim.d used in shares(). 
 
 9. obj.alpha and obj.sigma obj.beta!
 
@@ -225,12 +226,6 @@ needed. Remove?
     (b) Set manually in SimMarket for simulation
   
     (c) used by RCDemandMarket
-
-7. obj.p
-
-    (a) Set in init@NLDemand()
-  
-    (b) Used by RCDemandMarket
 
 8. obj.Xorig(:, 1)
 
