@@ -9,14 +9,10 @@ classdef RCDemand < NLDemand
         x2 % nonlinear parameter vector
         xi % Unobservable utility, residual
         vars2 % Nonlinear variable names in output (with rc_ prefix)
-        nonlinparams = [] % Arrays for RC names and type of RC
         
         edelta % Saved between invocations of objective
-        oldsigma = 0 % Used in comparisons between minimization steps
         deltaJac % Used to guess new edelta
-        isOptimalIV = false
-        ZWZ
-        inv_x1ZWZx1
+        int % Internal variables
 %         estimationMatrix
     end
     
@@ -81,7 +77,7 @@ classdef RCDemand < NLDemand
             if isempty(obj.sigma)
                 error('sigma is not set, probably because init has not been invoked');
             end
-            obj.oldsigma = zeros(size(obj.sigma));
+            obj.int.oldsigma = zeros(size(obj.sigma));
                 options = optimoptions(@fminunc, ...
                     'MaxIter',obj.settings.maxiter, ... 
                     'TolX', obj.config.tolerance, 'TolFun', obj.config.tolerance, ...
@@ -128,10 +124,10 @@ classdef RCDemand < NLDemand
             else
                 [~, xi] = obj.lpart(del);
                 if ~isempty(obj.Z)
-                    f = xi' * obj.ZWZ * xi;
+                    f = xi' * obj.int.ZWZ * xi;
                     if nargout > 1
                         obj.deltaJac = obj.deltaJacobian(sigma, obj.edelta);
-                        g = 2* obj.deltaJac'* obj.ZWZ * xi;
+                        g = 2* obj.deltaJac'* obj.int.ZWZ * xi;
                     end
                 else
                     f = xi' * xi;
@@ -239,20 +235,22 @@ classdef RCDemand < NLDemand
             % randdraws can only be run once, in order to not get new draws
             % in simulation after estimation
             if isempty(obj.draws)
-                obj.randdraws();
+                nonlinparams = obj.randdraws();
+            else
+                nonlinparams = obj.draws.nonlinparams;
             end
-            obj.x2 = obj.data{:, obj.nonlinparams };
+            obj.x2 = obj.data{:, nonlinparams };
             % log price in CES in x2:
-            nonlinprice = strcmp(obj.var.price, obj.nonlinparams);
+            nonlinprice = strcmp(obj.var.price, nonlinparams);
             if any(nonlinprice) && obj.settings.ces
                 obj.x2(:, nonlinprice) = log(obj.data{:, obj.var.price});
-                nonlinparamsCES = obj.nonlinparams;
+                nonlinparamsCES = nonlinparams;
                 nonlinparamsCES{nonlinprice} = 'lP';
                 obj.vars2 = ...
                     cellfun(@(x) {sprintf('rc_%s', x)}, nonlinparamsCES );
             else
                 obj.vars2 = ...
-                    cellfun(@(x) {sprintf('rc_%s', x)}, obj.nonlinparams );
+                    cellfun(@(x) {sprintf('rc_%s', x)}, nonlinparams );
             end
             if ~isempty(selection)
                 obj.x2 = obj.x2(selection, :); 
@@ -260,7 +258,7 @@ classdef RCDemand < NLDemand
             obj.initPeriods();
         end
         
-        function randdraws(obj)
+        function nonlinparams = randdraws(obj)
             if obj.settings.marketdraws
                 markets = max(obj.marketid);
             else
@@ -273,29 +271,26 @@ classdef RCDemand < NLDemand
             if isempty(obj.var.nonlinear)
                 error('Some variable has to be specified as nonlinear');
             end
-            % The parse method could be included in create, but this will
-            % affect draw orders and thus all tests. A little work ...
-            obj.nonlinparams = obj.draws.parse( obj.var.nonlinear);
-            obj.draws.create( );
-            obj.getSigma();
+            nonlinparams = obj.draws.create( obj.var.nonlinear);
+            obj.getSigma(nonlinparams);
         end
         
-        function getSigma(obj)
+        function getSigma(obj, nonlinparams)
             % Only run once, but why? Remove in cleaning obj.sigm
             if isempty(obj.sigma)
                 if ~isempty(obj.settings.sigma0)
                     obj.sigma = obj.settings.sigma0;
                 elseif isempty(obj.config.randstream)
-                    obj.sigma = randn(length(obj.nonlinparams), 1);
+                    obj.sigma = randn(length(nonlinparams), 1);
                 else
-                    obj.sigma = obj.config.randstream.randn(length(obj.nonlinparams),1);
+                    obj.sigma = obj.config.randstream.randn(length(nonlinparams),1);
                 end
             end
             obj.results.sigma0 = obj.sigma;
             if size(obj.sigma, 2) > 1
                 obj.sigma = obj.sigma';
             end
-            if length(obj.nonlinparams) ~= length(obj.sigma)
+            if length(nonlinparams) ~= length(obj.sigma)
                 error('sigma and nonlinear have different dimensions');
             end
         end
@@ -389,7 +384,7 @@ classdef RCDemand < NLDemand
                     obj.edelta = obj.share.s ./ obj.share.s0;
                 end
             end
-            if max(abs(sigma - obj.oldsigma)) < 0.01
+            if max(abs(sigma - obj.int.oldsigma)) < 0.01
                 tolerance = obj.config.fptolerance2;
                 closeFlag = 0;
             else
@@ -399,7 +394,7 @@ classdef RCDemand < NLDemand
             
             if obj.config.guessdelta && ~isempty(obj.deltaJac)
                 newdelta = log(obj.edelta) + ...
-                    obj.deltaJac*(sigma - obj.oldsigma); 
+                    obj.deltaJac*(sigma - obj.int.oldsigma); 
                 edelta = exp(newdelta);
             else
                 edelta =  obj.edelta;
@@ -414,7 +409,7 @@ classdef RCDemand < NLDemand
             % Update oldsigma and edelta only in first stage and if
             % successful
             if closeFlag == 1 && max(isnan(newedelta)) < 1;
-                obj.oldsigma = sigma;
+                obj.int.oldsigma = sigma;
             end
         end       
         
@@ -425,9 +420,9 @@ classdef RCDemand < NLDemand
 %                 del = del - davt;
 %             end
             if ~isempty(obj.Z)
-                bet = obj.inv_x1ZWZx1 * (obj.X' * obj.ZWZ * del);
+                bet = obj.int.xZWZxInv * (obj.X' * obj.int.ZWZ * del);
             else
-                bet = obj.inv_x1ZWZx1 * (obj.X' * del);
+                bet = obj.int.xZWZxInv * (obj.X' * del);
             end
 %             bet = obj.estimationMatrix * del;
 
@@ -439,12 +434,12 @@ classdef RCDemand < NLDemand
                 if isempty(obj.W) && ~isempty(obj.Z) % W can be specified manually
                     obj.W = inv(obj.Z' * obj.Z);
                 end
-                obj.isOptimalIV = false;
+                obj.int.isOptimalIV = false; 
             else
-                if obj.isOptimalIV
+                if obj.int.isOptimalIV
                     return % Already calculated optimal IV
                 end
-                obj.isOptimalIV = true;
+                obj.int.isOptimalIV = true;
                 %                 pHat = obj.Z*((obj.Z'*obj.Z)\obj.Z'*obj.X(:, 1));
                 %                 deltaHat = [pHat, obj.X(:,2:end)] * obj.beta;
                 % The following code is an attempt to get optimal IV with
@@ -466,20 +461,20 @@ classdef RCDemand < NLDemand
 %                 pHat = pHat  - phatMean(obj.panelid, :);
                 obj.Z  = [obj.X(:,2:end), pHat, optInstr];
                 xiZ = bsxfun(@times, obj.xi, obj.Z );
-                obj.W = inv(xiZ'*xiZ);
+                obj.W = inv(xiZ' * xiZ);
             end
             
 %             if ~isempty(obj.Z)
-%                 obj.ZWZ = obj.Z * obj.W * obj.Z';
-%                 obj.estimationMatrix = inv(obj.X'*obj.ZWZ*obj.X) * obj.X' * obj.ZWZ;
+%                 obj.int.ZWZ = obj.Z * obj.W * obj.Z';
+%                 obj.estimationMatrix = inv(obj.X'*obj.int.ZWZ*obj.X) * obj.X' * obj.int.ZWZ;
 %             else
 %                 obj.estimationMatrix = inv(obj.X'*obj.X) * obj.X';
 %             end
             if ~isempty(obj.Z)
-                obj.ZWZ = obj.Z * obj.W * obj.Z';
-                obj.inv_x1ZWZx1 = inv(obj.X'*obj.ZWZ*obj.X);
+                obj.int.ZWZ = obj.Z * obj.W * obj.Z';
+                obj.int.xZWZxInv = inv(obj.X' * obj.int.ZWZ * obj.X);
             else
-                obj.inv_x1ZWZx1 = inv(obj.X'*obj.X);
+                obj.int.xZWZxInv = inv(obj.X' * obj.X);
             end
         end
         

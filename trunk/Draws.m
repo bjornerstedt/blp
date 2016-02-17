@@ -6,7 +6,7 @@ classdef Draws < matlab.mixin.Copyable
     properties
         settings
         
-        names
+        nonlinparams
         spec
         draws
         weights
@@ -140,7 +140,7 @@ classdef Draws < matlab.mixin.Copyable
         
         function create2(obj)
             % Simple creation process if obj.var.nonlinear is a string
-            K = length(obj.names);
+            K = length(obj.nonlinparams);
             if strcmpi(obj.settings.drawmethod, 'quadrature')
                 [obj.draws, obj.weights] = obj.quadrature( 1, K);
             else
@@ -148,7 +148,8 @@ classdef Draws < matlab.mixin.Copyable
             end
         end
         
-        function create(obj)
+        function nonlinparams = create(obj, varlist)
+            nonlinparams = obj.parse( varlist);
             if isempty(obj.spec)
                 obj.create2()
                 return
@@ -195,7 +196,6 @@ classdef Draws < matlab.mixin.Copyable
                 'logistic', 'lognormal'};
             if ischar(spec) 
                 names = strsplit(strtrim(spec));
-                obj.names = names;
             elseif iscell(spec)
                 % With one dist type convert to nested cell array if it is
                 % not:
@@ -220,7 +220,7 @@ classdef Draws < matlab.mixin.Copyable
             else
                 error('Input to nonlinear draws must be a string or a cell array')
             end
-            obj.names = names;
+            obj.nonlinparams = names;
         end
 
         function obj = Draws(varargin)

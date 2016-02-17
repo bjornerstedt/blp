@@ -13,6 +13,19 @@ programming issues that are best described by the code itself. The purpose is to
 provide a background for more challenging issues that can be hard to understand
 from reading the program code.
 
+## Scenarios
+
+Note that init is used both in initializing estimation and simulation. Three
+scenarios have slightly different setup requirements.
+
+1. Estimate on data
+
+2. Simulate on existing data
+
+3. Create new data
+
+How do 2 and 3 differ in initialization?
+
 # Data structure and initialization
 
 The demand code is used in three basic ways
@@ -26,6 +39,8 @@ The demand code is used in three basic ways
     for the test of the mapping to be complete
 
 2. Simulation: $\alpha$, $\sigma$, $d$ and $c$ known, $p$ and $q$ unknown
+
+    (a) Calibration can either be direct, or from elasticities.
 
     (a) In RC done on all markets at one time - share() splits per market
     
@@ -56,18 +71,13 @@ Demand classes),
 
     (a) initSimulation is invoked by Market.initSimulation(), 
 
-    (a) which in turn is invoked by findCosts() and equilibrium()
+    (a) which in turn is invoked by findCosts() and equilibrium() - needed to create 
+    per market ownership matrix obj.RR
+
+    (a) the method has to be invoked before using demand.shares() or 
+    demand.shareJacobian()
     
-## Scenarios
-
-Note that init is used both in initializing estimation and simulation. Three
-scenarios have slightly different setup requirements.
-
-1. Estimate on data
-
-2. Simulate on existing data
-
-3. Create new data
+## Selection
 
 # Class parameters
 
@@ -121,9 +131,9 @@ markets - selection
 
 5. obj.ms - marketsize. Used in share calcs and demand calc. (selection)
 
-6. obj.share - created shares. 
+6. obj.share - created shares. (selection)
 
-    (a) Created in initAdditional if depvar does not exist! (selection)
+    (a) Created in initAdditional if depvar does not exist! 
 
     (b) Used by NLDemand.estimate() to create obj.d
 
@@ -175,6 +185,14 @@ needed. Remove?
         
         ii. Copying demand and changing draw settings will have no effect,
         however.
+        
+    (b) obj.nonlinparams - list of all nonlinear. 
+
+        (a) Created in obj.randdraws() from init()
+      
+        (b) Used by methods: RCDemandMarket, 
+      
+        (c) Used by methods to get length : getSigma()
 
 2. obj.period - list of RCDemandMarket class instances (selection)
 
@@ -187,20 +205,16 @@ needed. Remove?
     
     (d) sharesAll() - where is this used? Not in SimMarket.
 
-3. obj.x2 - nonlinear data matrix, with logprice in CES. 
+3. obj.x2 - nonlinear data matrix, with logprice in CES. (selection)
 
     (a) Set in init()
   
-    (b) Not demeaned in FE. (selection)
+    (b) Not demeaned in FE. 
 
-4. obj.nonlinparams - list of all nonlinear. 
+4. obj.W
 
-    (a) Created in obj.randdraws() from init()
-  
-    (b) Used by methods: RCDemandMarket, 
-  
-    (c) Used by methods to get length : getSigma()
-
+    (a) Created in initEstimation or manually
+    
 5. obj.vars2 - nonlin variable names. Replace with function.
 
 6. obj.d

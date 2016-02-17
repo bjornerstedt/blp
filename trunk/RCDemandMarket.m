@@ -27,7 +27,7 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
             obj.alpha = demand.alpha;
             obj.sigma = demand.sigma;
             obj.config.ces = demand.settings.ces;
-            obj.nonlinprice = strcmp(demand.var.price, demand.nonlinparams);    
+            obj.nonlinprice = strcmp(demand.var.price, demand.draws.nonlinparams);    
         end
         
         function [s, si] = shares(obj, p)
