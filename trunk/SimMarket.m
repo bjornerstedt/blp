@@ -54,7 +54,7 @@ classdef SimMarket < matlab.mixin.Copyable
                 defmodel.xi = .1;
                 defmodel.varepsilon = 0; % Utility variation not observed by firms
                 
-                defmodel.endog_sigma = 0.1; % Degree of corr between x and epsilon
+                defmodel.endog_vcv = 0.1; % Degree of corr between x and epsilon
                 defmodel.prob_prod = .8;    % Prob of product existing in market
                 obj.model = SettingsClass(defmodel);
             end
@@ -228,7 +228,7 @@ classdef SimMarket < matlab.mixin.Copyable
                 % Keep expected effect of instruments on p to be zero
                 suminst = sum(inst, 2) - mean(sum(inst, 2));
                 obj.data.p = obj.data.p ...
-                    + suminst + obj.model.endog_sigma * obj.epsilon(1:n);
+                    + suminst + obj.model.endog_vcv * obj.epsilon(1:n);
             else
                 inst = [];
             end

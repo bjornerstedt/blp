@@ -77,7 +77,7 @@ classdef Estimate  < matlab.mixin.Copyable
             obj.var = SettingsClass({'market','panel','depvar','exog', ...
                 'endog','instruments'});
             obj.settings = SettingsClass({'paneltype', 'nocons', ...
-                'estimateMethod', 'robust', 'logLinear'});
+                'estimateMethod', 'robust'});
 %            obj.config = SettingsClass({'quietly','nocons ss','estimateMethod'});
             
             obj.config.quietly = true;

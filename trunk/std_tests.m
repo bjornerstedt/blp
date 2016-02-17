@@ -155,11 +155,11 @@ display(m.model)
 results = m.estimate()
 
 testVals = [results{'p','Coef'}, results{'rc_x','Coef'}];
-correctVals = [-0.970445612378203,1.045687504726134];
+correctVals = [-0.970459257509805,1.045491435731395];
 
 SimMarket.testSame(testVals, correctVals, 7);
 
-SimMarket.testEqual(results{'rc_x','Coef'} , results{'rc_x', 'True_val'}, 1e-1 )
+SimMarket.testEqual(results{'rc_x','Coef'} , results{'rc_x', 'True_val'}, 5e-2 )
 
 %% Test 8: LSDV/FE
 % Four tests, comparing LSDV/FE for NL/FE

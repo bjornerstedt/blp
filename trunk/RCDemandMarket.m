@@ -76,7 +76,8 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
         end
         
         function der = deltaJacobian(obj, sigma, edelta)
-            % Note thate here deltaJacobian takes care of selection
+            obj.nlpart(sigma);
+            % Note that here deltaJacobian takes care of selection
             if obj.config.compiled
                 [s, si] = shareCalcCpp(obj.expmu, obj.iweight, edelta(obj.selection));
             else

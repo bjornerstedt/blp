@@ -158,7 +158,7 @@ markets - (selection)
 
 9. obj.alpha and obj.sigma obj.beta!
 
-10. obj.sim - structure with selection, $d$ and market. Only market is really
+10. obj.sim - structure with $d$ and marketid. Only market is really
 needed. Remove?
 
 11. obj.data
@@ -212,16 +212,36 @@ needed. Remove?
   
     (b) Not demeaned in FE. 
 
-4. obj.W
+4. obj.sigma
 
-    (a) Created in initEstimation or manually
+    (a) obj.sigma used minimize() in fminunc as starting value
     
+    (a) estimationStep() replaces obj.sigma with abs(obj.sigma) after minimize. 
+    Uses it to create results.
+        (a) computeVariance uses it to create varcovar
+        
+    (a) getSigma() sets obj.sigma and obj.results.sigma0. They are set to a
+    column vector with obj.settings.sigma0 if not empty otherwise as a random
+    normal vector.
+    
+    (a) initEstimation() uses obj.sigma to create optimal instruments. 
+    
+4. obj.beta
+    (a) set in estimationStep()
+
+    (a) used in initEstimation() to create optimal instruments
+
+4. obj.alpha - negated value from beta
+
+    (a) set in estimationStep() from beta. 
+
+    (a) used in estimate() to create obj.d. 
+
 5. obj.vars2 - nonlin variable names. Replace with function.
 
 6. obj.d
 
-    (a) set in initSimulation() from edelta and alpha after estimation. Move to
-    estimate?
+    (a) set in estimate() from edelta and alpha after estimation. 
     
     (b) Set manually in SimMarket for simulation
   
@@ -263,6 +283,10 @@ needed. Remove?
 6. obj.d - why?:
 
     (a) in shares(): to do share calc
+
+4. obj.W
+
+    (a) Created in initEstimation or manually
 
 7. obj.nonlinprice - from RCDemand nonlinparams - strcmp(demand.var.price,
 demand.nonlinparams)

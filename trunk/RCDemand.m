@@ -69,15 +69,12 @@ classdef RCDemand < NLDemand
             else
                 extraoptions = {};
             end
-            if isempty(obj.sigma)
-                error('sigma is not set, probably because init has not been invoked');
-            end
             obj.int.oldsigma = zeros(size(obj.sigma));
-                options = optimoptions(@fminunc, ...
-                    'MaxIter',obj.settings.maxiter, ... 
-                    'TolX', obj.config.tolerance, 'TolFun', obj.config.tolerance, ...
-                    'Algorithm','trust-region' ,...
-                    'GradObj','on', extraoptions{:});
+            options = optimoptions(@fminunc, ...
+                'MaxIter',obj.settings.maxiter, ...
+                'TolX', obj.config.tolerance, 'TolFun', obj.config.tolerance, ...
+                'Algorithm','trust-region' ,...
+                'GradObj','on', extraoptions{:});
             fval = 10^6;
             i = 0;
             finished = false;
@@ -145,7 +142,6 @@ classdef RCDemand < NLDemand
                 R = est;
             end
             % Create starting values for findDelta
-            obj.edelta = obj.findDelta(obj.sigma);
             obj.d = log(obj.edelta) + obj.alpha * obj.Xorig(:, 1);
             for t = 1:max(obj.marketid)
                 obj.period{t}.d = obj.d(obj.dummarket(:, t));
@@ -176,7 +172,7 @@ classdef RCDemand < NLDemand
             obj.alpha = - obj.beta(strcmp(obj.getPriceName(), obj.vars));
             coef = [obj.beta; obj.sigma];  % vector of all parameters
             obj.results.alpha = obj.alpha;
-            obj.results.sigma = obj.sigma;
+            obj.results.sigma = obj.sigma';
             varsel = [1:length(obj.vars ), ...
                 (length(coef)-length(obj.vars2)+1):length(coef)];
             varcovar = obj.computeVariance();
@@ -191,7 +187,6 @@ classdef RCDemand < NLDemand
             varcovar.Properties.VariableNames = variables;
             varcovar.Properties.RowNames = variables;
             obj.results.params.varcovar = varcovar;
-            obj.results.params.sigma = obj.sigma;
             R = obj.results.estimate;
         end
         
