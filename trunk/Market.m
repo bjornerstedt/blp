@@ -46,7 +46,6 @@ classdef Market < Estimate
         end
         
         function initSimulation(obj, market_number)
-            obj.demand.initSimulation(market_number);
             R = dummyvar(obj.firm(obj.marketid == market_number) )';
             obj.RR  = R' * R;
             if obj.settings.conduct > 0
@@ -78,7 +77,7 @@ classdef Market < Estimate
                 selection = obj.marketid == t;
                 obj.initSimulation(t);
                 [pt, ~, exitflag, output] = fsolve( ...
-                    @(x)obj.foc(x, obj.c(selection)), ...
+                    @(x)obj.foc(x, obj.c(selection), t), ...
                     p0(selection), options);
                 obj.p(selection) = pt;
                 obj.results.iterations = output.iterations;
@@ -108,7 +107,7 @@ classdef Market < Estimate
                 t = marketid_list(i);
                 msel = obj.marketid == t;
                 obj.initSimulation(t);
-                [sj, cnd] = linsolve( obj.RR .* obj.demand.shareJacobian(obj.p(msel)), ...
+                [sj, cnd] = linsolve( obj.RR .* obj.demand.shareJacobian(obj.p(msel), t), ...
                     -quantity(msel) );
                 obj.c(msel) = obj.p(msel) - sj;
                 obj.results.findCosts.cond = min([obj.results.findCosts.cond, cnd]);
@@ -122,10 +121,10 @@ classdef Market < Estimate
             end
         end
 
-		function f = foc(obj,  P, ct)
-			S = obj.demand.shares( P );
+		function f = foc(obj,  P, ct, t)
+			S = obj.demand.shares( P, t );
             ct = ct + obj.gamma * S; % Scale effects
-			f = ( obj.RR .* obj.demand.shareJacobian( P )) * (P - ct) + S;
+			f = ( obj.RR .* obj.demand.shareJacobian( P, t )) * (P - ct) + S;
 		end 
 
         function theta = estimate(obj, varargin)

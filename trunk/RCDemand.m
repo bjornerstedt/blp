@@ -17,8 +17,8 @@ classdef RCDemand < NLDemand
     
     methods
 %% GENERAL DEMAND %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%       
-        function [s, si] = shares(obj, p)
-            [s, si] = obj.period{obj.sim.market}.shares( p );
+        function [s, si] = shares(obj, p, market)
+            [s, si] = obj.period{market}.shares( p );
         end
        
         function [sh, indsh] = sharesAll(obj, p)
@@ -33,9 +33,9 @@ classdef RCDemand < NLDemand
         end
        
 		% Calculate quantities and market shares
-        function tab = quantity(obj, P)
+        function tab = quantity(obj, P, t)
             tableCols = {'Product', 'Price', 'Quantity', 'MarketSh', 'Share'};
-            s = obj.shares(P);
+            s = obj.shares(P, t);
             if obj.settings.ces
                 q = s .* obj.ms ./ P;
             else
@@ -46,8 +46,8 @@ classdef RCDemand < NLDemand
             tab.Properties.VariableNames = tableCols;
         end
                 
-        function sh = shareJacobian(obj, P)
-            sh = obj.period{obj.sim.market}.shareJacobian(P);          
+        function sh = shareJacobian(obj, P, market)
+            sh = obj.period{market}.shareJacobian(P);          
         end
              
         function der = deltaJacobian(obj, sigma, edelta)
@@ -321,12 +321,6 @@ classdef RCDemand < NLDemand
             end
         end
               
-        function initSimulation(obj, market)
-            % General init, move to estimate? Should NestedLogit have
-            % similar code?
-            obj.sim.market = market; % HACK to get market based routines to work
-        end
-                                  
         function obj = RCDemand(varargin)
             obj = obj@NLDemand(varargin{:});
             obj.var.setParameters({'nonlinear','nonlinearlogs','nonlineartriangular'});

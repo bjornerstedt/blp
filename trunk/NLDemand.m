@@ -12,7 +12,7 @@ classdef NLDemand < Estimate
         nest
         share
         ms
-        sim % Simulation data
+        simMarket % Simulation data
         dummarket 
         G % Group membership, each column a group with 1 if member
         H % Subgroup membership
@@ -26,7 +26,7 @@ classdef NLDemand < Estimate
             q = zeros(size(obj.dummarket, 1), 1);
             for t = 1:size(obj.dummarket, 2)
                 obj.initSimulation(t);
-                q(obj.dummarket(:, t)) = obj.shares(p(obj.dummarket(:, t)));
+                q(obj.dummarket(:, t)) = obj.shares(p(obj.dummarket(:, t)), t);
             end            
             if obj.settings.ces
                 q = q ./ p;
@@ -43,9 +43,7 @@ classdef NLDemand < Estimate
                     obj.sigma = obj.beta(2:pars);
                 end
             end
-            obj.sim.selection = obj.dummarket(:, market);
-            obj.sim.d  = obj.d(obj.dummarket(:, market) );
-            obj.sim.market = market;
+            obj.simMarket = market;
             if ~isempty(obj.nest)
                 obj.G = dummyvar(obj.nest(obj.dummarket(:, market), 1))';
                 obj.GG = obj.G' * obj.G;
@@ -95,12 +93,18 @@ classdef NLDemand < Estimate
             end
         end
 
-		function s = shares(obj, P, varargin)
-            % shares(p, [market_number])
+		function s = shares(obj, P, market)
+            % shares(p, market_number)
+            
+            % Only initialize if the market has changed:
+            if market ~= obj.simMarket
+                obj.initSimulation(market)
+                obj.simMarket = market;
+            end
             if obj.settings.ces
                 P = log(P);
             end
-            delta = obj.sim.d - obj.alpha .* P; % d is delta without price effect
+            delta = obj.d(obj.dummarket(:, market) ) - obj.alpha .* P; 
 			if obj.nestCount == 2 
                 sigma1 = obj.sigma(1);
                 sigma2 = obj.sigma(2);
@@ -150,11 +154,9 @@ classdef NLDemand < Estimate
             tab.Properties.VariableNames = tableCols;
         end
                 
-        function sj = shareJacobian(obj, P)
-            % shareJacobian([P])
-            % When P is empty shareJacobian is on actual prices and shares
-            % Restrict shares to market t:
-            S = obj.shares(P);
+        function sj = shareJacobian(obj, P, market)
+            % shares initializes market if necessary:
+            S = obj.shares(P, market);
             other_effect =  - S * S';
 			if isempty(obj.nest) 	
 				own_effect = diag(S);
@@ -211,16 +213,16 @@ classdef NLDemand < Estimate
             if length(marketId) >1
                 error('Elasticities in multiple markets not supported')
             end
-            obj.initSimulation(marketId);
             P = P(obj.dummarket(:, marketId));
-            s = obj.shares(P);
+            % shares() initializes period, if necessary:
+            s = obj.shares(P, marketId);
             n = length(s);
-            D = obj.shareJacobian(P)';
+            D = obj.shareJacobian(P, marketId)';
             E = diag(P) * D * diag( 1 ./ s );
             elas = [sumstats(E, eye(n))];
             if ~isempty(args.Results.group)
                 G = dummyvar( obj.data{:, args.Results.group} );
-                GG = G*G';
+                GG = G * G';
                 elas = [elas; ...
                     obj.sumstats(E, GG - eye(n)); ...
                     obj.sumstats(E, 1 - GG)];
@@ -259,7 +261,6 @@ classdef NLDemand < Estimate
                 error('Elasticities in multiple markets not supported')
             end
             P = P(obj.dummarket(:, marketId));
-            obj.initSimulation(marketId);            
             group = obj.data{obj.dummarket(:, marketId), group};
             if iscategorical(group)
                 [names,~,group] = unique(group);
@@ -268,8 +269,8 @@ classdef NLDemand < Estimate
                 names = [];
             end
             A = dummyvar(group)';
-            s = obj.shares(P);
-            D = obj.shareJacobian(P)';
+            s = obj.shares(P, marketId);
+            D = obj.shareJacobian(P, marketId)';
             elas = A * diag(P) * D * A' * diag( 1 ./(A*s) ) ;
             elas = array2table(elas);
             if ~isempty(names)
@@ -362,6 +363,7 @@ classdef NLDemand < Estimate
                 sh = obj.share{:, lsnames{obj.nestCount+1}};
                 Xorig = [Xorig, sh];
             end
+            obj.simMarket = 0;
         end
         
         function wa = useValueShares(obj)
