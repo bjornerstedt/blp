@@ -213,34 +213,49 @@ end
 if false
 %% Test 9: Exogenous nonlinear price constant, testing findCosts
 display '**********************  Test 9  *************************'
-
+for tst = 0:1
 m = SimMarket();
 m.demand = RCDemand;
-m.demand.var.nonlinear = 'x p';
+m.demand.settings.ces = true; 
+m.demand.config.compiled = false;
+% m.demand.config.tolerance = 1e-12;
+m.demand.settings.drawmethod = 'quadrature';
+m.demand.config.guessdelta = false;
+m.demand.config.fpmaxit = 3000; 
+m.demand.var.exog = 'x1 x2';
 m.demand.alpha = 1;
-m.demand.sigma = [0.2; .2];
-m.demand.settings.nind = 200;
-m.demand.settings.ces = true; % This works
-% m.demand.settings.drawmethod = 'quadrature';
- m.demand.settings.quaddraws = 15;
+if logical(tst)
+    m.demand.sigma = [1; .2];
+    m.demand.var.nonlinear = {'x1 x2', 'normal'};
+else
+    m.demand.sigma = [.2; 1];
+    m.demand.var.nonlinear = {'x2 x1', 'normal'};
+end
+m.demand.settings.nind = 1000;
 %  m.demand.settings.marketdraws = true;
-m.demand.var.instruments = 'nprod nprod2 c';
-m.demand.settings.optimalIV = true;
+% m.demand.var.instruments = 'nprod nprod2 c';
+% m.demand.settings.optimalIV = true;
 % m.model.gamma = 1;
-m.model.endog = true;
-m.model.randomProducts = true;
+% m.model.endog = true;
+% m.model.randomProducts = true;
 % Increase in number of observations to get significance
-m.model.markets = 100;
+m.model.markets = 500;
 % m.model.products = 10;
+m.model.x = [5, 0, 0];
+m.model.x_vcv = [1, 1, 1];
+m.model.beta = [ 1, -1, 0];
+
 m.create();
+
 display(m.model)
 
 results = m.estimate()
-SimMarket.testEqual(results{'rc_lP','Coef'} , results{'rc_lP', 'True_val'}, 3e-2 )
+% SimMarket.testEqual(results{'rc_lP','Coef'} , results{'rc_lP', 'True_val'}, 1e-1 )
 
 m.findCosts()
 meanCosts = mean(m.data.c)
-SimMarket.testEqual( meanCosts ,  m.model.c, 1e-2 )
+% SimMarket.testEqual( meanCosts ,  m.model.c, 1e-2 )
+end
 end 
 %% Test 10: Nonlinear price, testing findCosts
 display '**********************  Test 10  *************************'

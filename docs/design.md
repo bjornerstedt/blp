@@ -19,7 +19,6 @@ Note that init is used both in initializing estimation and simulation. Three
 scenarios have slightly different setup requirements.
 
 1. Estimate on data
-
 2. Simulate on existing data
 
 3. Create new data
@@ -166,10 +165,36 @@ needed. Remove?
     (a) used in initAdditional to create obj.nest, obj.marketid, obj.shares, obj.q and obj.p
     
     (a) used in groupElasticities() for grouping
+    
+### Loglinear price and CES
+
+With `demand.settings.ces = true` logprices are used instead of prices in NLDemand and RCDemand.
+
+    (a) NLDemand.getDemand(p) divides shares by p to get quantities
+    
+    (a) NLDemand.estimate() logs obj.data{:, obj.var.price}
+    
+    (a) NLDemand.shares(p, t) logs p
+    
+    (a) NLDemand.shareJacobian(p, t) adjusts derivative with 1./p
+    
+    (a) NLDemand.getPriceName() returns 'lP' instead of obj.var.price
+    
+    (a) NLDemand.initAdditional() puts log(obj.data{:, obj.var.price}) as first var in Xorig
+    
+    (a) NLDemand.useValueShares() returns true for ces.
+    
+    (a) NLDemand.generateShares() multiplies quantities by p before taking shares.
+    
+    (a) RCDemand.init() puts log(price) in x2. 'rc_lP'. in vars2 if nonlinear price
+    
+    (a) RCDemandMarket.shares(p) calculates obj.vx using log(p) 
+    
+    (a) RCDemandMarket.shareJacobian(p) adjusts derivative with 1./p
 
 ## RCDemand class
 
-1. obj.draws - a Draws class instance with nonlinear draws. 
+1. obj.draws - Draws class instance with nonlinear draws. 
 
     (a) Only created once - why? 
 

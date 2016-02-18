@@ -163,7 +163,7 @@ classdef Draws < matlab.mixin.Copyable
                         [dl{i, 1}, dl{i, 2}] = obj.empiricalDraws(speci{3});
                     else
                         [dl{i, 1}, dl{i, 2}] = obj.quadrature(speci{2}, ...
-                            length(speci(1)));
+                            length(speci{1}));
                     end
                 end
             else

@@ -31,6 +31,7 @@ classdef NLDemand < Estimate
             if obj.settings.ces
                 q = q ./ p;
             end
+            q = q .* obj.ms;
         end   
         
         function initSimulation(obj, market)
@@ -55,6 +56,16 @@ classdef NLDemand < Estimate
                     obj.GH(obj.GH > 0) = 1;
                 end
             end
+        end
+
+        function truevals = setTrueResults(obj, beta)
+            beta = [-obj.alpha; reshape(obj.sigma, [], 1); beta'];
+            if strcmpi(obj.settings.paneltype, 'fe')
+                beta = beta(1:end-1);
+            end
+            truevals = table(beta);
+            truevals.Properties.VariableNames = {'True_val'};
+            obj.results.trueValues = truevals;
         end
 
         function R = estimate(obj, varargin)
@@ -90,6 +101,9 @@ classdef NLDemand < Estimate
                     obj.sigma = est(2:end);
                     obj.results.sigma = obj.sigma;
                 end
+            end
+            if ~isempty(obj.results) && isfield(obj.results,'trueValues') 
+                R = [obj.results.trueValues, obj.results.estimate];
             end
         end
 
@@ -140,10 +154,10 @@ classdef NLDemand < Estimate
             S = obj.share.s;	
         end
 
-        function tab = quantity(obj, P)
-		% QUANTITY calculates quantities and market shares
+		% Calculate quantities and market shares
+        function tab = quantity(obj, P, t)
             tableCols = {'Product', 'Price', 'Quantity', 'MarketSh', 'Share'};
-            s = obj.shares(P);
+            s = obj.shares(P, t);
             if obj.settings.ces
                 q = s .* obj.ms ./ P;
             else
@@ -351,17 +365,19 @@ classdef NLDemand < Estimate
             else
                 Xorig = obj.data{:, obj.var.price};
             end
+            if isempty(obj.var.marketsize) || isempty(obj.var.exog)
+                error(['Demand.var.exog and marketsize', ...
+                    ' must be specified in model']);
+            end
+            obj.ms = obj.data{: , obj.var.marketsize};
             % quantity is empty for simulated market
             if ~isempty(obj.var.quantity) && obj.isvar(obj.var.quantity, obj.data)
-                if isempty(obj.var.marketsize) || isempty(obj.var.exog) 
-                    error(['Demand.var.exog and marketsize', ...
-                        ' must be specified in model']);
-                end
-                obj.ms = obj.data{: , obj.var.marketsize};
                 obj.share = obj.generateShares();
                 obj.y = obj.share.ls;
                 sh = obj.share{:, lsnames{obj.nestCount+1}};
                 Xorig = [Xorig, sh];
+                obj.results.s0 = ...
+                    mean(accumarray(obj.marketid, obj.share.s0, [], @mean));
             end
             obj.simMarket = 0;
         end

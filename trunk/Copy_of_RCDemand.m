@@ -56,7 +56,7 @@ classdef RCDemand < NLDemand
             else
                 extraoptions = {};
             end
-            obj.int.oldsigma = zeros(size(obj.sigma));
+            obj.int.oldsigma = zeros(size(obj.results.sigma0));
             options = optimoptions(@fminunc, ...
                 'MaxIter',obj.settings.maxiter, ...
                 'TolX', obj.config.tolerance, 'TolFun', obj.config.tolerance, ...
@@ -67,7 +67,7 @@ classdef RCDemand < NLDemand
             finished = false;
             func = @(x)obj.objective(x);
             while ~finished && i <= obj.config.restartMaxIterations 
-                [sigma,fval,exitflag] = fminunc(func, obj.sigma, options);
+                [sigma,fval,exitflag] = fminunc(func, obj.results.sigma0, options);
                 if obj.settings.optimalIV && fval > obj.config.restartFval || exitflag <= 0
                     obj.getSigma();
                     if exitflag <= 0
@@ -133,6 +133,8 @@ classdef RCDemand < NLDemand
             obj.edelta = exp(obj.share.ls);
             est = obj.estimationStep(false, varargin{:});
             if obj.settings.optimalIV
+                obj.results.sigma0 = obj.sigma;
+                obj.settings.sigma0 = obj.sigma;
                 R = obj.estimationStep(true, varargin{:});
                 obj.results.estimate1 = est;
             else
@@ -184,7 +186,9 @@ classdef RCDemand < NLDemand
             varcovar.Properties.VariableNames = variables;
             varcovar.Properties.RowNames = variables;
             obj.results.params.varcovar = varcovar;
-            
+            if isfield(obj.results,'trueValues') 
+                obj.results.estimate = [obj.results.trueValues, obj.results.estimate];
+            end        
             R = obj.results.estimate;
         end
         
@@ -271,22 +275,20 @@ classdef RCDemand < NLDemand
         
         function getSigma(obj, nonlinparams)
             % Only run once, but why? Remove in cleaning obj.sigm
-            if isempty(obj.sigma)
-                if ~isempty(obj.settings.sigma0)
-                    obj.sigma = obj.settings.sigma0;
-                elseif isempty(obj.config.randstream)
-                    obj.sigma = randn(length(nonlinparams), 1);
+            if isempty(obj.settings.sigma0)
+                if isempty(obj.config.randstream)
+                    obj.results.sigma0 = randn(length(nonlinparams), 1);
                 else
-                    obj.sigma = obj.config.randstream.randn(length(nonlinparams),1);
+                    obj.results.sigma0 = ...
+                        obj.config.randstream.randn(length(nonlinparams),1);
+                end
+            else
+                obj.results.sigma0 = reshape(obj.settings.sigma0, [], 1);
+                if length(nonlinparams) ~= length(obj.sigma)
+                    error('sigma and nonlinear have different dimensions');
                 end
             end
-            obj.results.sigma0 = obj.sigma;
-            if size(obj.sigma, 2) > 1
-                obj.sigma = obj.sigma';
-            end
-            if length(nonlinparams) ~= length(obj.sigma)
-                error('sigma and nonlinear have different dimensions');
-            end
+            obj.sigma = obj.results.sigma0;
         end
         
         function initPeriods(obj)

@@ -87,23 +87,20 @@ classdef SimMarket < matlab.mixin.Copyable
         end
         
         function results = estimate(obj)
-            result = obj.estDemand.estimate();
             if isa(obj.demand, 'RCDemand')
                 beta = [-obj.demand.alpha; obj.model.beta'];
-            else
-                beta = [-obj.demand.alpha; reshape(obj.demand.sigma, [], 1);...
-                    obj.model.beta'];
-            end
-            if strcmpi(obj.estDemand.settings.paneltype, 'fe')
-                beta = beta(1:end-1);
-            end
-            if isa(obj.demand, 'RCDemand')
+                if strcmpi(obj.estDemand.settings.paneltype, 'fe')
+                    beta = beta(1:end-1);
+                end
                 truevals = table([beta; obj.demand.sigma]);
+                truevals.Properties.VariableNames = {'True_val'};
+                result = obj.estDemand.estimate();
+                results = [truevals, result];
             else
-                truevals = table(beta);
+                obj.estDemand.setTrueResults( obj.model.beta);
+                results = obj.estDemand.estimate();
+%                 results = [truevals, result];
             end
-            truevals.Properties.VariableNames = {'True_val'};
-            results = [truevals, result];
         end
         
         function R = means(obj, cols, index)
@@ -117,11 +114,13 @@ classdef SimMarket < matlab.mixin.Copyable
             % Simulation of dataset
             obj.demand.var.market = 'marketid';
             obj.demand.var.panel = 'productid';
-            obj.demand.var.price = 'p';
-            obj.demand.var.exog = 'x';
-            obj.demand.var.quantity = 'q';
-            obj.demand.var.marketsize = 'constant';
-            
+            varNames = {'price', 'quantity', 'exog', 'marketsize'};
+            varValues = {'p', 'q', 'x', 'constant'};
+            for i = 1:length(varNames)
+                if isempty(obj.demand.var.(varNames{i}))
+                    obj.demand.var.(varNames{i}) = varValues{i};
+                end
+            end
             obj.simDemand = copy(obj.demand);
             obj.estDemand = copy(obj.demand);
             if isa(obj.demand, 'RCDemand')
@@ -178,14 +177,14 @@ classdef SimMarket < matlab.mixin.Copyable
                 obj.model.markets, 1);
             
             % Create random x var:
-%            obj.data.x = obj.model.x(2) + randn(n, 1) * obj.model.x_vcv(2);
             x = mvnrnd(obj.model.x, obj.model.x_vcv, n);
             % Create price var to satisfy demand.initAdditional
             obj.data.p = x(:, 1);
-            obj.data.x = x(:, 2:end);
+            x = x(:, 2:end);
+            obj.data = [obj.data, array2table(x)];
             obj.data.constant = ones(n, 1);
             % This should be done in the demand classes:            <<<<<<<<<<<<<<<<
-            x0 = [table2array(obj.data(:, 'x')), obj.data.constant];
+            x0 = [x, obj.data.constant];
             obj.data.d = x0 * obj.model.beta' + obj.epsilon;
             
             if obj.model.gamma ~= 0 % Otherwise existing tests fail

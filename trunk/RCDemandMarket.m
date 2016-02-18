@@ -37,6 +37,7 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
             if any(obj.nonlinprice) 
                 k = obj.nonlinprice;
                 obj.vx(:,:,k) = bsxfun(@times, p, obj.v(k,:));
+                obj.nlpart(obj.sigma);
             end
             % obj.d set in init() or by user in simulating data:
             edeltapred = exp(obj.d - obj.alpha * p); 
@@ -124,6 +125,9 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
                     maxdev = max(abs(newedel - edelta));
                     edelta = newedel;
                     i = i + 1;
+                end
+                if i == obj.config.fpmaxit
+                    warning('Maximum number of iterations fpmaxit exceeded')
                 end
             end
             obj.edelta = edelta;
