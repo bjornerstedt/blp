@@ -189,6 +189,7 @@ for d = 1:2
         m.create();
 
         m.estDemand.settings.paneltype = paneltype{i};
+        m.demand.settings.paneltype = paneltype{i};
         results{i} = m.estimate();
         display(results{1})
         display(results{2})

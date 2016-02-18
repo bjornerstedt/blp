@@ -88,18 +88,12 @@ classdef SimMarket < matlab.mixin.Copyable
         
         function results = estimate(obj)
             if isa(obj.demand, 'RCDemand')
-                beta = [-obj.demand.alpha; obj.model.beta'];
-                if strcmpi(obj.estDemand.settings.paneltype, 'fe')
-                    beta = beta(1:end-1);
-                end
-                truevals = table([beta; obj.demand.sigma]);
-                truevals.Properties.VariableNames = {'True_val'};
+                truevals = obj.demand.setTrueResults( obj.model.beta);
                 result = obj.estDemand.estimate();
                 results = [truevals, result];
             else
                 obj.estDemand.setTrueResults( obj.model.beta);
                 results = obj.estDemand.estimate();
-%                 results = [truevals, result];
             end
         end
         
