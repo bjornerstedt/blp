@@ -119,7 +119,7 @@ m.demand.settings.ces = true;
 %         m.estDemand.settings.robust = 'false';
 m.demand.alpha = 4;
 m.demand.sigma = 1;
-m.model.beta = [ 1; 4];
+m.model.beta = [ 1, 4];
 % m.model.markets = 200;
 m.demand.var.nonlinear = 'constant';
 % m.model.endog = true;
@@ -185,11 +185,10 @@ for d = 1:2
         m.model.endog = true;
         m.model.randomProducts = true;
 %        m.model.pricesFromCosts = false;
+        m.demand.settings.paneltype = paneltype{i};
         
         m.create();
 
-        m.estDemand.settings.paneltype = paneltype{i};
-        m.demand.settings.paneltype = paneltype{i};
         results{i} = m.estimate();
         display(results{1})
         display(results{2})

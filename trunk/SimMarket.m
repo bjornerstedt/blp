@@ -88,11 +88,8 @@ classdef SimMarket < matlab.mixin.Copyable
         
         function results = estimate(obj)
             if isa(obj.demand, 'RCDemand')
-                truevals = obj.demand.setTrueResults( obj.model.beta);
-                result = obj.estDemand.estimate();
-                results = [truevals, result];
+                results = obj.estDemand.estimate();
             else
-                obj.estDemand.setTrueResults( obj.model.beta);
                 results = obj.estDemand.estimate();
             end
         end
@@ -115,6 +112,7 @@ classdef SimMarket < matlab.mixin.Copyable
                     obj.demand.var.(varNames{i}) = varValues{i};
                 end
             end
+            obj.demand.setTrueResults( obj.model.beta);
             obj.simDemand = copy(obj.demand);
             obj.estDemand = copy(obj.demand);
             if isa(obj.demand, 'RCDemand')

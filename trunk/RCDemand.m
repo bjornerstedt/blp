@@ -68,16 +68,16 @@ classdef RCDemand < NLDemand
             func = @(x)obj.objective(x);
             while ~finished && i <= obj.config.restartMaxIterations 
                 [sigma,fval,exitflag] = fminunc(func, obj.sigma, options);
-                if obj.settings.optimalIV && fval > obj.config.restartFval || exitflag <= 0
-                    obj.getSigma();
-                    if exitflag <= 0
-                        disp('Restarting as minimization did not converge.');
-                    else
-                        disp(['Restarting as fval=', num2str(fval), ' is too large']);
-                    end
-                else
-                    finished = true;      
-                end
+%                 if obj.settings.optimalIV && fval > obj.config.restartFval || exitflag <= 0
+%                     obj.getSigma();
+%                     if exitflag <= 0
+%                         disp('Restarting as minimization did not converge.');
+%                     else
+%                         disp(['Restarting as fval=', num2str(fval), ' is too large']);
+%                     end
+%                 else
+%                     finished = true;      
+%                 end
                 i = i + 1;
             end
             obj.results.other.fval = fval;
@@ -184,7 +184,9 @@ classdef RCDemand < NLDemand
             varcovar.Properties.VariableNames = variables;
             varcovar.Properties.RowNames = variables;
             obj.results.params.varcovar = varcovar;
-            
+            if isfield(obj.results,'trueValues') 
+                obj.results.estimate = [obj.results.trueValues, obj.results.estimate];
+            end        
             R = obj.results.estimate;
         end
         
@@ -249,6 +251,7 @@ classdef RCDemand < NLDemand
             if ~isempty(selection)
                 obj.x2 = obj.x2(selection, :); 
             end
+            obj.getSigma();
             obj.initPeriods();
         end
         
@@ -266,26 +269,29 @@ classdef RCDemand < NLDemand
                 error('Some variable has to be specified as nonlinear');
             end
             nonlinparams = obj.draws.create( obj.var.nonlinear);
-            obj.getSigma(nonlinparams);
         end
         
-        function getSigma(obj, nonlinparams)
-            % Only run once, but why? Remove in cleaning obj.sigm
+        function getSigma(obj)
+        % obj.sigma is set in simulation, in estimation it is created
+        % from obj.settings.sigma0 or from random draw. 
+            nonlinparams = obj.draws.nonlinparams
+            if ~isempty(obj.settings.sigma0)
+                obj.sigma = obj.settings.sigma0;
+                obj.results.sigma0 = obj.sigma;
+                if size(obj.sigma, 2) > 1
+                    obj.sigma = obj.sigma';
+                end
+                if length(nonlinparams) ~= length(obj.sigma)
+                    error('sigma and nonlinear have different dimensions');
+                end
+            end
             if isempty(obj.sigma)
-                if ~isempty(obj.settings.sigma0)
-                    obj.sigma = obj.settings.sigma0;
-                elseif isempty(obj.config.randstream)
+                if isempty(obj.config.randstream)
                     obj.sigma = randn(length(nonlinparams), 1);
                 else
                     obj.sigma = obj.config.randstream.randn(length(nonlinparams),1);
                 end
-            end
-            obj.results.sigma0 = obj.sigma;
-            if size(obj.sigma, 2) > 1
-                obj.sigma = obj.sigma';
-            end
-            if length(nonlinparams) ~= length(obj.sigma)
-                error('sigma and nonlinear have different dimensions');
+                obj.results.sigma0 = obj.sigma;
             end
         end
         
