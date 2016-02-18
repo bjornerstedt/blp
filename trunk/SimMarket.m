@@ -14,7 +14,6 @@ classdef SimMarket < matlab.mixin.Copyable
     end
     properties (SetAccess = protected, Hidden = true )
         simDemand % Class with settings for data generation
-        estDemand % Settings for estimation
         epsilon
     end
     
@@ -73,7 +72,7 @@ classdef SimMarket < matlab.mixin.Copyable
             if nargin == 2 
                 obj.market.demand = varargin{1};
             else
-                obj.market.demand = obj.estDemand;
+                obj.market.demand = obj.demand;
             end
             if isempty(obj.model.firm)
                 obj.market.var.firm = 'productid'; % One product firms
@@ -85,15 +84,7 @@ classdef SimMarket < matlab.mixin.Copyable
             cr = rowfun(@(x,y)(y-x)/y, mr(:,2:3),'OutputVariableNames','Markup');
             mr = [mr, cr];
         end
-        
-        function results = estimate(obj)
-            if isa(obj.demand, 'RCDemand')
-                results = obj.estDemand.estimate();
-            else
-                results = obj.estDemand.estimate();
-            end
-        end
-        
+               
         function R = means(obj, cols, index)
             R = array2table(splitapply(@mean, obj.data{:, cols}, ...
                 obj.data.(index)), 'VariableNames', cols);
@@ -112,11 +103,10 @@ classdef SimMarket < matlab.mixin.Copyable
                     obj.demand.var.(varNames{i}) = varValues{i};
                 end
             end
-            obj.demand.setTrueResults( obj.model.beta);
             obj.simDemand = copy(obj.demand);
-            obj.estDemand = copy(obj.demand);
+            obj.demand.setTrueResults( obj.model.beta);
             if isa(obj.demand, 'RCDemand')
-                obj.estDemand.sigma = [];
+                obj.demand.sigma = [];
             end
             obj.model.beta = reshape(obj.model.beta, 1, length(obj.model.beta));
             
@@ -238,9 +228,9 @@ classdef SimMarket < matlab.mixin.Copyable
             display 'Average sum shares'
             disp(mean(accumarray(obj.data.marketid, obj.data.q)))
             if obj.model.endog
-                obj.estDemand.var.instruments = sprintf('inst%d ', 1:6);
+                obj.demand.var.instruments = sprintf('inst%d ', 1:6);
             end
-            obj.estDemand.data = obj.data;
+            obj.demand.data = obj.data;
             obj.simDemand.data = obj.data;
         end
         
@@ -269,16 +259,16 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.data.q = obj.simDemand.getDemand(obj.data.p);
            
             mr = obj.means({'p', 'q'}, 'productid') ;
-            if obj.model.endog && isempty(obj.estDemand.var.instruments)
+            if obj.model.endog && isempty(obj.demand.var.instruments)
                 if obj.model.randomProducts
-                    obj.estDemand.var.instruments = 'nprod nprod2';
+                    obj.demand.var.instruments = 'nprod nprod2';
                 elseif obj.model.gamma ~= 0
-                    obj.estDemand.var.instruments = 'w';
+                    obj.demand.var.instruments = 'w';
                 else
-                    obj.estDemand.var.instruments = 'c';
+                    obj.demand.var.instruments = 'c';
                 end
             end
-            obj.estDemand.data = obj.data;
+            obj.demand.data = obj.data;
         end
                 
         function cpObj = copyElement(obj)

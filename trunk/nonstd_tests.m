@@ -35,7 +35,7 @@ m.create();
 
 display(m.model)
 
-results = m.estimate()
+results = m.demand.estimate()
 sp = m.estDemand.results.sigma0
 % SimMarket.testEqual(results{'rc_lP','Coef'} , results{'rc_lP', 'True_val'}, 1e-1 )
 
@@ -83,7 +83,7 @@ m.create();
 
 display(m.model)
 
-results = m.estimate()
+results = m.demand.estimate()
 % SimMarket.testEqual(results{'rc_lP','Coef'} , results{'rc_lP', 'True_val'}, 1e-1 )
 
 m.findCosts()

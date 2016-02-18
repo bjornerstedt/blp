@@ -10,7 +10,7 @@ m.demand.alpha = 1;
 
 sresults = m.create();
 display(m.model)
-results = m.estimate()
+results = m.demand.estimate()
 % Test that result is within 0.1% of true value
 SimMarket.testEqual(results{'p','Coef'} , results{'p', 'True_val'}, 1e-2)
 
@@ -35,7 +35,7 @@ m.model.types = 2;
 m.create();
 display(m.model)
 
-results = m.estimate()
+results = m.demand.estimate()
 % Test that result is within 0.1% of true value
 SimMarket.testEqual(results{'lP','Coef'} , results{'lP', 'True_val'}, 1e-2)
 
@@ -59,7 +59,7 @@ m.create();
 
 display(m.model)
 
-results = m.estimate()
+results = m.demand.estimate()
 % Test that result is within 0.1% of true value
 SimMarket.testEqual(results{'p','Coef'} , results{'p', 'True_val'}, 1e-2)
 
@@ -79,9 +79,9 @@ m.demand.var.nonlinear = 'constant';
 sresults = m.create();
 display(m.model)
 
-results = m.estimate()
+results = m.demand.estimate()
 % Check that estimate different than initial guess:
-assert(abs(m.estDemand.results.sigma0 - m.estDemand.sigma) > 0.3)
+assert(abs(m.demand.results.sigma0 - m.demand.sigma) > 0.3)
 
 SimMarket.testEqual(results{'p','Coef'} , results{'p', 'True_val'}, 1e-2 )
 SimMarket.testEqual(results{'rc_constant','Coef'} , results{'rc_constant', 'True_val'}, 1e-1 )
@@ -103,7 +103,7 @@ for i = 0:1
     sresults = m.create();
     display(m.model)
     
-    results = m.estimate()
+    results = m.demand.estimate()
     testVals = [sresults{1, 'q'}, sresults{1, 'p'}, results{'p','Coef'}, results{'p','Std_err'}];
     correctVals = [0.030538586199379,4.980964755245374,-1.005205788003259,0.004425086528973];
     SimMarket.testSame(testVals, correctVals, 5);
@@ -116,7 +116,7 @@ display '**********************  Test 6  *************************'
 m = SimMarket();
 m.demand = RCDemand;
 m.demand.settings.ces = true;
-%         m.estDemand.settings.robust = 'false';
+%         m.demand.settings.robust = 'false';
 m.demand.alpha = 4;
 m.demand.sigma = 1;
 m.model.beta = [ 1, 4];
@@ -129,7 +129,7 @@ m.demand.var.nonlinear = 'constant';
 m.create();
 display(m.model)
 
-results = m.estimate()
+results = m.demand.estimate()
 testVals = [results{'lP', 'Coef'}, results{'rc_constant', 'Coef'}];
 correctVals = [-4.014189676113176,0.988748863095228];
 SimMarket.testSame(testVals, correctVals, 6);
@@ -152,7 +152,7 @@ m.model.products = 10;
 m.create();
 display(m.model)
 
-results = m.estimate()
+results = m.demand.estimate()
 
 testVals = [results{'p','Coef'}, results{'rc_x','Coef'}];
 correctVals = [-0.970459257509805,1.045491435731395];
@@ -189,10 +189,10 @@ for d = 1:2
         
         m.create();
 
-        results{i} = m.estimate();
+        results{i} = m.demand.estimate();
         display(results{1})
         display(results{2})
-        market = Market(m.estDemand);
+        market = Market(m.demand);
         market.var.firm = 'productid';
        
         display 'Test that mean calculated costs are close to actual'
@@ -249,7 +249,7 @@ m.create();
 
 display(m.model)
 
-results = m.estimate()
+results = m.demand.estimate()
 % SimMarket.testEqual(results{'rc_lP','Coef'} , results{'rc_lP', 'True_val'}, 1e-1 )
 
 m.findCosts()
@@ -280,7 +280,7 @@ m.model.products = 5;
 m.create();
 display(m.model)
 
-results = m.estimate()
+results = m.demand.estimate()
 SimMarket.testEqual(results{'rc_p','Coef'} , results{'rc_p', 'True_val'}, 2e-1 )
 
 m.findCosts()
@@ -310,6 +310,6 @@ m.model.products = 5;
 m.create();
 display(m.model)
 
-results = m.estimate()
+results = m.demand.estimate()
 SimMarket.testEqual(results{'rc_p','Coef'} , results{'rc_p', 'True_val'}, 5e-2 )
 
