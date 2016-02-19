@@ -68,17 +68,20 @@ classdef RCDemand < NLDemand
             func = @(x)obj.objective(x);
             while ~finished && i <= obj.config.restartMaxIterations 
                 [sigma,fval,exitflag] = fminunc(func, obj.sigma, options);
-%                 if obj.settings.optimalIV && fval > obj.config.restartFval || exitflag <= 0
-%                     obj.getSigma();
-%                     if exitflag <= 0
-%                         disp('Restarting as minimization did not converge.');
-%                     else
-%                         disp(['Restarting as fval=', num2str(fval), ' is too large']);
-%                     end
-%                 else
-%                     finished = true;      
-%                 end
+                if obj.settings.optimalIV && fval > obj.config.restartFval || exitflag <= 0
+                    obj.getSigma();
+                    if exitflag <= 0
+                        disp('Restarting as minimization did not converge.');
+                    else
+                        disp(['Restarting as fval=', num2str(fval), ' is too large']);
+                    end
+                else
+                    finished = true;      
+                end
                 i = i + 1;
+            end
+            if fval == 1e10
+                error('RCDemand.estimate could not find an estimate')
             end
             obj.results.other.fval = fval;
             obj.results.other.restarts = i - 1;
@@ -90,10 +93,10 @@ classdef RCDemand < NLDemand
             obj.edelta =  obj.findDelta(sigma);
             del = log(obj.edelta);
             
-            if max(isnan(del)) == 1
+            if ~isreal(del) || max(isnan(del)) == 1
                 f = 1e+10;
                 if nargout > 1
-                    g = 1e+10;
+                    g = 1e+10 * ones(size(obj.sigma));
                 end
                 disp('Negative deltas found at observations')
                 err = find(isnan(del));
@@ -101,6 +104,11 @@ classdef RCDemand < NLDemand
                     disp(err)
                 end
             else
+%             if strcmpi(obj.settings.paneltype, 'fe')
+%                 davt = accumarray(obj.panelid, del, [], @mean);
+%                 davt = davt(obj.panelid, :);
+%                 del = del - davt;
+%             end
                 xi = obj.int.annihalator * del;
                 if ~isempty(obj.Z)
                     f = xi' * obj.int.ZWZ * xi;
@@ -112,7 +120,7 @@ classdef RCDemand < NLDemand
                     f = xi' * xi;
                     if nargout > 1
                         obj.deltaJac = obj.deltaJacobian(sigma, obj.edelta);
-                        g = 2*obj.deltaJac' * xi;
+                        g = 2 * obj.deltaJac' * xi;
                     end
                 end
             end
@@ -131,12 +139,15 @@ classdef RCDemand < NLDemand
         function R = estimate(obj, varargin)
             obj.init(varargin{:});
             obj.edelta = exp(obj.share.ls);
-            est = obj.estimationStep(false, varargin{:});
             if obj.settings.optimalIV
+                if isempty(obj.Z)
+                    error('RCDemand.settings.ptimalIV only works if instruments are set.')
+                end
+                est = obj.estimationStep(false, varargin{:});
                 R = obj.estimationStep(true, varargin{:});
                 obj.results.estimate1 = est;
             else
-                R = est;
+                R = obj.estimationStep(false, varargin{:});
             end
             % Create starting values for findDelta
             obj.d = log(obj.edelta) + obj.alpha * obj.Xorig(:, 1);
@@ -274,7 +285,7 @@ classdef RCDemand < NLDemand
         function getSigma(obj)
         % obj.sigma is set in simulation, in estimation it is created
         % from obj.settings.sigma0 or from random draw. 
-            nonlinparams = obj.draws.nonlinparams
+            nonlinparams = obj.draws.nonlinparams;
             if ~isempty(obj.settings.sigma0)
                 obj.sigma = obj.settings.sigma0;
                 obj.results.sigma0 = obj.sigma;
@@ -376,11 +387,16 @@ classdef RCDemand < NLDemand
             end
             sel = logical(obj.dummarket);
             newedelta = zeros(size(edelta));
+            nccount = 0;
             for t = 1:max(obj.marketid)
-                newedelta(sel(:,t)) = obj.period{t}.findDelta(sigma, ...
+                [newedelta(sel(:,t)), nonconv] = obj.period{t}.findDelta(sigma, ...
                     edelta(sel(:,t)), tolerance);
+                nccount = nccount + nonconv;
             end
-            % Update oldsigma and edelta only in first stage and if
+            if nccount > 0
+                warning('findDelta did not converge in %d markets', nccount)
+            end
+           % Update oldsigma and edelta only in first stage and if
             % successful
             if closeFlag == 1 && max(isnan(newedelta)) < 1;
                 obj.int.oldsigma = sigma;

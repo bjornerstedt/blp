@@ -294,7 +294,7 @@ m = SimMarket();
 m.demand = RCDemand;
 m.demand.settings.drawmethod = 'quadrature';
 m.demand.alpha = 1;
-m.demand.sigma = [0.2; 1];
+m.demand.sigma = [0.2; .1];
 
 m.demand.var.nonlinear = {{'p', 'uniform'}, {'x'}};
 
@@ -312,4 +312,5 @@ display(m.model)
 
 results = m.demand.estimate()
 SimMarket.testEqual(results{'rc_p','Coef'} , results{'rc_p', 'True_val'}, 5e-2 )
+sigma0 = m.demand.results.sigma0 
 

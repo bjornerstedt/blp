@@ -106,7 +106,10 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.simDemand = copy(obj.demand);
             obj.demand.setTrueResults( obj.model.beta);
             if isa(obj.demand, 'RCDemand')
+                % obj.sigma has to be cleared in order for estimation to select
+                % a random starting point. Otherwise obj.sigma is used.
                 obj.demand.sigma = [];
+                obj.simDemand.settings.sigma0 = [];
             end
             obj.model.beta = reshape(obj.model.beta, 1, length(obj.model.beta));
             

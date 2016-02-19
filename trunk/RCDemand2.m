@@ -47,6 +47,22 @@ classdef RCDemand2 < RCDemand
             end
         end
  
+        function [ bet, xi ] = lpart(obj, del )
+%             if strcmpi(obj.settings.paneltype, 'fe')
+%                 davt = accumarray(obj.panelid, del, [], @mean);
+%                 davt = davt(obj.panelid, :);
+%                 del = del - davt;
+%             end
+            if ~isempty(obj.Z)
+                bet = obj.inv_x1ZWZx1 * (obj.X' * obj.ZWZ * del);
+            else
+                bet = obj.inv_x1ZWZx1 * (obj.X' * del);
+            end
+%             bet = obj.estimationMatrix * del;
+
+            xi = del - obj.X * bet;
+        end
+        
         function [j, h] = objectiveHessian(obj, xi, delta, sigma)
             % Create vector expression from Hessian
             % $-2ZWZ^{T}\xi(\theta)$

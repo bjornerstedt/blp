@@ -104,12 +104,14 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
             obj.expmu = exp(mu);
         end
         
-        function edelta = findDelta(obj, sigma, edelta, tolerance)
+        function [edelta, nonconv] = findDelta(obj, sigma, edelta, tolerance)
         % findDelta is invoked by RCDemand.findDelta
             obj.nlpart( sigma );
             if obj.config.compiled
                 % Note that maxit and tolerance are hard coded in c++ function
                 edelta = findDeltaCpp(obj.s, obj.expmu, obj.iweight, edelta);
+                % Nonconv count not implemented for compiled code
+                nonconv = 0;
             else
                 i = 0;
                 maxdev = 100;
@@ -126,9 +128,7 @@ classdef RCDemandMarket  < matlab.mixin.Copyable
                     edelta = newedel;
                     i = i + 1;
                 end
-                if i == obj.config.fpmaxit
-                    warning('Maximum number of iterations fpmaxit exceeded')
-                end
+                nonconv = (i == obj.config.fpmaxit);
             end
             obj.edelta = edelta;
         end
