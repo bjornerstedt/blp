@@ -1,6 +1,6 @@
 %% Test 1: Testing ordering of multiple nonlinear with price
 display '**********************  Test 1  *************************'
-endog = true;
+endog = false;
 for tst = 0:1
 m = SimMarket();
 m.demand = RCDemand;
@@ -9,12 +9,12 @@ m.demand.config.compiled = false;
 m.demand.settings.drawmethod = 'quadrature';
 m.demand.config.guessdelta = false;
 m.demand.config.fpmaxit = 5000; 
-m.demand.alpha = .8;
+m.demand.alpha = 4;
 if ~logical(tst)
-    m.demand.sigma = [1; .2];
+    m.demand.sigma = [1; 3];
     m.demand.var.nonlinear = 'x p';
 else
-    m.demand.sigma = [.2; 1];
+    m.demand.sigma = [3; 1];
     m.demand.var.nonlinear = 'p x';
 end
 m.demand.settings.nind = 1000;

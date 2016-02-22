@@ -111,17 +111,16 @@ for i = 0:1
     SimMarket.testEqual(results{'p','Coef'} , results{'p', 'True_val'}, 1e-2 )
     SimMarket.testEqual(results{'rc_x','Coef'} , results{'rc_x', 'True_val'}, 1e-1 )
 end
-%% Test 6: CES RCDemand
+%% Test 6: CES RCDemand, exogenous
 display '**********************  Test 6  *************************'
 m = SimMarket();
 m.demand = RCDemand;
 m.demand.settings.ces = true;
-%         m.demand.settings.robust = 'false';
-m.demand.alpha = 4;
-m.demand.sigma = 1;
+m.demand.alpha = 3;
+m.demand.sigma = .5;
 m.model.beta = [ 1, 4];
-% m.model.markets = 200;
-m.demand.var.nonlinear = 'constant';
+m.model.markets = 200;
+m.demand.var.nonlinear = 'p';
 % m.model.endog = true;
 % m.model.randomProducts = false;
 % m.model.pricesFromCosts = false;
@@ -130,11 +129,12 @@ m.create();
 display(m.model)
 
 results = m.demand.estimate()
-testVals = [results{'lP', 'Coef'}, results{'rc_constant', 'Coef'}];
-correctVals = [-4.014189676113176,0.988748863095228];
+testVals = [results{'lP', 'Coef'}, results{'rc_lP', 'Coef'}];
+correctVals = [-3.012747977629290,0.511180973525220];
 SimMarket.testSame(testVals, correctVals, 6);
 
 SimMarket.testEqual(results{'lP', 'Coef'} , results{'lP', 'True_val'}, 1e-2)
+SimMarket.testEqual(results{'rc_lP', 'Coef'} , results{'rc_lP', 'True_val'}, 5e-2)
 
 %% Test 7: Optimal IV
 display '**********************  Test 7  *************************'

@@ -2,19 +2,29 @@ clear all
 SimMarket.randDraws();
 
 %% Test 1: empirical draws
+distlist = {{'test'}, {'testuni', 'uniform'}, {'testuni', 'triangular'}};
+dr1 = Draws('DrawMethod', 'hypercube', 'individuals', 1e6);
+dr1.create( distlist);
+
+for j = 1:length(distlist)
+    SimMarket.testSame(max(mean(dr1.draws)), 0)
+    SimMarket.testSame(max(var(dr1.draws) - 1), 0)
+end
+
+display ' **** Test 1 passed ****'
+
+%% Test 2: empirical draws
 dr1 = Draws('DrawMethod', 'quadrature', 'Accuracy', 3);
-dr1.parse( {{'test'}, {'testuni', 'uniform'}});
-dr1.create( );
+dr1.create( {{'test'}, {'testuni', 'uniform'}});
 
 dr2 = Draws('DrawMethod', 'quadrature', 'Accuracy', 3);
 [dm, wt] = nwspgr('KPN', 1, 3);
-dr2.parse(  {{'testemp', 'empirical', [dm, wt]}, {'testuni', 'uniform'}});
-dr2.create( );
+dr2.create( {{'testemp', 'empirical', [dm, wt]}, {'testuni', 'uniform'}});
 assert(all(all(dr1.draws - dr2.draws == 0)))
 assert(all(all(dr1.weights - dr2.weights == 0)))
 display ' **** Test 1 passed ****'
 
-%% Test 2: moments of random draws
+%% Test 3: moments of random draws
 distname = {'normal', 'uniform', 'empirical', 'triangular', ...
     'logistic', 'lognormal'};
 drawmethod = {'hypercube', 'halton', 'random'};
@@ -34,8 +44,7 @@ for i = 1:length(drawmethod)
             'DrawMethod', drawmethod{i},...
             'Individuals', 1000000 ...
             );
-        draws.parse( nonlinear);
-        draws.create( );
+        draws.create(nonlinear);
         
         results(j, 1) = mean(draws.draws);
         results(j, 2) = var(draws.draws);
@@ -52,7 +61,7 @@ for i = 1:length(drawmethod)
     disp(results)
 end
 
-%% Test 3: moments of quadrature draws
+%% Test 4: moments of quadrature draws
 distname = {'normal', 'uniform'};
 
 results = cell(length(distname), 2);
@@ -70,8 +79,7 @@ for j = 1:length(distname)
         'Accuracy', 7 ...
         );
     
-    draws.parse( nonlinear);
-    draws.create( );
+    draws.create( nonlinear);
     
     results{j, 1} = mean(draws.draws);
     % Variance calculated as weighted summation:
@@ -85,7 +93,7 @@ results.Properties.RowNames = distname;
 disp('Drawmethod: quadrature')
 disp(results)
 
-%% Test 2: Market draws
+%% Test 5: Market draws
 distname = {'normal', 'uniform', 'empirical', 'triangular', ...
     'logistic', 'lognormal'};
 drawmethod = {'hypercube', 'halton', 'random'};
@@ -95,8 +103,7 @@ draws = Draws(...
     'Markets', 2, ...
     'Individuals', 1000 ...
     );
-draws.parse( 'test1');
-draws.create( );
+draws.create(  'test1');
 dr = reshape(draws.draws, 1, []);
 mean(dr)
 std(dr)

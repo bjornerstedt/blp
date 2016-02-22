@@ -292,10 +292,13 @@ classdef SimMarket < matlab.mixin.Copyable
             end
             RandStream.setGlobalStream(RandStream('mt19937ar','Seed', seed));
         end
-
         
-        function vals = testSame(x,y,i)
-            assert(all( abs(x - y) < 10e-6), 'Test %d failed' , i);
+        function vals = testSame(x, y, varargin)
+            if nargin > 2
+                assert(all( abs(x - y) < 10e-6), 'Test %d failed' , varargin{1});
+            else
+                assert(all( abs(x - y) < 10e-6), 'Test failed');
+            end
         end
         
         function vals = testEqual(x, y, sensitivity)

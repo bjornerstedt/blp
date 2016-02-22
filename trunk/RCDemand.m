@@ -380,7 +380,7 @@ classdef RCDemand < NLDemand
             end
             if obj.config.guessdelta && ~isempty(obj.deltaJac)
                 newdelta = log(obj.edelta) + ...
-                    obj.deltaJac*(sigma - obj.int.oldsigma); 
+                    obj.deltaJac * (sigma - obj.int.oldsigma); 
                 edelta = exp(newdelta);
             else
                 edelta =  obj.edelta;

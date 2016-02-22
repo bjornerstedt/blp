@@ -226,8 +226,8 @@ classdef Draws < matlab.mixin.Copyable
         function obj = Draws(varargin)
             args = inputParser;
             args.addParameter('drawmethod', 'hypercube', @ischar);
-            args.addParameter('accuracy', 7, @isnumeric);
-            args.addParameter('individuals', 5, @isnumeric);
+            args.addParameter('accuracy', 15, @isnumeric);
+            args.addParameter('individuals', 300, @isnumeric);
             args.addParameter('markets', 1, @isnumeric);
             args.addParameter('randstream', []);
             args.parse(varargin{:});
