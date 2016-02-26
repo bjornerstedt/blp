@@ -154,10 +154,19 @@ classdef Estimate  < matlab.mixin.Copyable
             if ~isempty(obj.var.instruments)
                 obj.Zorig = [obj.data{:, [exog, instruments]}, constant, obj.lsdv];
             end
+            if ~isempty(selection)                
+                obj.Xorig = obj.Xorig(selection, :);
+                obj.Zorig = obj.Zorig(selection, :);
+                obj.Zorig = obj.Zorig(:, sum(obj.Zorig) ~= 0);
+                panelid_sel = obj.panelid(selection);
+                obj.y = obj.y(selection);
+            else
+                panelid_sel = obj.panelid;
+            end
             if strcmpi(obj.settings.paneltype, 'fe')
-                obj.X = obj.demean(obj.Xorig);
-                obj.y = obj.demean(obj.y);
-                obj.Z =  obj.demean(obj.Zorig);
+                obj.X = Estimate.demean(obj.Xorig, panelid_sel);
+                obj.y = Estimate.demean(obj.y, panelid_sel);
+                obj.Z =  Estimate.demean(obj.Zorig, panelid_sel);
                 obj.results.dgf = (size(obj.X,1) - size(obj.X,2)) ...
                     - length(unique(obj.panelid));
             else
@@ -166,13 +175,6 @@ classdef Estimate  < matlab.mixin.Copyable
                 obj.results.dgf = (size(obj.X,1) - size(obj.X,2));
             end
             obj.results.observations = size(obj.X,1);
-            if ~isempty(selection)                
-                obj.X = obj.X(selection, :);
-                obj.y = obj.y(selection);
-                obj.Z = obj.Z(selection, :);
-                obj.Xorig = obj.Xorig(selection, :);
-                obj.Zorig = obj.Zorig(selection, :);
-            end
 %             if any(isnan(table2array(T)))
 %                 warning('NaN occurs in data')
 %             end
@@ -271,23 +273,6 @@ classdef Estimate  < matlab.mixin.Copyable
             % TODO: Add dgf adjustment
         end
        
-        function mn  = demean(obj, data )
-        %DEMEAN Subtract the mean value of vars over panel
-            if istable(data)
-                data = table2array(data);
-            end
-            if isempty(data)
-                mn = [];
-                return
-            end
-            mn = zeros(max(obj.panelid), size(data, 2));
-            for i = 1:size(data, 2)
-                mn(:, i) = accumarray(obj.panelid, data(:, i), [], @mean );
-            end
-            mn =  mn(obj.panelid, :);
-            mn = data - mn;
-        end
-        
         function cpObj = copyElement(obj)
         % Overrides copyElement method
         
@@ -304,6 +289,23 @@ classdef Estimate  < matlab.mixin.Copyable
     end
     
     methods( Static )
+        function mn  = demean(data, panelid_sel )
+        %DEMEAN Subtract the mean value of vars over panel
+            if istable(data)
+                data = table2array(data);
+            end
+            if isempty(data)
+                mn = [];
+                return
+            end
+            mn = zeros(max(panelid_sel), size(data, 2));
+            for i = 1:size(data, 2)
+                mn(:, i) = accumarray(panelid_sel, data(:, i), [], @mean );
+            end
+            mn =  mn(panelid_sel, :);
+            mn = data - mn;
+        end
+        
         function [instruments, names] = countInstruments(data, market, typeNames, varargin)
         % countInstruments(market, typeNames, sumVars, dataTable) 
         % sums vars by market over firm and typenames 

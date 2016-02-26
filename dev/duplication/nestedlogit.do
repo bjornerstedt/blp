@@ -36,9 +36,19 @@ use painkillers
 	xtivreg2 M_ls $exogvar (Ptablets1 M_lsjh M_lshg = num*) if year<2009, fe robust
 
 
-mergersim market if year==2008&month==12   
+mergersim market // if year==2008&month==12   
 
-mergersim simulate if year == 2008&month==12, seller(1) buyer(2) sellereff(0) buyereff(0)
+mergersim simulate if year >2008, seller(1) buyer(2) sellereff(0) buyereff(0)
+
+mergersim init, nests(form substance) unit price(Ptablets1) quantity(Xtablets) marketsize(BL0) firm(firm) name(U)
+
+	xtivreg2 U_ls $exogvar (Ptablets1 U_lsjh U_lshg = num*) if year<2009, fe robust
+
+
+mergersim market , name(U) 
+clonevar newfirm = firm
+replace newfirm = 1 if brand==1 | brand ==21
+mergersim simulate if year >2008, newfirm(newfirm) name(U)
 
 **** Save for Matlab
 
