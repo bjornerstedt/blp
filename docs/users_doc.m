@@ -23,7 +23,7 @@ load example_data;
 demand = NLDemand(dt1);
 
 %%
-% Here we specify the market and panel id, price, quantity and marketsize
+% Here we specify the market and panel id, price, quantity and marketSize
 % (here set to the constant value 1). In addition one can specify a list of
 % exogenous variables to be used in estimation in |demand.var.exog|. A list
 % of variables is specified as a string with variable names separated by
@@ -33,7 +33,7 @@ demand.var.market = 'marketid';
 demand.var.panel = 'productid';
 demand.var.price = 'p';
 demand.var.quantity = 'q';
-demand.var.marketsize = 'constant';
+demand.var.marketSize = 'constant';
 demand.var.exog = 'x';
 
 %%
@@ -45,14 +45,6 @@ demand.var.exog = 'x';
 demand.var
 
 %%
-% In |demand.settings|, other demand settings are set. Four properties
-% of |NLDemand|.settings concern estimation. The last one,
-% |demand.settings.ces| is used to select CES Demand rather than the default,
-% Unit demand.
-
-demand.settings
-
-%%
 % To estimate demand, the |estimate()| method is used. The estimation method 
 % used will depend on what has been specified in demand.var and in
 % demand.settings. 
@@ -62,6 +54,19 @@ result = demand.estimate()
 %%
 % The method returns a table with the estimate, as well as putting it and
 % various other information in a demand.results structure.
+
+%%
+% In |demand.settings|, other demand settings are set. Four properties
+% of |NLDemand|.settings concern estimation. The last one,
+% |demand.settings.ces| is used to select CES Demand rather than the default,
+% Unit demand.
+
+demand.settings
+
+%%
+% The estimation method can be set using |demand.settings.estimateMethod|.
+% By default it uses OLS if instruments have not been specified in 
+% |demand.var.instruments|. 
 
 %% RCDemand estimation
 % Estimation of mixed logit is rather similar to nested logit. There are
@@ -77,7 +82,7 @@ demand2.var.market = 'marketid';
 demand2.var.panel = 'productid';
 demand2.var.price = 'p';
 demand2.var.quantity = 'q';
-demand2.var.marketsize = 'constant';
+demand2.var.marketSize = 'constant';
 demand2.var.exog = 'x';
 demand2.var.instruments = 'nprod nprod2 c';
 
@@ -99,7 +104,7 @@ demand2.settings
 % estimation with optimal instruments in the second
 % stage with the |settings.optimalIV| setting.
 
-demand2.settings.drawmethod = 'quadrature';
+demand2.settings.drawMethod = 'quadrature';
 demand2.settings.optimalIV = true;
 result = demand2.estimate()
 
@@ -249,7 +254,7 @@ dt1 = m1.data;
 % estimated values in the other columns. This is useful in testing
 % estimation methods.
 
-results = m1.estimate()
+results = m1.demand.estimate()
 
 %% RCDemand Monte-Carlo
 % Now we will create a slightly more complex market with mixed logit demand. 
@@ -359,7 +364,7 @@ demand.var.market = 'marketid';
 demand.var.panel = 'productid';
 demand.var.price = 'p';
 demand.var.quantity = 'q';
-demand.var.marketsize = 'constant';
+demand.var.marketSize = 'constant';
 demand.var.exog = 'x';
 
 %%

@@ -2,8 +2,7 @@ classdef RCDemand < NLDemand
     % Random Coefficient demand class
     %   Simulation of shares and estimation of parameters beta and sigma.
    
-%     properties (SetAccess = protected, Hidden = true )
-    properties (SetAccess = protected )
+     properties (SetAccess = protected, Hidden = true )
         draws % Random draws (nind, nmkt, k) matrix k = # random params. 
         W
         x2 % nonlinear parameter vector
@@ -267,14 +266,14 @@ classdef RCDemand < NLDemand
         end
         
         function nonlinparams = randdraws(obj)
-            if obj.settings.marketdraws
+            if obj.settings.marketDraws
                 markets = max(obj.marketid);
             else
                 markets = 1;
             end
-            obj.draws = Draws('DrawMethod', obj.settings.drawmethod,...
+            obj.draws = Draws('DrawMethod', obj.settings.drawMethod,...
                 'Markets', markets, 'Individuals', obj.settings.nind,...
-                'Accuracy', obj.settings.quaddraws, ...
+                'Accuracy', obj.settings.accuracy, ...
                 'RandStream', obj.config.randstream);
             if isempty(obj.var.nonlinear)
                 error('Some variable has to be specified as nonlinear');
@@ -321,7 +320,7 @@ classdef RCDemand < NLDemand
                     newmarket.d = obj.d(newmarket.selection, 1);
                 end
                 newmarket.v = [];
-                if obj.settings.marketdraws
+                if obj.settings.marketDraws
                     newmarket.v = obj.draws.draws(:,:,t)'; 
                 else
                     newmarket.v = obj.draws.draws'; 
@@ -333,20 +332,20 @@ classdef RCDemand < NLDemand
               
         function obj = RCDemand(varargin)
             obj = obj@NLDemand(varargin{:});
-            obj.var.setParameters({'nonlinear','nonlinearlogs','nonlineartriangular'});
-            obj.settings.setParameters({'optimalIV','drawmethod',... 
-                'marketdraws','nind','quaddraws','maxiter', 'sigma0'});
+            obj.var.setParameters({'nonlinear'});
+            obj.settings.setParameters({'optimalIV','drawMethod',... 
+                'marketDraws','nind','accuracy','maxiter', 'sigma0'});
             obj.config = SettingsClass({'tolerance','fptolerance1','fptolerance2', ...
                 'restartMaxIterations','restartFval', 'test', 'fpmaxit',...
-                'randstream','hessian','guessdelta','compiled','quietly'});
+                'randstream','hessian','guessDelta','compiled','quietly'});
             
             obj.settings.paneltype = 'lsdv';
 
             obj.settings.optimalIV = false;
-            obj.settings.drawmethod = 'hypercube';
-            obj.settings.marketdraws = false; % Different draws for each market
+            obj.settings.drawMethod = 'hypercube';
+            obj.settings.marketDraws = false; % Different draws for each market
             obj.settings.nind = 100; % number of simulated "indviduals" per market 
-            obj.settings.quaddraws = 10;
+            obj.settings.accuracy = 10;
             obj.settings.maxiter = 100;
             obj.settings.ces = false;
             obj.settings.sigma0 = [];
@@ -358,7 +357,7 @@ classdef RCDemand < NLDemand
             obj.config.restartMaxIterations = 1; % Max # of restarts if fval is high
             obj.config.restartFval =  10^3; % Restart optimal IV estimation if fval >.
             obj.config.randstream = []; % random stream for estimation in parallel 
-            obj.config.guessdelta = true;
+            obj.config.guessDelta = true;
             obj.config.hessian = false;
             obj.config.compiled = true; % Use c++ code
             obj.config.quietly = true;
@@ -378,7 +377,7 @@ classdef RCDemand < NLDemand
                 tolerance = obj.config.fptolerance1;
                 closeFlag = 1;
             end
-            if obj.config.guessdelta && ~isempty(obj.deltaJac)
+            if obj.config.guessDelta && ~isempty(obj.deltaJac)
                 newdelta = log(obj.edelta) + ...
                     obj.deltaJac * (sigma - obj.int.oldsigma); 
                 edelta = exp(newdelta);

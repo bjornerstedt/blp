@@ -219,8 +219,8 @@ m.demand = RCDemand;
 m.demand.settings.ces = true; 
 m.demand.config.compiled = false;
 % m.demand.config.tolerance = 1e-12;
-m.demand.settings.drawmethod = 'quadrature';
-m.demand.config.guessdelta = false;
+m.demand.settings.drawMethod = 'quadrature';
+m.demand.config.guessDelta = false;
 m.demand.config.fpmaxit = 3000; 
 m.demand.var.exog = 'x1 x2';
 m.demand.alpha = 1;
@@ -232,7 +232,7 @@ else
     m.demand.var.nonlinear = {'x2 x1', 'normal'};
 end
 m.demand.settings.nind = 1000;
-%  m.demand.settings.marketdraws = true;
+%  m.demand.settings.marketDraws = true;
 % m.demand.var.instruments = 'nprod nprod2 c';
 % m.demand.settings.optimalIV = true;
 % m.model.gamma = 1;
@@ -262,7 +262,7 @@ display '**********************  Test 10  *************************'
 
 m = SimMarket();
 m.demand = RCDemand;
-m.demand.settings.drawmethod = 'quadrature';
+m.demand.settings.drawMethod = 'quadrature';
 m.demand.alpha = 1;
 m.demand.sigma = [0.2; 1];
 
@@ -275,7 +275,7 @@ m.model.gamma = 1;
 m.model.endog = true;
 m.model.randomProducts = true;
 m.model.markets = 200;
-m.demand.config.guessdelta = false;
+m.demand.config.guessDelta = false;
 m.model.products = 5;
 m.create();
 display(m.model)
@@ -292,7 +292,7 @@ display '**********************  Test 11  *************************'
 
 m = SimMarket();
 m.demand = RCDemand;
-m.demand.settings.drawmethod = 'quadrature';
+m.demand.settings.drawMethod = 'quadrature';
 m.demand.alpha = 1;
 m.demand.sigma = [0.2; .1];
 
@@ -305,7 +305,7 @@ m.model.gamma = 1;
 m.model.endog = true;
 m.model.randomProducts = true;
 m.model.markets = 200;
-m.demand.config.guessdelta = false;
+m.demand.config.guessDelta = false;
 m.model.products = 5;
 m.create();
 display(m.model)

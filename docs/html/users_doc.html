@@ -1,0 +1,866 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>SimMarket 0.3 Users Guide</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-03-04"><meta name="DC.source" content="users_doc.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>SimMarket 0.3 Users Guide</h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Demand estimation</a></li><li><a href="#2">NLDemand estimation</a></li><li><a href="#8">RCDemand estimation</a></li><li><a href="#12">Market class</a></li><li><a href="#19">SimMarket Monte-Carlo Simulation</a></li><li><a href="#28">RCDemand Monte-Carlo</a></li><li><a href="#32">Nested logit Monte-Carlo</a></li></ul></div><h2>Demand estimation<a name="1"></a></h2><p>Demand is estimated using the <tt>NLDemand</tt> and <tt>RCDemand</tt> classes. The classes have methods to estimate demand of the respective type.</p><p>Data used in estimation is contained in a Matlab  <a href="matlab:doc('table')">table</a>  object. Tables in Matlab are very similar to datasets in Stata or data frames in R. They can contain categorical/factor and numerical variables. Reference to variables in the table are by their variable names.</p><p>Demand is estimated using the <tt>NLDemand</tt> and <tt>RCDemand</tt> classes.</p><h2>NLDemand estimation<a name="2"></a></h2><p>We will start by describing estimation of nested logit demand. Although the syntax is a little different than with <i>mergersim</i> in Stata, the required fields are the same. We load data including table <tt>dt1</tt>, and provide this table as an input to the demand constructor:</p><pre class="codeinput">load <span class="string">example_data</span>;
+demand = NLDemand(dt1);
+</pre><p>Here we specify the market and panel id, price, quantity and marketsize (here set to the constant value 1). In addition one can specify a list of exogenous variables to be used in estimation in <tt>demand.var.exog</tt>. A list of variables is specified as a string with variable names separated by spaces.</p><pre class="codeinput">demand.var.market = <span class="string">'marketid'</span>;
+demand.var.panel = <span class="string">'productid'</span>;
+demand.var.price = <span class="string">'p'</span>;
+demand.var.quantity = <span class="string">'q'</span>;
+demand.var.marketsize = <span class="string">'constant'</span>;
+demand.var.exog = <span class="string">'x'</span>;
+</pre><p>There are a number of parameters that can be set in <tt>NLDemand</tt> The most important characteristics are set in <tt>demand.var</tt> and <tt>demand.settings</tt>. In <tt>demand.var</tt>, various variable names in the dataset are specified. One can list the contents of the structure:</p><pre class="codeinput">demand.var
+</pre><pre class="codeoutput">
+ans = 
+
+  SettingsClass with properties:
+
+           exog: 'x'
+          panel: 'productid'
+       quantity: 'q'
+         market: 'marketid'
+          price: 'p'
+         depvar: []
+     marketsize: 'constant'
+          endog: []
+    instruments: []
+          nests: []
+
+</pre><p>In <tt>demand.settings</tt>, other demand settings are set. Four properties of <tt>NLDemand</tt>.settings concern estimation. The last one, <tt>demand.settings.ces</tt> is used to select CES Demand rather than the default, Unit demand.</p><pre class="codeinput">demand.settings
+</pre><pre class="codeoutput">
+ans = 
+
+  SettingsClass with properties:
+
+         paneltype: 'lsdv'
+               ces: 0
+            robust: 1
+    estimateMethod: '2sls'
+            nocons: 0
+
+</pre><p>To estimate demand, the <tt>estimate()</tt> method is used. The estimation method used will depend on what has been specified in demand.var and in demand.settings.</p><pre class="codeinput">result = demand.estimate()
+</pre><pre class="codeoutput">
+result = 
+
+                 Coef       Std_err     t_value
+                _______    _________    _______
+
+    p           -1.0034     0.004304    -233.14
+    x            0.9971    0.0044698     223.08
+    constant    0.11787     0.023714     4.9705
+
+</pre><p>The method returns a table with the estimate, as well as putting it and various other information in a demand.results structure.</p><h2>RCDemand estimation<a name="8"></a></h2><p>Estimation of mixed logit is rather similar to nested logit. There are more parameters that one can specify, however. In the following example, we use count instruments <tt>nprod</tt> and <tt>nprod2</tt> and costs <tt>c</tt> in the data table <tt>dt2</tt> to identify the endogenous price variable.</p><pre class="codeinput">dt2.firm2 = dt2.firm;
+dt2.firm2(dt2.firm2 == 2 ) = 1;
+
+demand2 = RCDemand(dt2);
+
+demand2.var.market = <span class="string">'marketid'</span>;
+demand2.var.panel = <span class="string">'productid'</span>;
+demand2.var.price = <span class="string">'p'</span>;
+demand2.var.quantity = <span class="string">'q'</span>;
+demand2.var.marketsize = <span class="string">'constant'</span>;
+demand2.var.exog = <span class="string">'x'</span>;
+demand2.var.instruments = <span class="string">'nprod nprod2 c'</span>;
+
+demand2.var.nonlinear = <span class="string">'x'</span>;
+</pre><p>To estimate, the <tt>estimate()</tt> method is invoked:</p><pre class="codeinput">result = demand2.estimate()
+</pre><pre class="codeoutput">
+                                Norm of      First-order 
+ Iteration        f(x)          step          optimality   CG-iterations
+     0           0.243624                         0.499                
+     1          0.0510187       0.656459          0.133           1
+     2          0.0188657       0.388518          0.047           1
+     3         0.00589868       0.410761         0.0184           1
+     4         0.00474135       0.217861         0.0121           1
+     5         0.00435341      0.0609431       0.000934           1
+     6         0.00435078     0.00559381       8.95e-06           1
+     7         0.00435078    5.46056e-05       8.89e-10           1
+
+Optimization completed: The first-order optimality measure, 8.890151e-10, 
+is less than options.TolFun = 1.000000e-09, and no negative/zero curvature is
+detected in the trust-region model.
+
+Optimization Metric                                       Options
+relative first-order optimality =   8.89e-10     TolFun =   1e-09 (selected)
+
+
+result = 
+
+                   Coef       Std_err      t_value  
+                __________    ________    __________
+
+    p             -0.29862    0.054566       -5.4727
+    x              0.84248      1.7984       0.46845
+    constant    -0.0034846      2.2763    -0.0015308
+    rc_x           0.57445      5.8547      0.098117
+
+</pre><p>The demand2 class <tt>RCDemand</tt> has more settings than <tt>NLDemand</tt></p><pre class="codeinput">demand2.settings
+</pre><pre class="codeoutput">
+ans = 
+
+  SettingsClass with properties:
+
+            sigma0: []
+         optimalIV: 0
+        drawmethod: 'hypercube'
+       marketdraws: 0
+         quaddraws: 10
+              nind: 100
+         paneltype: 'lsdv'
+               ces: 0
+            robust: 1
+           maxiter: 100
+    estimateMethod: '2sls'
+            nocons: 0
+
+</pre><p>We can for example estimate using quadrature, and specify a two stage estimation with optimal instruments in the second stage with the <tt>settings.optimalIV</tt> setting.</p><pre class="codeinput">demand2.settings.drawmethod = <span class="string">'quadrature'</span>;
+demand2.settings.optimalIV = true;
+result = demand2.estimate()
+</pre><pre class="codeoutput">
+                                Norm of      First-order 
+ Iteration        f(x)          step          optimality   CG-iterations
+     0         0.00336059                       0.00309                
+     1         0.00330299      0.0339148       0.000455           1
+     2         0.00330136     0.00698911       1.68e-05           1
+     3         0.00330136    0.000277869       2.53e-08           1
+     4         0.00330136    4.20458e-07       1.89e-12           1
+
+Optimization completed: The first-order optimality measure, 1.891376e-12, 
+is less than options.TolFun = 1.000000e-09, and no negative/zero curvature is
+detected in the trust-region model.
+
+Optimization Metric                                       Options
+relative first-order optimality =   1.89e-12     TolFun =   1e-09 (selected)
+
+
+                                Norm of      First-order 
+ Iteration        f(x)          step          optimality   CG-iterations
+     0            104.411                           558                
+     1            22.5464       0.495138            306           1
+     2           0.033093       0.143695           11.4           1
+     3        1.36796e-07     0.00580431         0.0231           1
+     4        6.27989e-17    1.18331e-05       9.98e-08           1
+     5       -3.22983e-16    5.10992e-11       1.04e-12           1
+
+Optimization completed: The first-order optimality measure, 1.037392e-12, 
+is less than options.TolFun = 1.000000e-09, and no negative/zero curvature is
+detected in the trust-region model.
+
+Optimization Metric                                       Options
+relative first-order optimality =   1.04e-12     TolFun =   1e-09 (selected)
+
+
+result = 
+
+                  Coef       Std_err     t_value
+                ________    _________    _______
+
+    p           -0.30316    0.0094996    -31.913
+    x             1.0363     0.015781     65.672
+    constant    -0.17773     0.077064    -2.3062
+    rc_x         0.96126     0.031994     30.045
+
+</pre><h2>Market class<a name="12"></a></h2><p>The market class is used to calculate equilibrium prices and quantities, based on market structure. The equilibrium depends on the estimated parameters of the demand model specified.</p><pre class="codeinput">market = Market(demand2);
+market.var.firm = <span class="string">'firm'</span>;
+</pre><p>To find the marginal costs that correspond with the estimated demand and prices and quantities, we use the function <tt>findCosts()</tt>. We can display summary information about prices and calculated costs with the <tt>summary()</tt> function. The function allows calculation of average prices and costs for a selectio.</p><pre class="codeinput">market.findCosts();
+market.summary()
+market.summary(<span class="string">'Selection'</span>, dt2.marketid == 1)
+</pre><pre class="codeoutput">
+ans = 
+
+    Firm    Price     Costs     Lerner     MarketSh
+    ____    ______    ______    _______    ________
+
+    1       8.2435    3.9848    0.51865    0.38343 
+    2       8.3304    4.0176    0.51871    0.42748 
+    3       7.9595     3.917    0.51297    0.27117 
+
+
+ans = 
+
+    Firm    Price     Costs     Lerner     MarketSh
+    ____    ______    ______    _______    ________
+
+    1       8.2364    4.5184    0.45141    0.25561 
+    2       7.8063    4.2674    0.45334    0.43798 
+    3       8.0221    4.5205    0.43649    0.30641 
+
+</pre><p>Having determined costs, one can use the market class (with its associated demand) to study variations in ownership, costs etc. The simplest way to do this is to make a copy of the <tt>Market</tt> object <tt>market</tt> and compute a new equilibrium with the copy, <tt>market2</tt>. Before calculating the equilibrium, we set the name of the variable specifying the new ownership.</p><pre class="codeinput">market2 = copy(market);
+market2.var.firm = <span class="string">'firm2'</span>;
+market2.equilibrium();
+</pre><pre class="codeoutput">Simulation converged for 200 of 200 markets
+</pre><p>The effects of the change in the market conditions in the two settings can then be compared using <tt>market.summary()</tt> for all markets or for a selection.</p><pre class="codeinput">mergerResult = summary(market, market2)
+mergerResult = summary(market, market2, <span class="string">'Selection'</span>, dt2.marketid == 1)
+</pre><pre class="codeoutput">
+mergerResult = 
+
+    Firm    Costs     Price1    Price2     PriceCh 
+    ____    ______    ______    ______    _________
+
+    1       3.9848    8.2435    8.9121     0.083799
+    2       4.0176    8.3304    8.9271     0.072727
+    3        3.917    7.9595    7.9763    0.0021458
+
+
+mergerResult = 
+
+    Firm    Costs     Price1    Price2     PriceCh  
+    ____    ______    ______    ______    __________
+
+    1       4.5184    8.2364    8.5323      0.035929
+    2       4.2674    7.8063    7.9809      0.022357
+    3       4.5205    8.0221    8.0255    0.00042273
+
+</pre><p>Cost calculation and equilibrium simulation can be performed on a selection rather than the whole dataset. To do this, a selection vector is provided. In this example we restrict our attention to market 1 by specifying <tt>findCosts(dt2.marketid == 1)</tt>. As costs have not been calculated for other markets, both <tt>market2.equilibrium()</tt> and <tt>summary</tt> calculate only for this market.</p><pre class="codeinput">market = Market(demand2);
+market.var.firm = <span class="string">'firm'</span>;
+market.findCosts(dt2.marketid == 1);
+market2 = copy(market);
+market2.firm(market2.firm == 2 ) = 1;
+market2.equilibrium();
+mergerResult2 = summary(market, market2)
+</pre><pre class="codeoutput">Simulation converged for 1 of 1 markets
+
+mergerResult2 = 
+
+    Firm    Costs     Price1    Price2    PriceCh
+    ____    ______    ______    ______    _______
+
+    1       4.5184    8.2364    8.2364    0      
+    2       4.2674    7.8063    7.8063    0      
+    3       4.5205    8.0221    8.0221    0      
+
+</pre><p>One can also explicitly restrict equilibrium calculation to some markets. In this case calculations will only be on these markets, provided that costs have been calculated for them. Comparisons can be restricted to a subset of markets by providing the restriction with the <tt>'Selection'</tt> option.</p><pre class="language-matlab">market2.equilibrium(dt2.marketid == 1);
+mergerResult2 = summary(market, market2, <span class="string">'Selection'</span>, dt2.marketid == 1)
+</pre><p>The <tt>Market</tt> class has a number of settings. Similarly to the demand classes, estimation is possible (see section below).</p><h2>SimMarket Monte-Carlo Simulation<a name="19"></a></h2><p>To create a simulated market, the <tt>SimMarket</tt> class is used. It has methods to create price and quantity variables: # from a random price using a specified demand # from a set of products that vary exogenously over time</p><p>In both cases instruments are created.</p><p>The purpose of the <tt>SimMarket</tt> class is to # create a dataset based on a demand model and to # facilitate estimation by creating a new demand object associated with the data.</p><pre class="codeinput">m1 = SimMarket()
+</pre><pre class="codeoutput">
+m1 = 
+
+  SimMarket with properties:
+
+     model: [1x1 SettingsClass]
+      data: []
+    demand: []
+    market: []
+
+</pre><p>The <tt>SimMarket</tt> object <tt>m1</tt> contains a structure of settings <tt>m1.model</tt>. The dataset created by <tt>SimMarket</tt> is stored in <tt>m.data</tt>.</p><p>A demand model can be created by using one of the classes <tt>NLDemand</tt> or <tt>RCDemand</tt>. The demand object is created as follows:</p><pre class="codeinput">demand = NLDemand();
+demand.alpha = 1;
+</pre><p>This command creates an unnested logit demand object, as the only property set is demand.alpha.</p><p>To create a simulated dataset with 100 observations based on the demand object, a <tt>SimMarket</tt> object is created, and the demand object is attached</p><pre class="codeinput">m1.demand = demand;
+</pre><p>To create the dataset the method <tt>create()</tt> is used. Invoking this method, changes the <tt>SimMarket</tt> object we have created.</p><pre class="codeinput">sresults = m1.create()
+</pre><pre class="codeoutput">Average sum shares
+    0.0851
+
+
+sresults = 
+
+      p          q    
+    ______    ________
+
+     4.981    0.021574
+    4.9833    0.017881
+    5.0141    0.013232
+    5.0925    0.018524
+    4.9318    0.013846
+
+</pre><p>The object <tt>m</tt> now contains a dataset <tt>m1.data</tt>. By default <tt>m1.create()</tt> ceates a market with 5 products and 100 markets, in long format as a Matlab table. The first 10 observations of the dataset are shown below. It contains a market and product identifiers, a constant, costs <tt>c</tt>, a demand characteristic <tt>x</tt> and a variable <tt>d</tt> containing both observable and unobservable characteristics. By default, the disturbances containing both an individual and a product specific shock, the latter uncorrelated with observables (random effects).</p><p>Using the demand specification in <tt>m1.demand</tt>, quantities are calculated based on prices and product characteristics <tt>d</tt>. The total share of the product including the outside good is shown below, as are the average prices and quantities by product. (By default market size is set to 1 in all markets).</p><pre class="codeinput">m1.data(1:10,:)
+</pre><pre class="codeoutput">
+ans = 
+
+    marketid    productid      p          x        constant       d          c           q     
+    ________    _________    ______    ________    ________    ________    ______    __________
+
+    1           1            5.9716    -0.13407    1           -0.16969    4.6617     0.0020445
+    1           2            4.6276     0.24852    1            0.32246     5.634      0.012824
+    1           3             5.249    -0.21179    1           -0.24246    5.3666     0.0039154
+    1           4            3.1195    -0.37056    1           -0.34794    4.3518      0.029635
+    1           5            4.5613     -1.7296    1            -1.8197    4.8641     0.0016087
+    2           1            5.9268      1.0363    1            0.99302         2     0.0067441
+    2           2            3.6921     0.51072    1            0.57001    4.2157      0.041282
+    2           3            4.5167    -0.82524    1           -0.89918    4.1279     0.0041647
+    2           4            5.3528     -1.6326    1             -1.634    3.9786    0.00086564
+    2           5            3.8161    -0.60054    1           -0.71096    4.8591      0.010129
+
+</pre><p>Once <tt>m1.create()</tt> has been run, a data table has been created for the market that can be used in estimation.</p><pre class="codeinput">dt1 = m1.data;
+</pre><p><tt>SimMarket</tt> has an <tt>estimate()</tt> method that can be used to estimate demand based on the data created. It estimates the demand based on a copy of the demand object that has specified.</p><p>Demand can be estimated using the estimate() method. With the standard configuration used here, this gives an OLS panel estimate, using fixed effects. The results shown have true values in the first column and the estimated values in the other columns. This is useful in testing estimation methods.</p><pre class="codeinput">results = m1.demand.estimate()
+</pre><pre class="codeoutput">
+results = 
+
+                True_val     Coef       Std_err     t_value
+                ________    _______    _________    _______
+
+    p           -1          -1.0034     0.004304    -233.14
+    x            1           0.9971    0.0044698     223.08
+    constant     0          0.11787     0.023714     4.9705
+
+</pre><h2>RCDemand Monte-Carlo<a name="28"></a></h2><p>Now we will create a slightly more complex market with mixed logit demand. A minimal definition of a <tt>RCDemand</tt> object is as follows:</p><pre class="codeinput">demand = RCDemand();
+demand.alpha = .3;
+demand.sigma = 1;
+demand.var.nonlinear = <span class="string">'x'</span>;
+</pre><p>The <tt>SimMarket</tt> class has a set of model settings that can be used to customize the simulated market. All model settings have default values:</p><pre class="codeinput">m2 = SimMarket();
+m2.demand = demand;
+display(m2.model)
+</pre><pre class="codeoutput">
+ans = 
+
+  SettingsClass with properties:
+
+         varepsilon: 0
+              w_vcv: 1
+               firm: []
+                  c: 4
+          endog_vcv: 0.1000
+          prob_prod: 0.8000
+              gamma: 0
+                  w: 0
+    pricesFromCosts: 1
+                 xi: 0.1000
+            epsilon: 0.1000
+               beta: [1 0]
+            markets: 100
+              x_vcv: [1 1]
+     randomProducts: 0
+           products: 5
+                  x: [5 0]
+              types: []
+              endog: 0
+                eta: 1
+
+</pre><p>In contrast with the previous example, here we let prices be endogenous. Instead of prices being exogenously random, <tt>create()</tt> calculates equilibrium values depending on market conditions in each market. Price variability can comes from cost shifters and/or the number of products being set to be exogenously random. Prices and quantities will depend on the products in the market as well as the ownership structure. Here we set ownership of the five products explicitly with the <tt>m2.model.firm</tt> setting. Note that as <tt>m2.model.randomProducts = true</tt> is specified, not all five products will actually exist in all markets.</p><pre class="codeinput">m2.model.endog = true;
+m2.model.randomProducts = true;
+m2.model.firm = [1,1,2,2,3];
+m2.model.markets = 200;
+m2.create();
+</pre><pre class="codeoutput">Simulation converged for 200 of 200 markets
+</pre><p>The data table created is as above stored in <tt>m2.data</tt>.</p><pre class="codeinput">dt2 = m2.data;
+</pre><h2>Nested logit Monte-Carlo<a name="32"></a></h2><p>A minimal nested logit demand specification with the nesting variable <tt>type</tt> is created as follows: the demand parameters alpha and sigma are set, and the nest characteristic is associated with the data variable <tt>type</tt>.</p><pre class="codeinput">demand = NLDemand();
+demand.alpha = 0.5;
+demand.sigma = 0.5;
+demand.var.nests = <span class="string">'type'</span>;
+</pre><p>The market created can be specified by modifying the model characteristics. To allow for nests, we can add a categorical variable <tt>type</tt> having 2 distinct values by specifying:</p><pre class="codeinput">m3 = SimMarket();
+m3.demand = demand;
+m3.model.types = 2;
+</pre><p>One can also specify <tt>market.settings.conduct</tt> - the degree to which profits of other firms are taken in to consideration in profit maximization, by creating the Market and setting the <tt>settings.conduct</tt> parameter:</p><pre class="codeinput">m3.market = Market;
+m3.market.settings.conduct = 0.5;
+</pre><p>Prices in <tt>SimMarket</tt> are by default determined by equilibrium conditions, with variation coming from changes in costs and/or the number of products in the market.</p><p>Alternatively, one can let prices be set randomly, with or without correlation with the error term. In this setup, quantities are calculated based on prices that are randomly generated. With endogeneity, a set of valid instruments inst1-inst6 are also generated.</p><pre class="codeinput"><span class="comment">%   m3.model.pricesFromCosts = false;</span>
+</pre><p>By default SimMarket assumes single product firms. We can change this mapping by setting the <tt>model.firms</tt> property. Here we assume that the five products in the model have two owners.</p><pre class="codeinput">m3.model.firm = [1,1,1,2,2];
+
+m3.model.endog = true;
+m3.model.randomProducts = true;
+</pre><p>We add a cost shifter <tt>w</tt> by specifying the <tt>model.gamma</tt> parameter.</p><pre class="codeinput">m3.model.gamma = 1;
+m3.create();
+dt3 = m3.data;
+</pre><pre class="codeoutput">Simulation converged for 100 of 100 markets
+</pre><p>As before, we can estimate the model by first creating a demand object and then specifying a set of parameters. Here we wait with associating the dataset dt3 with the demand, as we want to add a set of instruments to the dataset first.</p><pre class="codeinput">demand = NLDemand;
+
+demand.var.market = <span class="string">'marketid'</span>;
+demand.var.panel = <span class="string">'productid'</span>;
+demand.var.price = <span class="string">'p'</span>;
+demand.var.quantity = <span class="string">'q'</span>;
+demand.var.marketsize = <span class="string">'constant'</span>;
+demand.var.exog = <span class="string">'x'</span>;
+</pre><p>We can create an array of count instruments by using the utility method <tt>Estimate.countInstruments()</tt>. It creates count instruments by market as specified in the 'marketid' column, here creating counts by market and all combinations of firms and type. Note that a column of a Matlab table can be an array instead of a column vector. Here the count instruments are all put in the column <tt>dt3.inst</tt> of the</p><pre class="codeinput">dt3.inst = Estimate.countInstruments(dt3, <span class="string">'marketid'</span>, {<span class="string">'firm'</span>, <span class="string">'type'</span>});
+demand.var.instruments = <span class="string">'inst'</span>;
+demand.data = dt3;
+</pre><p>To estimate this model, the nesting variable <tt>type</tt> has to be specified. The same count instruments as above are used. Note that the 2SLS FE panel estimate will have price and log group shares as endogenous variables.</p><pre class="codeinput">demand.var.nests = <span class="string">'type'</span>;
+demand.settings.paneltype = <span class="string">'lsdv'</span>;
+result = demand.estimate()
+</pre><pre class="codeoutput">
+result = 
+
+                  Coef       Std_err     t_value
+                ________    _________    _______
+
+    p           -0.49494     0.041372    -11.963
+    lsjg         0.50943    0.0085056     59.893
+    x            0.98931     0.013295     74.414
+    constant    0.080747      0.25356    0.31845
+
+</pre><p>The cost equation can be estimated. The default intercept in generated data is 4 and slope (the <tt>gamma</tt> variable) has been set to 1 in the creation of the dataset.</p><pre class="codeinput">market = Market(demand);
+market.var.firm = <span class="string">'firm'</span>;
+market.settings.conduct = 0.5;
+
+market.findCosts();
+market.y = market.c;
+market.var.exog = <span class="string">'w'</span>;
+market.var.panel = <span class="string">'productid'</span>;
+costEstimate = market.estimate()
+</pre><pre class="codeoutput">
+costEstimate = 
+
+          Coef      Std_err     t_value
+         _______    ________    _______
+
+    w    0.98801    0.052174    18.937 
+
+</pre><p>The datasets that have been created can be saved for later use, here to the file <tt>example_data.mat</tt>:</p><pre class="codeinput">save <span class="string">example_data</span> <span class="string">dt1</span> <span class="string">dt2</span> <span class="string">dt3</span>;
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% SimMarket 0.3 Users Guide
+
+%% Demand estimation
+% Demand is estimated using the |NLDemand| and
+% |RCDemand| classes. The classes have methods to estimate demand of
+% the respective type. 
+%
+% Data used in estimation is contained in a Matlab  <matlab:doc('table') table>  object. Tables
+% in Matlab are very similar to datasets in Stata or data frames in R. They
+% can contain categorical/factor and numerical variables. Reference to
+% variables in the table are by their variable names. 
+%
+% Demand is estimated using the |NLDemand| and |RCDemand|
+% classes.
+
+%% NLDemand estimation
+% We will start by describing estimation of nested logit demand. Although the
+% syntax is a little different than with _mergersim_ in Stata, the required fields are
+% the same. We load data including table |dt1|, and provide this table as an input to
+% the demand constructor:
+
+load example_data;
+demand = NLDemand(dt1);
+
+%%
+% Here we specify the market and panel id, price, quantity and marketsize
+% (here set to the constant value 1). In addition one can specify a list of
+% exogenous variables to be used in estimation in |demand.var.exog|. A list
+% of variables is specified as a string with variable names separated by
+% spaces.
+
+demand.var.market = 'marketid';
+demand.var.panel = 'productid';
+demand.var.price = 'p';
+demand.var.quantity = 'q';
+demand.var.marketsize = 'constant';
+demand.var.exog = 'x';
+
+%%
+% There are a number of parameters that can be set in |NLDemand|
+% The most important characteristics are set in |demand.var| and |demand.settings|. In
+% |demand.var|, various variable names in the dataset are specified. One
+% can list the contents of the structure:
+
+demand.var
+
+%%
+% In |demand.settings|, other demand settings are set. Four properties
+% of |NLDemand|.settings concern estimation. The last one,
+% |demand.settings.ces| is used to select CES Demand rather than the default,
+% Unit demand.
+
+demand.settings
+
+%%
+% To estimate demand, the |estimate()| method is used. The estimation method 
+% used will depend on what has been specified in demand.var and in
+% demand.settings. 
+
+result = demand.estimate()
+
+%%
+% The method returns a table with the estimate, as well as putting it and
+% various other information in a demand.results structure.
+
+%% RCDemand estimation
+% Estimation of mixed logit is rather similar to nested logit. There are
+% more parameters that one can specify, however. In the following example,
+% we use count instruments |nprod| and |nprod2| and costs |c| in the data 
+% table |dt2| to identify the endogenous price variable.
+dt2.firm2 = dt2.firm;
+dt2.firm2(dt2.firm2 == 2 ) = 1;
+
+demand2 = RCDemand(dt2);
+
+demand2.var.market = 'marketid';
+demand2.var.panel = 'productid';
+demand2.var.price = 'p';
+demand2.var.quantity = 'q';
+demand2.var.marketsize = 'constant';
+demand2.var.exog = 'x';
+demand2.var.instruments = 'nprod nprod2 c';
+
+demand2.var.nonlinear = 'x';
+
+%%
+% To estimate, the |estimate()| method is invoked:
+
+result = demand2.estimate()
+
+%%
+% The demand2 class |RCDemand| has more settings than
+% |NLDemand|
+
+demand2.settings
+
+%% 
+% We can for example estimate using quadrature, and specify a two stage 
+% estimation with optimal instruments in the second
+% stage with the |settings.optimalIV| setting.
+
+demand2.settings.drawmethod = 'quadrature';
+demand2.settings.optimalIV = true;
+result = demand2.estimate()
+
+%% Market class
+% The market class is used to calculate equilibrium prices and quantities,
+% based on market structure. The equilibrium depends on the estimated
+% parameters of the demand model specified.
+
+market = Market(demand2);
+market.var.firm = 'firm';
+
+%%
+% To find the marginal costs that correspond with the estimated demand and
+% prices and quantities, we use the function |findCosts()|. We can display
+% summary information about prices and calculated costs with the
+% |summary()| function. The function allows calculation of average prices
+% and costs for a selectio.
+
+market.findCosts();
+market.summary()
+market.summary('Selection', dt2.marketid == 1)
+
+%%
+% Having determined costs, one can use the market class (with its
+% associated demand) to study variations in ownership, costs etc. The
+% simplest way to do this is to make a copy of the |Market| object |market| and
+% compute a new equilibrium with the copy, |market2|. Before calculating
+% the equilibrium, we set the name of the variable specifying the new
+% ownership.
+
+market2 = copy(market);
+market2.var.firm = 'firm2';
+market2.equilibrium();
+
+%%
+% The effects of the change in
+% the market conditions in the two settings can then be compared using 
+% |market.summary()| for all markets or for a selection.
+mergerResult = summary(market, market2)
+mergerResult = summary(market, market2, 'Selection', dt2.marketid == 1)
+
+%%
+% Cost calculation and equilibrium simulation can be performed on a
+% selection rather than the whole dataset. To do this, a selection vector
+% is provided. In this example we restrict our attention to market 1 by
+% specifying |findCosts(dt2.marketid == 1)|. As costs have not been
+% calculated for other markets, both |market2.equilibrium()| and |summary|
+% calculate only for this market. 
+
+market = Market(demand2);
+market.var.firm = 'firm';
+market.findCosts(dt2.marketid == 1);
+market2 = copy(market);
+market2.firm(market2.firm == 2 ) = 1;
+market2.equilibrium();
+mergerResult2 = summary(market, market2)
+
+%%
+% One can also explicitly restrict 
+% equilibrium calculation to some markets. In this case calculations will
+% only be on these markets, provided that costs have been calculated for
+% them. Comparisons can be restricted to a subset of markets by providing
+% the restriction with the |'Selection'| option.
+%
+%   market2.equilibrium(dt2.marketid == 1);
+%   mergerResult2 = summary(market, market2, 'Selection', dt2.marketid == 1)
+
+%%
+% The |Market| class has a number of settings. Similarly to the demand
+% classes, estimation is possible (see section below). 
+
+%% SimMarket Monte-Carlo Simulation
+% To create a simulated market, the |SimMarket| class is used. It has methods
+% to create price and quantity variables:
+% # from a random price using a specified demand
+% # from a set of products that vary exogenously over time
+% 
+% In both cases instruments are created.
+% 
+% The purpose of the |SimMarket| class is to 
+% # create a dataset based on a demand model and to 
+% # facilitate estimation by creating a new demand object associated with the data. 
+
+m1 = SimMarket()
+
+%%
+% The |SimMarket| object |m1| contains a structure of settings |m1.model|. 
+% The dataset created by |SimMarket| is stored in |m.data|.
+
+%% 
+% A demand model can be created by using one of the classes
+% |NLDemand| or |RCDemand|. The demand object is created as
+% follows:
+
+demand = NLDemand();
+demand.alpha = 1;
+
+%%
+% This command creates an unnested logit demand object, as the only
+% property set is demand.alpha.
+%
+% To create a simulated dataset with 100 observations based on the demand
+% object, a |SimMarket| object is created, and the demand object is attached
+
+m1.demand = demand;
+
+%%
+% To create the dataset the method |create()| is used. Invoking
+% this method, changes the |SimMarket| object we have created. 
+
+sresults = m1.create()
+
+%%
+% The object |m| now contains a dataset |m1.data|.
+% By default |m1.create()| ceates a market with 5 products and 100 markets, in long 
+% format as a Matlab table. 
+% The first 10 observations of the dataset are shown below. It contains a 
+% market and product identifiers, a constant, costs |c|, a demand characteristic |x| and
+% a variable |d| containing both observable and unobservable characteristics. By
+% default, the disturbances containing both an individual and a product
+% specific shock, the latter uncorrelated with observables (random
+% effects).
+
+%%
+% Using the demand specification in |m1.demand|, quantities are calculated 
+% based on prices and product characteristics |d|. The total
+% share of the product including the outside good is shown below, as are
+% the average prices and quantities by product. (By default market size is
+% set to 1 in all markets).
+
+m1.data(1:10,:)
+
+%%
+% Once |m1.create()| has been run, a data table has been created for the
+% market that can be used in estimation.
+
+dt1 = m1.data;
+
+%%
+% |SimMarket| has an |estimate()| method that can be used to estimate
+% demand based on the data created. It estimates the demand based on a copy
+% of the demand object that has specified. 
+%
+% Demand can be estimated using the estimate() method. With the standard
+% configuration used here, this gives an OLS panel estimate, using fixed
+% effects. The results shown have true values in the first column and the
+% estimated values in the other columns. This is useful in testing
+% estimation methods.
+
+results = m1.demand.estimate()
+
+%% RCDemand Monte-Carlo
+% Now we will create a slightly more complex market with mixed logit demand. 
+% A minimal definition of a |RCDemand| object is as follows:
+
+demand = RCDemand();
+demand.alpha = .3;
+demand.sigma = 1;
+demand.var.nonlinear = 'x';
+
+%% 
+% The |SimMarket| class has a set of model settings that can be used to
+% customize the simulated market. All model settings have default values:
+
+m2 = SimMarket();
+m2.demand = demand;
+display(m2.model)
+
+%% 
+% In contrast with the previous example, here we let prices be endogenous. 
+% Instead of prices being exogenously random, |create()| calculates 
+% equilibrium values depending on market conditions in each
+% market. Price variability can comes from cost shifters and/or the number of products being set to be 
+% exogenously random. Prices and quantities will depend on the products in
+% the market as well as the ownership structure. Here we set ownership of
+% the five products explicitly with the |m2.model.firm| setting. Note that
+% as |m2.model.randomProducts = true| is specified, not all five products
+% will actually exist in all markets.
+
+m2.model.endog = true;
+m2.model.randomProducts = true;
+m2.model.firm = [1,1,2,2,3];
+m2.model.markets = 200;
+m2.create();
+
+%%
+% The data table created is as above stored in |m2.data|. 
+
+dt2 = m2.data;
+
+%% Nested logit Monte-Carlo
+% A minimal nested logit demand specification with the nesting variable
+% |type| is created as follows: the demand parameters alpha and sigma are
+% set, and the nest characteristic is associated with the data variable
+% |type|.
+
+demand = NLDemand();
+demand.alpha = 0.5;
+demand.sigma = 0.5;
+demand.var.nests = 'type';
+
+%%
+% The market created can be specified by modifying the model characteristics. 
+% To allow for nests, we can add a categorical variable |type| 
+% having 2 distinct values by specifying:
+
+m3 = SimMarket();
+m3.demand = demand;
+m3.model.types = 2;
+
+
+%%
+% One can also specify |market.settings.conduct| - the degree to which 
+% profits of other firms are taken in to consideration in profit
+% maximization, by creating the Market and setting the |settings.conduct|
+% parameter:
+
+m3.market = Market;
+m3.market.settings.conduct = 0.5;
+
+%%
+% Prices in |SimMarket| are by default determined by
+% equilibrium conditions, with variation coming from changes in costs
+% and/or the number of products in the market. 
+%
+% Alternatively, one can let prices be set randomly, with or without
+% correlation with the error term. In this setup, quantities are calculated
+% based on prices that are randomly generated. With endogeneity, a set of
+% valid instruments inst1-inst6 are also generated.
+
+%   m3.model.pricesFromCosts = false; 
+
+%%
+% By default SimMarket assumes single product firms. We can change this mapping
+% by setting the |model.firms| property. Here we assume that the five
+% products in the model have two owners. 
+
+m3.model.firm = [1,1,1,2,2];
+
+m3.model.endog = true;
+m3.model.randomProducts = true;
+
+%%
+% We add a cost shifter |w| by specifying the |model.gamma| parameter.
+m3.model.gamma = 1;
+m3.create();
+dt3 = m3.data;
+
+%%
+% As before, we can estimate the model by first creating a demand object and
+% then specifying a set of parameters. Here we wait with associating the
+% dataset dt3 with the demand, as we want to add a set of instruments to
+% the dataset first.
+demand = NLDemand;
+
+demand.var.market = 'marketid';
+demand.var.panel = 'productid';
+demand.var.price = 'p';
+demand.var.quantity = 'q';
+demand.var.marketsize = 'constant';
+demand.var.exog = 'x';
+
+%%
+% We can create an array of count instruments by using the utility method
+% |Estimate.countInstruments()|. It creates count instruments by market as
+% specified in the 'marketid' column, here creating counts by market and
+% all combinations of firms and type. Note that a column of a Matlab table
+% can be an array instead of a column vector. Here the count instruments
+% are all put in the column |dt3.inst| of the
+dt3.inst = Estimate.countInstruments(dt3, 'marketid', {'firm', 'type'});
+demand.var.instruments = 'inst';
+demand.data = dt3;
+%%
+% To estimate this model, the nesting variable |type| has to be specified.
+% The same count instruments as above are used. Note that the 2SLS FE panel
+% estimate will have price and log group shares as endogenous variables.
+
+demand.var.nests = 'type';
+demand.settings.paneltype = 'lsdv';
+result = demand.estimate()
+
+%% 
+% The cost equation can be estimated. The default intercept in generated data is 4 and slope
+% (the |gamma| variable) has been set to 1 in the creation of the dataset.
+
+market = Market(demand);
+market.var.firm = 'firm';
+market.settings.conduct = 0.5;
+
+market.findCosts();
+market.y = market.c;
+market.var.exog = 'w';
+market.var.panel = 'productid';
+costEstimate = market.estimate()
+
+%%
+% The datasets that have been created can be saved for later use, here to 
+% the file |example_data.mat|:
+
+save example_data dt1 dt2 dt3;
+
+##### SOURCE END #####
+--></body></html>

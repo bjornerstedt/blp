@@ -5,9 +5,9 @@ classdef NLDemand < Estimate
         alpha
         sigma
         d % Utility without the price effect 
-        marketid % Protected?
     end
     properties (SetAccess = protected, Hidden = true )
+        marketid % Protected?
         nestCount = 0
         nest
         share
@@ -295,7 +295,7 @@ classdef NLDemand < Estimate
         
         function obj = NLDemand(varargin)
             obj = obj@Estimate(varargin{:});
-            obj.var.setParameters({'quantity','price','nests','marketsize'});
+            obj.var.setParameters({'quantity','price','nests','marketSize'});
             obj.settings.setParameters({'ces'});
             
             obj.settings.paneltype = 'lsdv';
@@ -365,11 +365,11 @@ classdef NLDemand < Estimate
             else
                 Xorig = obj.data{:, obj.var.price};
             end
-            if isempty(obj.var.marketsize) || isempty(obj.var.exog)
-                error(['Demand.var.exog and marketsize', ...
+            if isempty(obj.var.marketSize) || isempty(obj.var.exog)
+                error(['Demand.var.exog and marketSize', ...
                     ' must be specified in model']);
             end
-            obj.ms = obj.data{: , obj.var.marketsize};
+            obj.ms = obj.data{: , obj.var.marketSize};
             % quantity is empty for simulated market
             if ~isempty(obj.var.quantity) && obj.isvar(obj.var.quantity, obj.data)
                 obj.share = obj.generateShares();

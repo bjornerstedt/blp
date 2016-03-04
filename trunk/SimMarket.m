@@ -96,7 +96,7 @@ classdef SimMarket < matlab.mixin.Copyable
             % Simulation of dataset
             obj.demand.var.market = 'marketid';
             obj.demand.var.panel = 'productid';
-            varNames = {'price', 'quantity', 'exog', 'marketsize'};
+            varNames = {'price', 'quantity', 'exog', 'marketSize'};
             varValues = {'p', 'q', 'x', 'constant'};
             for i = 1:length(varNames)
                 if isempty(obj.demand.var.(varNames{i}))
@@ -237,12 +237,8 @@ classdef SimMarket < matlab.mixin.Copyable
             obj.simDemand.data = obj.data;
         end
         
-        function mr = simulateDemand(obj, varargin)
-            if nargin > 1
-                obj.market.demand = varargin{1};
-            else
-                obj.market.demand = obj.simDemand;
-            end
+        function mr = simulateDemand(obj)
+            obj.market.demand = obj.simDemand;
             if isempty(obj.model.firm)
                 obj.market.var.firm = 'productid'; % One product firms
             else

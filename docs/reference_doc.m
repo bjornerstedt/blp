@@ -106,7 +106,7 @@ demand.var
 %         price: Variable name of price variable
 %         nests: Name(s) of nesting variables
 %      quantity: Quantity variable
-%    marketsize: Name of variable in dataset containing market size per market
+%    marketSize: Name of variable in dataset containing market size per market
 %
 %
 % There is also an additional setting in NLDemand beyond those of
@@ -125,7 +125,6 @@ methods(NLDemand)
 %% RCDemand class
 %
 demand = RCDemand(dt1)
-demand.var
 
 %%
 % RCDemand with properties:
@@ -135,32 +134,75 @@ demand.var
 %% 
 % Settings
 % 
-% RCDemand.settings has properties:
+% RCDemand.settings has the additional properties:
 % 
-%              ces: 0 - CES or Unit logit demand
-%          maxiter: 100 - Maximum number of iterations in optimization
-%        optimalIV: 0 - Optimal instruments true/false
-%       drawmethod: 'hypercube' - Sampling method:
-%       'hypercube'/'quadrature'/'halton'/'random'
-%             nind: 100 - Number of simulated individuals
-%      marketdraws: 0 - Different random draws for each market true/false
-%        quaddraws: 10 - Quadrature accuracy level
-%     fptolerance1: 1.0000e-14
-%     fptolerance2: 1.0000e-14
+%             sigma0: [] - starting point in estimation
+%         drawmethod: 'hypercube' - Sampling method:
+%                     ('hypercube'/'quadrature'/'halton'/'random')
+%          quaddraws: 10 - Quadrature accuracy level
+%        marketdraws: 0 - Different random draws for each market true/false
+%               nind: 100 - Number of simulated individuals
+%            maxiter: 100
+%          optimalIV: 0 - Optimal instruments true/false
+
 demand.settings
+
+%%
+% Various methods can be used for draws of nonlinear variables
+% |demand.settings.drawMethod| can be set as:
+%
+% # 'hypercube' - the modified hypercube method of Train et al
+% # 'halton' - halton draws for each nonlinear variable
+% # 'random' - uniform random draws
+% # 'quadrature' - quadrature draws as implemented in the
+% <http://www.mathworks.com nwspgr method of Heiss & Winschel>.
+%
+% For quadrature, the accuracy can be set using |demand.settings.accuracy|
+%
+% For the other methods: hypercube, halton and random, the number of
+% individual draws is set using |demand.settings.nind|.
+%
+% The |RCDemand.var| class has the property |nonlinear| to specify the set
+% of nonlinear variables. The nonlinear variables can be specified in
+% different ways, to specify variable names and the type of draw.
+%
+% 1. As a string of variable names:
+% 
+%    demand.var.nonlinear = {'x1 x2', 'normal'};
+%
+% 2. As a cell array with variable names and nonlinear distribution:
+% 
+%    demand.var.nonlinear = {'x1 x2', 'lognormal'};
+%
+% 3. As a cell array with different nonlinear distributions:
+% 
+%    demand.var.nonlinear = {{'x1 x2', 'normal'}, {'x3', 'lognormal'}];
+%
+% The set of supported distributions are:
+%
+% # normal: {'x1 x2', 'normal'} or simply {'x1 x2'}
+% # uniform: {'x1 x2', 'uniform'}
+% # empirical: {'x1 x2', 'empirical', dataarray}
+% # _lognormal_:  {'x1 x2', 'lognormal'}
+% # _symmetric triangular_:  {'x1 x2', 'triangular'}
+% # _logistic_:  {'x1 x2', 'triangular'}
+%
+% The lognormal, triangular and logistic distributions cannot be used with
+% the quadrature drawmethod. 
+%
+% Empirical draws specify an array |dataarray| with weights in the first column and
+% variable values in the other columns.
+%
+% Different draws by market can be obtained by setting
+% |demand.settings.marketDraws = true|. It adds a uniform random number,
+% subtracting one if the result is outside the unit interval. This
+% effectively rotates the draws by a random amount, along the lines of
+% Train [ref].
 
 %%
 % RCDemand.config
 % 
-%                  hessian: 0
-%                     test: []
-%                  fpmaxit: 1000
-%                tolerance: 1.0000e-09
-%               randstream: []
-%              restartFval: 1000
-%               guessdelta: 1
-%                  quietly: 1
-%     restartMaxIterations: 1
+% Less common configuration parameters are set in |demand.config|
 demand.config
 
 %% 
