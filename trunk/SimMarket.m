@@ -34,7 +34,7 @@ classdef SimMarket < matlab.mixin.Copyable
                 defmodel.types = [];
                 defmodel.firm = [];
                 
-% beta does not include alpha:
+% beta does not include alpha, but includes constant:
                 defmodel.beta = [ 1, 0];
 % x is the expected values, const not included. The value for p only
 % matters if market is calculated, not simulated. 
@@ -86,8 +86,11 @@ classdef SimMarket < matlab.mixin.Copyable
         end
                
         function R = means(obj, cols, index)
-            R = array2table(splitapply(@mean, obj.data{:, cols}, ...
-                obj.data.(index)), 'VariableNames', cols);
+            R = splitapply(@mean, obj.data{:, cols}, ...
+                obj.data.(index));
+            if length(cols) == size(obj.data{:, cols},2)
+                R = array2table(R, 'VariableNames', cols);
+            end
         end
 
     end
@@ -228,8 +231,6 @@ classdef SimMarket < matlab.mixin.Copyable
                     randn(size(obj.data,1), 1) * obj.model.varepsilon;
             end
             mr = obj.means({'p', 'q'}, 'productid') ;
-            display 'Average sum shares'
-            disp(mean(accumarray(obj.data.marketid, obj.data.q)))
             if obj.model.endog
                 obj.demand.var.instruments = sprintf('inst%d ', 1:6);
             end
