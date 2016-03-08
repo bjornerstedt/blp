@@ -7,12 +7,18 @@ m.model.markets = 50;
 if test
     m.demand = NLDemand
     m.demand.alpha = .3;
+m.model.types = 2;
+    m.demand.var.nests = 'type';
+    m.demand.sigma = 0.5;
     sresults = m.create()
     return
 else
     m.demand = NLIndividualDemand
     m.demand.settings.nind = 1000;
     m.demand.alpha = .3;
+    m.demand.var.nests = 'type';
+    m.demand.sigma = 0.5;
+m.model.types = 2;
     sresults = m.create();
 end
 display(m.model)
