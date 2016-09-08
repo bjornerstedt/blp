@@ -7,3 +7,5 @@ clogit sh p x , group(obs)
 nlogitgen tt = type(fast:1, slow:2)
 
 nlogit sh p x || tt: || productid: , case(obs)
+
+matlist e(b)

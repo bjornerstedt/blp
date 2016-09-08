@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>SimMarket 0.3 Reference</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-03-04"><meta name="DC.source" content="reference_doc.m"><style type="text/css">
+      --><title>SimMarket 0.3 Reference</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-06-14"><meta name="DC.source" content="reference_doc.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -68,111 +68,33 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
   </style></head><body><div class="content"><h1>SimMarket 0.3 Reference</h1><!--introduction--><p>This is a preliminary version that includes output of structures for comparisons.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Estimate class</a></li><li><a href="#10">NLDemand class</a></li><li><a href="#13">RCDemand class</a></li><li><a href="#19">Market class</a></li><li><a href="#27">SimMarket class</a></li></ul></div><h2>Estimate class<a name="1"></a></h2><p>SimMarket demand and market classes all inherit the linear estimation functionality of the <tt>Estimate</tt> class. This class can be used for estimation not directly related to demand or market estimation.</p><pre class="codeinput">load <span class="string">example_data</span>;
 est = Estimate(dt3);
+</pre><pre class="codeoutput error">Undefined function 'Estimate' for input arguments of type 'table'.
+
+Error in reference_doc (line 10)
+est = Estimate(dt3);
 </pre><p>The Estimate class has the following properties</p><pre>  settings: A structure with different estimation settings
    config: Contains less common settings
       var: A structure with variable names used in estimation
      data: The Matlab table with data useed in estimation. Can be
            specified in the constructor as above.
   results: A structure with results (coefficients, standare errors, other statistics)</pre><pre class="codeinput">est
-</pre><pre class="codeoutput">
-est = 
-
-  Estimate with properties:
-
-        data: [403x14 table]
-     panelid: []
-     results: [1x1 struct]
-           y: []
-           X: []
-           Z: []
-        beta: []
-    settings: [1x1 SettingsClass]
-      config: [1x1 struct]
-         var: [1x1 SettingsClass]
-       Xorig: []
-       Zorig: []
-
 </pre><p>est.var contains fields for variables used in estimation:</p><pre>        market: Misnomer for this general class - change to time?
          panel: Panel data identifier
         depvar: Dependent variable
           exog: List of exogenous variable names, separated by spaces
          endog: List of endogenous variable
    instruments: List of instruments</pre><pre class="codeinput">est.var
-</pre><pre class="codeoutput">
-ans = 
-
-  SettingsClass with properties:
-
-    instruments: []
-           exog: []
-         depvar: []
-          panel: []
-         market: []
-          endog: []
-
 </pre><p>The est.settings structure has the following fields</p><pre>           robust: 1 - robust estimation true/false
         paneltype: 'none' - panel estimate: 'fe'/'lsdv'/'none'
            nocons: 0 Do not include constant in estimation true/false
    estimateMethod: 'ols'/'2sls'/'gmm'</pre><pre class="codeinput">est.settings
-</pre><pre class="codeoutput">
-ans = 
-
-  SettingsClass with properties:
-
-    estimateMethod: 'ols'
-            nocons: 0
-            robust: 1
-         paneltype: 'fe'
-
 </pre><p>The method <tt>Estimate.estimate()</tt> generates a result table as output. It also populates the structure <tt>Estimate.results</tt> with various results</p><p>estimateDescription: 'Linear Estimate'               other: [x]              params: Structure with the estimate and var-covar matrix            estimate: Estimate table                 var: Table with variable names used            settings: Table with settings</p><pre class="codeinput">est.settings.paneltype = <span class="string">'none'</span>;
 est.var.exog = <span class="string">'w'</span>;
 est.var.depvar = <span class="string">'c'</span>;
 est.estimate()
-</pre><pre class="codeoutput">
-ans = 
-
-                 Coef      Std_err     t_value
-                _______    ________    _______
-
-    w           0.98544    0.051983    18.957 
-    constant     4.0532    0.048519    83.538 
-
 </pre><p>The complete variance covariance matrix is obtained in the property</p><pre class="codeinput">est.results.params.varcovar
-</pre><pre class="codeoutput">
-ans = 
-
-                    w        constant 
-                _________    _________
-
-    w           0.0027022    0.0001343
-    constant    0.0001343    0.0023541
-
 </pre><p>The settings and var structs can also be obtained as tables</p><pre class="codeinput">est.results.var
 est.results.settings
-</pre><pre class="codeoutput">
-ans = 
-
-        names        values
-    _____________    ______
-
-    'instruments'    []    
-    'exog'           'w'   
-    'depvar'         'c'   
-    'panel'          []    
-    'market'         []    
-    'endog'          []    
-
-
-ans = 
-
-         names          values
-    ________________    ______
-
-    'estimateMethod'    'ols' 
-    'nocons'            [   0]
-    'robust'            [   1]
-    'paneltype'         'none'
-
 </pre><p>In estimating, Estimate creates the following properties that can be used in calculations. To generate these properties without estimating, the method <tt>Estimate.init()</tt> is invoked.</p><pre>       y: []
        X: []
        Z: []
@@ -181,111 +103,16 @@ marketid: []
   Xorig: [x]
   Zorig: [x]
 </pre><p><b>Methods</b></p><p>Estimation is done with the <tt>estimate()</tt> method. The mehod used depends on the type of object that estimation is performed on. In the <tt>Estimate</tt> class, the method can be set to OLS, 2SLS or GMM in settings.</p><pre class="codeinput">methods(Estimate)
-</pre><pre class="codeoutput">
-Methods for class Estimate:
-
-Estimate          estimate          set               
-copy              init              
-
-Static methods:
-
-countInstruments  demean            
-
-Call "methods('handle')" for methods of Estimate inherited from handle.
-
 </pre><h2>NLDemand class<a name="10"></a></h2><p>The demand classes extend <tt>Estimate</tt> to allow estimation of demand systems.</p><pre class="codeinput">demand = NLDemand(dt1)
 demand.var
-</pre><pre class="codeoutput">
-demand = 
-
-  NLDemand with properties:
-
-       alpha: []
-       sigma: []
-           d: []
-        data: [500x8 table]
-     panelid: []
-     results: [1x1 struct]
-           y: []
-           X: []
-           Z: []
-        beta: []
-    settings: [1x1 SettingsClass]
-      config: [1x1 struct]
-         var: [1x1 SettingsClass]
-       Xorig: []
-       Zorig: []
-
-
-ans = 
-
-  SettingsClass with properties:
-
-          nests: []
-    instruments: []
-           exog: []
-     marketsize: []
-         depvar: []
-          panel: []
-         market: []
-       quantity: []
-          endog: []
-          price: []
-
 </pre><p>NLDemand has the following additional properties:</p><pre>    alpha: The calibrated or estimated alpha parameter
     sigma: A vector with sigmas
         d: A vector with utility shifters, used in Monte Carlo estimation</pre><p>Additional variables are specified in demand.var:</p><pre>       price: Variable name of price variable
        nests: Name(s) of nesting variables
     quantity: Quantity variable
-  marketsize: Name of variable in dataset containing market size per market</pre><p>There is also an additional setting in NLDemand beyond those of Estimate:</p><div><ul><li>ces: 0 - Use CES logit rather than unit demand true/false</li></ul></div><pre class="codeinput">demand.settings
-</pre><pre class="codeoutput">
-ans = 
-
-  SettingsClass with properties:
-
-    estimateMethod: '2sls'
-            nocons: 0
-            robust: 1
-         paneltype: 'lsdv'
-               ces: 0
-
+  marketSize: Name of variable in dataset containing market size per market</pre><p>There is also an additional setting in NLDemand beyond those of Estimate:</p><div><ul><li>ces: 0 - Use CES logit rather than unit demand true/false</li></ul></div><pre class="codeinput">demand.settings
 </pre><p><b>Methods</b></p><p>The method <tt>NLDemand.estimate()</tt> performs a linear panel estimate based on the settings.</p><pre class="codeinput">methods(NLDemand)
-</pre><pre class="codeoutput">
-Methods for class NLDemand:
-
-NLDemand           estimate           initSimulation     setTrueResults     
-actualDemand       getDemand          quantity           shareJacobian      
-copy               groupElasticities  residuals          shares             
-elasticities       init               set                
-
-Static methods:
-
-countInstruments   demean             
-
-Call "methods('handle')" for methods of NLDemand inherited from handle.
-
 </pre><h2>RCDemand class<a name="13"></a></h2><pre class="codeinput">demand = RCDemand(dt1)
-</pre><pre class="codeoutput">
-demand = 
-
-  RCDemand with properties:
-
-       alpha: []
-       sigma: []
-           d: []
-        data: [500x8 table]
-     panelid: []
-     results: [1x1 struct]
-           y: []
-           X: []
-           Z: []
-        beta: []
-    settings: [1x1 SettingsClass]
-      config: [1x1 SettingsClass]
-         var: [1x1 SettingsClass]
-       Xorig: []
-       Zorig: []
-
 </pre><p>RCDemand with properties:</p><pre>  sigma: The calibrated or estimated nonlinear parameters</pre><p>Settings</p><p>RCDemand.settings has the additional properties:</p><pre>           sigma0: [] - starting point in estimation
        drawmethod: 'hypercube' - Sampling method:
                    ('hypercube'/'quadrature'/'halton'/'random')
@@ -294,84 +121,10 @@ demand =
              nind: 100 - Number of simulated individuals
           maxiter: 100
         optimalIV: 0 - Optimal instruments true/false</pre><pre class="codeinput">demand.settings
-</pre><pre class="codeoutput">
-ans = 
-
-  SettingsClass with properties:
-
-         quaddraws: 10
-         optimalIV: 0
-    estimateMethod: '2sls'
-           maxiter: 100
-            nocons: 0
-            sigma0: []
-            robust: 1
-         paneltype: 'lsdv'
-               ces: 0
-       marketdraws: 0
-              nind: 100
-        drawmethod: 'hypercube'
-
-</pre><p>Various methods can be used for draws of nonlinear variables <tt>demand.settings.drawmethod</tt> can be set as:</p><div><ol><li>'hypercube' - the modified hypercube method of Train et al</li><li>'halton' - halton draws for each nonlinear variable</li><li>'random' - uniform random draws</li><li>'quadrature' - quadrature draws as implemented in the <a href="http://www.mathworks.com">nwspgr method of Heiss &amp; Winschel</a>.</li></ol></div><p>For quadrature, the accuracy can be set using <tt>demand.settings.quaddraws</tt></p><p>For the other methods: hypercube, halton and random, the number of individual draws is set using <tt>demand.settings.nind</tt>.</p><p>The <tt>RCDemand.var</tt> class has the property <tt>nonlinear</tt> to specify the set of nonlinear variables. The nonlinear variables can be specified in different ways, to specify variable names and the type of draw.</p><p>1. As a string of variable names:</p><pre>  demand.var.nonlinear = {'x1 x2', 'normal'};</pre><p>2. As a cell array with variable names and nonlinear distribution:</p><pre>  demand.var.nonlinear = {'x1 x2', 'lognormal'};</pre><p>3. As a cell array with different nonlinear distributions:</p><pre>  demand.var.nonlinear = {{'x1 x2', 'normal'}, {'x3', 'lognormal'}];</pre><p>The set of supported distributions are:</p><div><ol><li>normal: {'x1 x2', 'normal'} or simply {'x1 x2'}</li><li>uniform: {'x1 x2', 'uniform'}</li><li>empirical: {'x1 x2', 'empirical', dataarray}</li><li><i>lognormal</i>:  {'x1 x2', 'lognormal'}</li><li><i>symmetric triangular</i>:  {'x1 x2', 'triangular'}</li><li><i>logistic</i>:  {'x1 x2', 'triangular'}</li></ol></div><p>The lognormal, triangular and logistic distributions cannot be used with the quadrature drawmethod.</p><p>Empirical draws specify an array with weights in the first column and variable values in the other columns.</p><p>RCDemand.config</p><pre>                hessian: 0
-                   test: []
-                fpmaxit: 1000
-              tolerance: 1.0000e-09
-             randstream: []
-            restartFval: 1000
-             guessdelta: 1
-                quietly: 1
-   restartMaxIterations: 1</pre><pre class="codeinput">demand.config
-</pre><pre class="codeoutput">
-ans = 
-
-  SettingsClass with properties:
-
-               tolerance: 1.0000e-09
-              guessdelta: 1
-            fptolerance2: 1.0000e-14
-             restartFval: 1000
-                 hessian: 0
-                    test: []
-    restartMaxIterations: 1
-                 quietly: 1
-                 fpmaxit: 1000
-            fptolerance1: 1.0000e-14
-                compiled: 1
-              randstream: []
-
+</pre><p>Various methods can be used for draws of nonlinear variables <tt>demand.settings.drawMethod</tt> can be set as:</p><div><ol><li>'hypercube' - the modified hypercube method of Train et al</li><li>'halton' - halton draws for each nonlinear variable</li><li>'random' - uniform random draws</li><li>'quadrature' - quadrature draws as implemented in the <a href="http://www.mathworks.com">nwspgr method of Heiss &amp; Winschel</a>.</li></ol></div><p>For quadrature, the accuracy can be set using <tt>demand.settings.accuracy</tt></p><p>For the other methods: hypercube, halton and random, the number of individual draws is set using <tt>demand.settings.nind</tt>.</p><p>The <tt>RCDemand.var</tt> class has the property <tt>nonlinear</tt> to specify the set of nonlinear variables. The nonlinear variables can be specified in different ways, to specify variable names and the type of draw.</p><p>1. As a string of variable names:</p><pre>  demand.var.nonlinear = {'x1 x2', 'normal'};</pre><p>2. As a cell array with variable names and nonlinear distribution:</p><pre>  demand.var.nonlinear = {'x1 x2', 'lognormal'};</pre><p>3. As a cell array with different nonlinear distributions:</p><pre>  demand.var.nonlinear = {{'x1 x2', 'normal'}, {'x3', 'lognormal'}];</pre><p>The set of supported distributions are:</p><div><ol><li>normal: {'x1 x2', 'normal'} or simply {'x1 x2'}</li><li>uniform: {'x1 x2', 'uniform'}</li><li>empirical: {'x1 x2', 'empirical', dataarray}</li><li><i>lognormal</i>:  {'x1 x2', 'lognormal'}</li><li><i>symmetric triangular</i>:  {'x1 x2', 'triangular'}</li><li><i>logistic</i>:  {'x1 x2', 'triangular'}</li></ol></div><p>The lognormal, triangular and logistic distributions cannot be used with the quadrature drawmethod.</p><p>Empirical draws specify an array <tt>dataarray</tt> with weights in the first column and variable values in the other columns.</p><p>Different draws by market can be obtained by setting <tt>demand.settings.marketDraws = true</tt>. It adds a uniform random number, subtracting one if the result is outside the unit interval. This effectively rotates the draws by a random amount, along the lines of Train [ref].</p><p>RCDemand.config</p><p>Less common configuration parameters are set in <tt>demand.config</tt></p><pre class="codeinput">demand.config
 </pre><p><b>Methods</b></p><p>The method <tt>RCDemand.estimate()</tt> performs a BLP estimate based on the settings specified in the demand object.</p><pre class="codeinput">methods(RCDemand)
-</pre><pre class="codeoutput">
-Methods for class RCDemand:
-
-RCDemand           estimationStep     initPeriods        set                
-actualDemand       findDelta          initSimulation     setTrueResults     
-computeVariance    getDemand          minimize           shareJacobian      
-copy               getSigma           objective          shares             
-deltaJacobian      groupElasticities  quantity           sharesAll          
-elasticities       init               randdraws          
-estimate           initEstimation     residuals          
-
-Static methods:
-
-countInstruments   demean             
-
-Call "methods('handle')" for methods of RCDemand inherited from handle.
-
 </pre><h2>Market class<a name="19"></a></h2><p>The <tt>Market</tt> class is used to calculate costs or to associated with a demand class either in its constructor or by setting <tt>Market.demand</tt></p><p>demand: Demand object (<tt>NLDemand</tt> or <tt>RCDemand</tt>)      p: Equilibrium calculated price      q: Equilibrium calculated quantity     p0: Initial guess for equilibrium price      c: Costs calculated from market prices and quantities and demand estimate</p><p>The <tt>Market</tt> class obtains data and various settings from the associated demand class. List these... It has the settings and var structures allowing estimation of costs.</p><pre class="codeinput">market = Market();
 market.var
-</pre><pre class="codeoutput">
-ans = 
-
-  SettingsClass with properties:
-
-    instruments: []
-           exog: []
-         depvar: []
-          panel: []
-         market: []
-          endog: []
-           firm: []
-
 </pre><p><tt>Market.var.firm</tt> is the only property that has to be set to calculate costs or equilibrium.</p><pre class="codeinput">market.var.firm = <span class="string">'productid'</span>;
 </pre><p>An estimated or calibrated demand is associated with the marktet either by providing it in the constructor or adding it to the <tt>Market.demand</tt> property:</p><pre class="codeinput">market.demand = demand;
 </pre><p>The Market class has the following settings, set in Market.settings</p><pre>         dampen: 1 - Dampening in fixed point iterations
@@ -379,38 +132,8 @@ ans =
         conduct: 0 - Conduct parameter in [0,1] interval
 weightedAverages: 1 - Calculate weighted averages true/false
     valueShares: 0 (1 for CES) - Use value shares as weights true/false</pre><pre class="codeinput">market.settings
-</pre><pre class="codeoutput">
-ans = 
-
-  SettingsClass with properties:
-
-    weightedAverages: 1
-             conduct: 0
-      estimateMethod: 'ols'
-              nocons: 0
-              robust: 1
-           paneltype: 'fe'
-         valueShares: 0
-              dampen: 1
-               maxit: 3000
-
 </pre><p><b>Methods</b></p><p><tt>Market.findCosts()</tt> calculates costs based on a demand specification Prices and quantities used are copied from the demand specification</p><pre class="language-matlab">market.findCosts()
 </pre><p><tt>Market.equilibrium()</tt> calculates a market equilibrium based on a demand specification, costs, and a specification of ownership and conduct (using <tt>Market.var.firm</tt> and <tt>Market.settings.conduct</tt>.</p><pre class="codeinput">methods(Market)
-</pre><pre class="codeoutput">
-Methods for class Market:
-
-Market            estimateCosts     getMarketShares   set               
-clone             estimateGMM       init              summary           
-copy              findCosts         initSimulation    
-equilibrium       fixedPoint        margins           
-estimate          foc               residuals         
-
-Static methods:
-
-countInstruments  demean            
-
-Call "methods('handle')" for methods of Market inherited from handle.
-
 </pre><p>To summarise market calculations after calculating costs with <tt>Market.findCosts()</tt>, <tt>Market.summarise()</tt> can be used. By default weighted averages by firm using market shares as weights are calculated. Market shares by quantity are used by default for unit demand, and market shares by value for CES demand. The type of average can be controlled by setting <tt>Market.settings.weightedAverages</tt> and <tt>Market.settings.valueShares</tt>. One can also summarise a selection in a logical vector by invoking:</p><pre class="language-matlab">m1.summary(<span class="string">'selection'</span>, vec);
 </pre><p>Options to functions in Matlab are specified with argument pairs: an identifying text string and a value. To get averages by product for the same selection, one specifies:</p><pre class="language-matlab">m1.summary(<span class="string">'selection'</span>, vec, <span class="string">'GroupingVariables'</span>, <span class="string">'productid'</span>);
 </pre><p>The method <tt>Market.summary()</tt> can be used to compare two market equilibria m1 and m2. Aggregated prices and percentage price changes from m1 to m2 are shown. By default weighted average prices, grouped by firm are shown using</p><pre class="language-matlab">summary(m1, m2)
@@ -418,16 +141,6 @@ Call "methods('handle')" for methods of Market inherited from handle.
  data: Data created by SimMarket
 demand: Demand model specified by user
 market: Market model specified by user</pre><pre class="codeinput">m = SimMarket()
-</pre><pre class="codeoutput">
-m = 
-
-  SimMarket with properties:
-
-     model: [1x1 SettingsClass]
-      data: []
-    demand: []
-    market: []
-
 </pre><p>The market model is specified with the parameters in <tt>SimMarket.model</tt>:</p><pre>         endog: 0 - Endogenous prices and quanities true/false
 randomProducts: 0 - Exogenously random products in market true/false
 pricesFromCosts: 1 - Simulate prices or let them be randomly drawn as
@@ -447,45 +160,8 @@ pricesFromCosts: 1 - Simulate prices or let them be randomly drawn as
       sigma_xi: 0.1 - Sd of panel unobservables
    endog_sigma: 0.1 - Endogeneity parameter for non simulated prices
      prob_prod: 0.8 - Probability that product exists in a market</pre><pre class="codeinput">m.model
-</pre><pre class="codeoutput">
-ans = 
-
-  SettingsClass with properties:
-
-          prob_prod: 0.8000
-            epsilon: 0.1000
-              types: []
-               beta: [1 0]
-              w_vcv: 1
-              x_vcv: [1 1]
-     randomProducts: 0
-           products: 5
-                  c: 4
-              gamma: 0
-                 xi: 0.1000
-                  w: 0
-    pricesFromCosts: 1
-                  x: [5 0]
-                eta: 1
-         varepsilon: 0
-          endog_vcv: 0.1000
-              endog: 0
-               firm: []
-            markets: 100
-
 </pre><p><b>Methods</b></p><div><ul><li>SimMarket - Create a new simulation object, optionally with demand spec</li><li>create - Creates market - should return dataset.</li><li>estimate -  Estimate and compare, used in testing framework</li><li>findCosts - Calculate costs, used in testing framework</li></ul></div><pre class="codeinput">methods(SimMarket)
-</pre><pre class="codeoutput">
-Methods for class SimMarket:
-
-SimMarket  copy       create     findCosts  means      
-
-Static methods:
-
-randDraws  testEqual  testSame   
-
-Call "methods('handle')" for methods of SimMarket inherited from handle.
-
-</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% SimMarket 0.3 Reference 
 % This is a preliminary version that includes output of structures for
@@ -595,7 +271,7 @@ demand.var
 %         price: Variable name of price variable
 %         nests: Name(s) of nesting variables
 %      quantity: Quantity variable
-%    marketsize: Name of variable in dataset containing market size per market
+%    marketSize: Name of variable in dataset containing market size per market
 %
 %
 % There is also an additional setting in NLDemand beyond those of
@@ -638,7 +314,7 @@ demand.settings
 
 %%
 % Various methods can be used for draws of nonlinear variables
-% |demand.settings.drawmethod| can be set as:
+% |demand.settings.drawMethod| can be set as:
 %
 % # 'hypercube' - the modified hypercube method of Train et al
 % # 'halton' - halton draws for each nonlinear variable
@@ -646,7 +322,7 @@ demand.settings
 % # 'quadrature' - quadrature draws as implemented in the
 % <http://www.mathworks.com nwspgr method of Heiss & Winschel>.
 %
-% For quadrature, the accuracy can be set using |demand.settings.quaddraws|
+% For quadrature, the accuracy can be set using |demand.settings.accuracy|
 %
 % For the other methods: hypercube, halton and random, the number of
 % individual draws is set using |demand.settings.nind|.
@@ -679,21 +355,19 @@ demand.settings
 % The lognormal, triangular and logistic distributions cannot be used with
 % the quadrature drawmethod. 
 %
-% Empirical draws specify an array with weights in the first column and
+% Empirical draws specify an array |dataarray| with weights in the first column and
 % variable values in the other columns.
+%
+% Different draws by market can be obtained by setting
+% |demand.settings.marketDraws = true|. It adds a uniform random number,
+% subtracting one if the result is outside the unit interval. This
+% effectively rotates the draws by a random amount, along the lines of
+% Train [ref].
 
 %%
 % RCDemand.config
 % 
-%                  hessian: 0
-%                     test: []
-%                  fpmaxit: 1000
-%                tolerance: 1.0000e-09
-%               randstream: []
-%              restartFval: 1000
-%               guessdelta: 1
-%                  quietly: 1
-%     restartMaxIterations: 1
+% Less common configuration parameters are set in |demand.config|
 demand.config
 
 %% 

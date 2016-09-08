@@ -234,6 +234,7 @@ classdef Estimate  < matlab.mixin.Copyable
             else
                 varcovar = ((xi' * xi) ./ obj.results.dgf) * inv(obj.X' * obj.X);
             end
+            obj.results.xi = xi;
         end
         
         function [beta, varcovar] = tsls(obj)
@@ -251,6 +252,7 @@ classdef Estimate  < matlab.mixin.Copyable
             else
                 varcovar = ((xi' * xi) ./ obj.results.dgf) * invZZ;
             end
+            obj.results.xi = xi;
         end
         
         function [beta, varcovar] = gmm(obj)            
@@ -266,7 +268,8 @@ classdef Estimate  < matlab.mixin.Copyable
             mid = obj.Z * W * obj.Z';
             beta = inv(obj.X' * mid * obj.X) * (obj.X' * mid * obj.y);
             xi = obj.y - obj.X * beta;
-
+            obj.results.xi = xi;
+            
             % See docs/design.lyx, section Robust errors
             % Note that second stage W is not used.
             varcovar = inv(obj.X' * mid * obj.X);

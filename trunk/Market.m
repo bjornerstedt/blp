@@ -133,19 +133,31 @@ classdef Market < Estimate
             theta = estimate@Estimate(obj, varargin{:});
  		end 
 
-        function theta = estimateGMM(obj, theta)
+        function R = estimateGMM(obj, theta)
             % Simultaneous 2SLS estimate of demand and costs over alpha
             obj.data = obj.demand.data;
             obj.init();
-            WC = inv(obj.X' * obj.X);
-            W = inv(obj.demand.Z' * obj.demand.Z);
+            obj.demand.estimate();
+            obj.findCosts();
+            obj.y = obj.c;
+            obj.estimate();
+            Z = [bsxfun(@times, obj.demand.Z, obj.demand.results.xi), ...
+                bsxfun(@times, obj.X, obj.results.xi)];
+            W = inv(Z' * Z);
             options = optimoptions(@fminunc, 'Algorithm', 'quasi-newton', 'MaxIter',50);
             
             [theta] = fminunc(@(x)objective(x, obj), theta, options);
             [~, beta ] = obj.demand.residuals(theta);
             [~, lambda ] = obj.residuals();
             theta = [beta; lambda];
-            
+            Sxz = [obj.demand.X, zeros(size(obj.X)); ...
+                zeros(size(obj.demand.X)), obj.X ]' * ...
+                [obj.demand.Z, zeros(size(obj.X)); ...
+                zeros(size(obj.demand.Z)), obj.X ];
+            varcovar = inv(Sxz * W * Sxz');
+            se = sqrt(  diag(varcovar) );  
+            tvalue = theta ./ se;
+            R = table(theta,se,tvalue);
             function val = objective(theta, obj)
                 % Residuals as function of demand params:
                 xi = obj.demand.residuals(theta);
@@ -154,7 +166,7 @@ classdef Market < Estimate
                 
                 xiZ = xi' * obj.demand.Z;
                 etaZ = eta' * obj.X;
-                val = xiZ * W * xiZ' + etaZ * WC * etaZ';
+                val = [xiZ, etaZ] * W * [xiZ, etaZ]';
             end
         end
         

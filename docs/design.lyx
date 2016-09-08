@@ -1,7 +1,9 @@
-#LyX 2.1 created this file. For more info see http://www.lyx.org/
-\lyxformat 474
+#LyX 2.2 created this file. For more info see http://www.lyx.org/
+\lyxformat 508
 \begin_document
 \begin_header
+\save_transient_properties true
+\origin unavailable
 \textclass article
 \use_default_options true
 \maintain_unincluded_children false
@@ -9,16 +11,16 @@
 \language_package default
 \inputencoding auto
 \fontencoding global
-\font_roman default
-\font_sans default
-\font_typewriter default
-\font_math auto
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
 \font_default_family default
 \use_non_tex_fonts false
 \font_sc false
 \font_osf false
-\font_sf_scale 100
-\font_tt_scale 100
+\font_sf_scale 100 100
+\font_tt_scale 100 100
 \graphics default
 \default_output_format default
 \output_sync 0
@@ -195,6 +197,174 @@ The GMM variance is given by (14.18) in Wooldridge, p 528.
  
 \end_layout
 
+\begin_layout Section
+Simultaneous GMM estimation of demand and costs
+\end_layout
+
+\begin_layout Standard
+Simultaneous estimation of demand and costs is performed with a similar
+ logic as BLP estimation, both in nested and random coefficients logit.
+ The logit parameter 
+\begin_inset Formula $\theta=\left(\alpha,\sigma\right)$
+\end_inset
+
+ vector is selected in a nonlinear optimization over the GMM objective.
+ 
+\end_layout
+
+\begin_layout Standard
+In the BLP optimization, the parameters 
+\begin_inset Formula $\theta$
+\end_inset
+
+ are used in the contraction to calculate the 
+\begin_inset Formula $\delta$
+\end_inset
+
+ that will give observed shares.
+ In the simultaneous estimation, the dependent varianle costs is also calculated
+ as a function of 
+\begin_inset Formula $\theta$
+\end_inset
+
+ and observed shares and prices.
+ Here are the steps in the estimation.
+\end_layout
+
+\begin_layout Enumerate
+The GMM weighting matrix is calculated.
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+In a one step optimization, the inverse variance covariance matrix of the
+ instruments is used.
+ The matrix of demand instrument observations 
+\begin_inset Formula $Z_{d}$
+\end_inset
+
+ and cost instruments 
+\begin_inset Formula $Z_{c}$
+\end_inset
+
+ are concatenated into 
+\begin_inset Formula $Z=\left[Z_{d},Z_{c}\right]$
+\end_inset
+
+, with 
+\begin_inset Formula $W=\left(Z'Z\right)^{-1}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+In a two step estimation the columns of 
+\begin_inset Formula $g_{d}=Z_{d}\cdot\varepsilon_{d}$
+\end_inset
+
+ and 
+\begin_inset Formula $g_{c}=Z_{c}\cdot\varepsilon_{c}$
+\end_inset
+
+ are combined into 
+\begin_inset Formula $g=\left[g_{d},g_{c}\right]$
+\end_inset
+
+, with 
+\begin_inset Formula $W=\left(g'g\right)^{-1}$
+\end_inset
+
+.
+ This corresponds with (4.3.2) p 269 in Hayashi.
+\end_layout
+
+\begin_layout Enumerate
+The Weighting matrix is created using representation (4.2.6) p 267 in Hayashi.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+An initial linear estimate of demand is performed in nested logit to get
+ a starting 
+\begin_inset Formula $\theta$
+\end_inset
+
+ value for the non-linear GMM estimation.
+\end_layout
+
+\begin_layout Enumerate
+In the optimization the linear system is set up
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+\begin_inset Formula $\delta$
+\end_inset
+
+ is calculated in RC demand.
+ Note that 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ is also estimated non-linearly as it affects the LHS in the cost equation.
+\end_layout
+
+\begin_layout Enumerate
+The contribution of 
+\begin_inset Formula $\theta$
+\end_inset
+
+ is subtracted from the LHS in NL demand.
+ Note that both share and price vectors are omitted from the 
+\begin_inset Formula $X$
+\end_inset
+
+ matrix.
+\end_layout
+
+\begin_layout Enumerate
+costs are calculated based on 
+\begin_inset Formula $\theta$
+\end_inset
+
+, taking logs if a loglinear model is used.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Residuals from linear regressors in both demand and costs are estimated
+ separately.
+ Note that in the current setup all linear regressors are assumed to be
+ exogenous.
+ (Only 
+\begin_inset Formula $\theta$
+\end_inset
+
+ variables are endogenous).
+ This means that the GMM conditions do not enter in the linear estimate.
+ With economies of scale, costs have to be instrumented.
+\end_layout
+
+\begin_layout Enumerate
+Calculate residuals and the GMM objective using the same weighting matrix
+\end_layout
+
+\begin_layout Enumerate
+After optimization, calculate the variance covariance matrix using the weighting
+ matrix.
+ This is the same calc as (4.2.6) above.
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+For RC the delta Jacobian is added for the nonlinear parameters
+\end_layout
+
+\end_deeper
 \begin_layout Section
 Calibration of simulated market
 \end_layout

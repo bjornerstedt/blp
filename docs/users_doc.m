@@ -313,7 +313,7 @@ demand.var.nests = 'type';
 
 m3 = SimMarket();
 m3.demand = demand;
-m3.model.types = 2;
+m3.model.typeList = [1,2,1,2,1];
 
 
 %%

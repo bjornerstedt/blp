@@ -32,6 +32,7 @@ classdef SimMarket < matlab.mixin.Copyable
                 defmodel.markets = 100;
                 defmodel.products = 5;
                 defmodel.types = [];
+                defmodel.typeList = [];
                 defmodel.firm = [];
                 
 % beta does not include alpha, but includes constant:
@@ -137,8 +138,8 @@ classdef SimMarket < matlab.mixin.Copyable
             end
             function typemat = createTypes(types, products, markets)
                 ntree = nestTree(types);
-                typelist = repmat(ntree, ceil(products / size(ntree,2)), 1);
-                type = repmat(typelist(1:products, :), markets, 1);
+                typeList = repmat(ntree, ceil(products / size(ntree,2)), 1);
+                type = repmat(typeList(1:products, :), markets, 1);
                 typemat = array2table(type);
             end
             obj.data = table();
@@ -150,6 +151,15 @@ classdef SimMarket < matlab.mixin.Copyable
             if ~isempty(obj.model.types)
                 obj.data = [obj.data, createTypes(obj.model.types, ...
                     obj.model.products, obj.model.markets)];
+            end
+            if ~isempty(obj.model.typeList)
+                if min(size(obj.model.typeList)) == 1
+                    obj.model.typeList = reshape(obj.model.typeList, length(obj.model.typeList),1);
+                end
+                if size(obj.model.typeList, 1) ~= obj.model.products
+                    error('The number of rows types does not match the number of products')
+                end
+                obj.data.type = repmat(obj.model.typeList, obj.model.markets, 1);
             end
             if ~isempty(obj.model.firm)
                 obj.model.firm = reshape(obj.model.firm, length(obj.model.firm),1);

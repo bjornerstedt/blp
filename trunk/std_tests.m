@@ -31,7 +31,7 @@ m.demand.settings.ces = true;
 m.demand.var.nests = 'type';
 m.demand.alpha = 2;
 m.demand.sigma = 0.5;
-m.model.types = 2;
+m.model.typeList = [1,2,1,2,1];
 m.create();
 display(m.model)
 
