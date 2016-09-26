@@ -3,7 +3,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 newinstruments = false
-  
+ces = false;
+
 load painkillers9511main2new;
 pk.paracetamol = +(pk.substance =='Paracetamol');
 pk.ibuprofen = +(pk.substance =='Ibuprofen');
@@ -39,21 +40,21 @@ disp '**************************************************************'
 disp '*****************  Nested Logit Demand  **********************'
 disp '**************************************************************'
 disp ' ' 
-demand = NestedLogitDemand(pk);
+demand = NLDemand(pk);
 demand.settings.ces = ces;
-demand.var.nests = 'form substance';
-demand.var.exog = ['marketing1 sw sm time month2 month3 month4 month5 month6 '...
+%demand.var.nests = 'form substance';
+demand.var.exog = ['marketing1 sw sm  month2 month3 month4 month5 month6 '...
     'month7 month8 month9 month10 month11 month12'];
 demand.config.quietly = true;
 
 if ces
     disp 'CES Demand'
-    demand.var.marketsize = 'BL_CES';
+    demand.var.marketSize = 'BL_CES';
     demand.var.price = 'Ptablets'; 
     demand.var.quantity = 'Xtablets2';
 else
     disp 'Unit Demand'
-    demand.var.marketsize = 'BL_Unit';
+    demand.var.marketSize = 'BL_Unit';
     demand.var.price = 'Ptablets_Real'; 
     demand.var.quantity = 'Xtablets';
 end
@@ -73,5 +74,5 @@ demand.settings.paneltype = 'lsdv';
 demand.settings.nocons = true;
 demand.init(); 
 
-results = demand.estimate();
+results = demand.estimate()
 

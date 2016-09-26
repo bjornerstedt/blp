@@ -365,6 +365,18 @@ For RC the delta Jacobian is added for the nonlinear parameters
 \end_layout
 
 \end_deeper
+\begin_layout Standard
+Note that 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ enters linearly in the share Jacobian.
+ In a system estimation, it will simply rescale the dependent variable.
+ As estimation is done in a two step procedure, this inner estimation will
+ give the same result as in the single product case.
+ With nested logit we could have differences, however.
+\end_layout
+
 \begin_layout Section
 Calibration of simulated market
 \end_layout

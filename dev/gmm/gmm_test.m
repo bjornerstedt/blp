@@ -2,22 +2,26 @@ clear
 
 m = SimMarket();
 model = m.model;
-model.markets = 25;
+model.markets = 50;
 model.epsilon = 1;
-model.gamma = 1;
-% model.types = 2;
+model.gamma = 2;
+model.products = 5;
+model.typeList = [1,2,1,2,1];
 model.firm = [1,1,3,2,2]';
-
+model.x = [5, 0];
+% model.productProbability = .5;
 %% Test: Count instruments
 m = SimMarket(model);
-%m.model.randomProducts = true;
+m.model.randomProducts = true;
 m.model.endog = true;
 m.demand = NLDemand;
-m.demand.alpha = 1;
-m.create();
-display Estimate
+% m.demand.var.nests = 'type';
+m.demand.alpha = .3;
+% m.demand.sigma = 0.5;
+m.create()
+display 'Estimate with count instruments'
 results = m.demand.estimate()
-
+return
 %% Test: NLDemand
 % m = SimMarket(model);
 % m.model.randomProducts = true;
@@ -59,5 +63,7 @@ theta = market.estimateGMM( alpha)
 market.findCosts()
 display 'Average market c:'
 mean(market.c)
+
+% Shares incorrect with randomProducts = true
 aa=market.summary()
 sum(aa{:,5})

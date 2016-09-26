@@ -55,7 +55,7 @@ classdef SimMarket < matlab.mixin.Copyable
                 defmodel.varepsilon = 0; % Utility variation not observed by firms
                 
                 defmodel.endog_vcv = 0.1; % Degree of corr between x and epsilon
-                defmodel.prob_prod = .8;    % Prob of product existing in market
+                defmodel.productProbability = .8;    % Prob of product existing in market
                 obj.model = SettingsClass(defmodel);
             end
         end
@@ -198,7 +198,7 @@ classdef SimMarket < matlab.mixin.Copyable
             % Random selection of products
             if obj.model.randomProducts
                 % probability prob_prod of a product existing in a period
-                prodsel = logical(binornd(1, obj.model.prob_prod, n, 1));
+                prodsel = logical(binornd(1, obj.model.productProbability, n, 1));
                 obj.data = obj.data(prodsel, :);
                 % Remove markets with only one product
                 sp = find(sum(dummyvar(obj.data.marketid)) ==1 );
@@ -206,7 +206,7 @@ classdef SimMarket < matlab.mixin.Copyable
                     obj.data(obj.data.marketid == sp(i), :) = [];
                 end
                 % TODO: Create count instruments for nests
-                instruments = Estimate.countInstruments(obj.data, 'marketid', []);
+                instruments = Estimate.countInstruments(obj.data, 'marketid', 'firm');
                 obj.data.nprod = instruments(:, 1);
                 obj.data.nprod2 = obj.data.nprod .^ 2;
             end

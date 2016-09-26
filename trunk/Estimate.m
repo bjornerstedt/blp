@@ -310,8 +310,8 @@ classdef Estimate  < matlab.mixin.Copyable
         end
         
         function [instruments, names] = countInstruments(data, market, typeNames, varargin)
-        % countInstruments(market, typeNames, sumVars, dataTable) 
-        % sums vars by market over firm and typenames 
+        % countInstruments(dataTable, market, typeNames, sumVars) 
+        % sums vars by market over firm and typeNames 
         % Market has to be specified, as the function is invoked prior to
         % the creation of marketid in init.
             instruments = table;
@@ -320,6 +320,9 @@ classdef Estimate  < matlab.mixin.Copyable
                 sumVar = data{ :, varargin{1}};                
             else
                 sumVar = ones(size(data,1), 1);
+            end
+            if ischar(typeNames)
+                typeNames = {typeNames};
             end
             names = cell(0);
             for s = 1:size(sumVar, 2);

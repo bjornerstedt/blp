@@ -141,12 +141,22 @@ classdef Market < Estimate
             obj.findCosts();
             obj.y = obj.c;
             obj.estimate();
-            Z = [bsxfun(@times, obj.demand.Z, obj.demand.results.xi), ...
-                bsxfun(@times, obj.X, obj.results.xi)];
-            W = inv(Z' * Z);
             options = optimoptions(@fminunc, 'Algorithm', 'quasi-newton', 'MaxIter',50);
             
+            Z = [bsxfun(@times, obj.demand.Z, obj.demand.residuals(theta)), ...
+                bsxfun(@times, obj.X, obj.results.xi)];
+            W = inv(Z' * Z);
+% Test with quadratic optimization
+%             C = chol(W);
             [theta] = fminunc(@(x)objective(x, obj), theta, options);
+%             [theta] = lsqnonlin(@(x)objective(x, obj), theta);
+            
+            Z = [bsxfun(@times, obj.demand.Z, obj.demand.results.xi), ...
+                bsxfun(@times, obj.X, obj.residuals())];
+            W = inv(Z' * Z);
+            [theta] = fminunc(@(x)objective(x, obj), theta, options);
+%             [theta] = lsqnonlin(@(x)objective(x, obj), theta);
+
             [~, beta ] = obj.demand.residuals(theta);
             [~, lambda ] = obj.residuals();
             theta = [beta; lambda];
@@ -167,6 +177,7 @@ classdef Market < Estimate
                 xiZ = xi' * obj.demand.Z;
                 etaZ = eta' * obj.X;
                 val = [xiZ, etaZ] * W * [xiZ, etaZ]';
+%                 val = C * [xiZ, etaZ]';
             end
         end
         
