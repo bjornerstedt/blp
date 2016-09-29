@@ -314,6 +314,7 @@ classdef Estimate  < matlab.mixin.Copyable
         % sums vars by market over firm and typeNames 
         % Market has to be specified, as the function is invoked prior to
         % the creation of marketid in init.
+        % If provided, sumVars are summed over, otherwise a count is taken.
             instruments = table;
             k = 1;
             if nargin == 4
@@ -329,7 +330,11 @@ classdef Estimate  < matlab.mixin.Copyable
                 for i = 0:length(typeNames)
                     sels = nchoosek(1:length(typeNames), i);
                     for j = 1:size(sels, 1)
-                        sel = [market, typeNames(sels(j,:))];
+                        if i == 0
+                            sel = market;
+                        else
+                            sel = [market, typeNames(sels(j,:))];
+                        end
                         names = [names; {sel}];
                         [~, ~, index] = unique(data(:, sel));
                         count = accumarray(index, sumVar(:, s) );

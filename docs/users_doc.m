@@ -84,7 +84,8 @@ demand2.var.price = 'p';
 demand2.var.quantity = 'q';
 demand2.var.marketSize = 'constant';
 demand2.var.exog = 'x';
-demand2.var.instruments = 'nprod nprod2 c';
+
+demand2.var.instruments = 'nprod c';
 
 demand2.var.nonlinear = 'x';
 
@@ -371,7 +372,11 @@ demand.var.exog = 'x';
 % We can create an array of count instruments by using the utility method
 % |Estimate.countInstruments()|. It creates count instruments by market as
 % specified in the 'marketid' column, here creating counts by market and
-% all combinations of firms and type. Note that a column of a Matlab table
+% all combinations of firms and type. |Estimate.countInstruments()| can
+% take an optional fourth argument, contaning names of columns to sum over.
+% If not provided, a count by group is made.
+% 
+% Note that a column of a Matlab table
 % can be an array instead of a column vector. Here the count instruments
 % are all put in the column |dt3.inst| of the
 dt3.inst = Estimate.countInstruments(dt3, 'marketid', {'firm', 'type'});

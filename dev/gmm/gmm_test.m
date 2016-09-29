@@ -15,13 +15,14 @@ m = SimMarket(model);
 m.model.randomProducts = true;
 m.model.endog = true;
 m.demand = NLDemand;
-% m.demand.var.nests = 'type';
+m.demand.var.nests = 'type';
 m.demand.alpha = .3;
-% m.demand.sigma = 0.5;
+m.demand.sigma = 0.5;
 m.create()
+m.demand.data.nprod= m.demand.data.nprod(: , 1:3);
 display 'Estimate with count instruments'
 results = m.demand.estimate()
-return
+
 %% Test: NLDemand
 % m = SimMarket(model);
 % m.model.randomProducts = true;
@@ -34,7 +35,7 @@ return
 % m.create()
 
 display('2SLS estimate')
-m.demand.var.instruments = 'w';
+% m.demand.var.instruments = 'nprod w';
 results = m.demand.estimate()
 
 
@@ -50,7 +51,7 @@ results = m.demand.estimate()
 % gmm_funcs(m.demand);
 
 display('Simultaneous Estimate')
-alpha = [-.3]';
+alpha = [-.3, .3]';
 
 market = Market(m.demand);
 market.var.firm = 'productid';

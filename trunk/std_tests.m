@@ -151,7 +151,9 @@ m.model.randomProducts = true;
 m.model.products = 10;
 m.create();
 display(m.model)
-
+% Ad-hoc to keep quadratic instruments
+m.demand.data.nprod2 = m.data.nprod.^2;
+m.demand.var.instruments = 'nprod nprod2'
 results = m.demand.estimate()
 
 testVals = [results{'p','Coef'}, results{'rc_x','Coef'}];
@@ -177,7 +179,7 @@ for d = 1:2
             m.demand.sigma = .2;
         end
         m.demand.alpha = 1;
-        m.demand.var.instruments = 'c nprod nprod2';
+%         m.demand.var.instruments = 'c nprod nprod2';
 %         m.model.beta = [1; -5];
 %         m.model.x = [1,0];
 %         m.model.x_vcv = [.2,1];
@@ -188,6 +190,9 @@ for d = 1:2
         m.demand.settings.paneltype = paneltype{i};
         
         m.create();
+% Ad-hoc to keep quadratic instruments
+m.demand.data.nprod2 = m.data.nprod.^2;
+m.demand.var.instruments = 'c nprod nprod2'
 
         results{i} = m.demand.estimate();
         display(results{1})
@@ -269,7 +274,6 @@ m.demand.sigma = [0.2; 1];
 % m.demand.settings.ces = true;
 m.demand.settings.paneltype = 'lsdv';
 m.demand.var.nonlinear = 'p x';
-m.demand.var.instruments = 'nprod nprod2 c';
 m.demand.settings.optimalIV = true;
 m.model.gamma = 1;
 m.model.endog = true;
@@ -279,6 +283,9 @@ m.demand.config.guessDelta = false;
 m.model.products = 5;
 m.create();
 display(m.model)
+% Ad-hoc to keep quadratic instruments
+m.demand.data.nprod2 = m.data.nprod.^2;
+m.demand.var.instruments = 'nprod nprod2 c'
 
 results = m.demand.estimate()
 SimMarket.testEqual(results{'rc_p','Coef'} , results{'rc_p', 'True_val'}, 2e-1 )
@@ -299,7 +306,7 @@ m.demand.sigma = [0.2; .1];
 m.demand.var.nonlinear = {{'p', 'uniform'}, {'x'}};
 
 m.demand.settings.paneltype = 'lsdv';
-m.demand.var.instruments = 'nprod nprod2 c';
+% m.demand.var.instruments = 'nprod nprod2 c';
 m.demand.settings.optimalIV = true;
 m.model.gamma = 1;
 m.model.endog = true;
@@ -309,6 +316,10 @@ m.demand.config.guessDelta = false;
 m.model.products = 5;
 m.create();
 display(m.model)
+% Ad-hoc to keep quadratic instruments
+m.demand.data.nprod2 = m.data.nprod.^2;
+m.demand.var.instruments = 'nprod nprod2 c'
+
 
 results = m.demand.estimate()
 SimMarket.testEqual(results{'rc_p','Coef'} , results{'rc_p', 'True_val'}, 5e-2 )

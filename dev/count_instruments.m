@@ -17,7 +17,7 @@ m.model.markets = 5;
 m.model.products = 8;
 m.model.types = [2,3];
 m.model.randomProducts = true;
-m.model.firm = [1,1,2,3,1,2,2,3]
+m.model.firm = [1,1,2,3,1,2,2,3];
 m.create()
 
 market = 'marketid';
@@ -25,8 +25,8 @@ typeNames = {'type1', 'type2'};
 firm = {'firm'};
 % firm = [];
 
-instruments = Estimate.countInstruments(m.data, market, [firm, typeNames], {'constant', 'type1'})
-
+% instruments = Estimate.countInstruments(m.data, market, [firm, typeNames], {'constant', 'type1'});
+instruments = Estimate.countInstruments(m.data, market, [firm, typeNames]);
 
 demand = NLDemand();
 demand.alpha = 0.5;
@@ -56,9 +56,9 @@ demand.var.market = 'marketid';
 demand.var.panel = 'productid';
 demand.var.price = 'p';
 demand.var.quantity = 'q';
-demand.var.marketsize = 'constant';
+demand.var.marketSize = 'constant';
 demand.var.exog = 'x';
 
 demand.var.nests = 'type';
-demand.var.instruments = 'c inst nprod2';
+demand.var.instruments = 'nprod';
 result = demand.estimate()

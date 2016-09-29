@@ -148,9 +148,12 @@ classdef SimMarket < matlab.mixin.Copyable
                 obj.model.products, 1), n, 1);
             obj.data.productid = repmat((1:obj.model.products)', ...
                 obj.model.markets, 1);
+            typeNames = [];
             if ~isempty(obj.model.types)
-                obj.data = [obj.data, createTypes(obj.model.types, ...
-                    obj.model.products, obj.model.markets)];
+                typeVars = createTypes(obj.model.types, ...
+                    obj.model.products, obj.model.markets);
+                obj.data = [obj.data, typeVars];
+                typeNames = typeVars.Properties.VariableNames;
             end
             if ~isempty(obj.model.typeList)
                 if min(size(obj.model.typeList)) == 1
@@ -160,6 +163,7 @@ classdef SimMarket < matlab.mixin.Copyable
                     error('The number of rows types does not match the number of products')
                 end
                 obj.data.type = repmat(obj.model.typeList, obj.model.markets, 1);
+                typeNames = {'type'};
             end
             if ~isempty(obj.model.firm)
                 obj.model.firm = reshape(obj.model.firm, length(obj.model.firm),1);
@@ -206,9 +210,17 @@ classdef SimMarket < matlab.mixin.Copyable
                     obj.data(obj.data.marketid == sp(i), :) = [];
                 end
                 % TODO: Create count instruments for nests
-                instruments = Estimate.countInstruments(obj.data, 'marketid', 'firm');
-                obj.data.nprod = instruments(:, 1);
-                obj.data.nprod2 = obj.data.nprod .^ 2;
+                countVars = [];
+                if ~isempty(obj.model.firm)
+                    countVars = { 'firm' };
+                end
+                if ~isempty(typeNames)
+                    countVars = [countVars, typeNames];
+                end
+                % xxxx
+                instruments = Estimate.countInstruments(obj.data, 'marketid', countVars);
+                obj.data.nprod = instruments;
+    %            obj.data.nprod2 = obj.data.nprod .^ 2;
             end
         end
         
@@ -271,7 +283,7 @@ classdef SimMarket < matlab.mixin.Copyable
             mr = obj.means({'p', 'q'}, 'productid') ;
             if obj.model.endog && isempty(obj.demand.var.instruments)
                 if obj.model.randomProducts
-                    obj.demand.var.instruments = 'nprod nprod2';
+                    obj.demand.var.instruments = 'nprod';
                 elseif obj.model.gamma ~= 0
                     obj.demand.var.instruments = 'w';
                 else
