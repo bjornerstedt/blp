@@ -60,6 +60,24 @@ classdef SimMarket < matlab.mixin.Copyable
             end
         end
         
+        function [rt, beta0] = calibrate(obj, insideShares, val)
+            k = 10;
+            for i = 1:100
+                v = obj.varyIntercept(i/k);
+                if v > insideShares
+                    break;
+                end
+            end
+            beta0 = (i - 1)/k;
+            [~, rt] = obj.varyIntercept(beta0);  
+        end
+        
+        function [v, mk] = varyIntercept(obj, beta0)
+            obj.model.beta(2) = beta0;
+            mk = obj.create();
+            v = sum(mk{:,2});
+        end
+
         function rt = create(obj)
             obj.init();
             if obj.model.pricesFromCosts && obj.model.endog
@@ -185,6 +203,7 @@ classdef SimMarket < matlab.mixin.Copyable
             x = x(:, 2:end);
             obj.data = [obj.data, array2table(x)];
             obj.data.constant = ones(n, 1);
+            
             % This should be done in the demand classes:            <<<<<<<<<<<<<<<<
             x0 = [x, obj.data.constant];
             obj.data.d = x0 * obj.model.beta' + obj.epsilon;
@@ -258,6 +277,7 @@ classdef SimMarket < matlab.mixin.Copyable
             end
             obj.demand.data = obj.data;
             obj.simDemand.data = obj.data;
+            obj.demand.d = obj.data.d;
         end
         
         function mr = simulateDemand(obj)
@@ -291,6 +311,7 @@ classdef SimMarket < matlab.mixin.Copyable
                 end
             end
             obj.demand.data = obj.data;
+            obj.demand.d = obj.data.d;
         end
                 
         function cpObj = copyElement(obj)

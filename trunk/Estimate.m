@@ -344,6 +344,8 @@ classdef Estimate  < matlab.mixin.Copyable
                 end
             end
             instruments = table2array(instruments);
+            % Remove zero columns
+            instruments = instruments(:,any(instruments));
         end
     end
     
