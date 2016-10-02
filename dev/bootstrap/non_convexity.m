@@ -45,7 +45,7 @@ res = zeros(20, 2);
 for i = 1:40
     alpha = 1/20 * i;
     m = SimMarket();
-    m.model.markets = 2;
+    m.model.markets = 1;
     m.demand = NLDemand;
     m.demand.alpha = alpha;
 %     m.model.endog = true;
@@ -76,7 +76,7 @@ end
 plot(res(:,1),res(:,2))
 
 %% Aggregate shocks
-
+return
 bdev = zeros(20, 2);
 for i = 1:40
     alpha = .5;

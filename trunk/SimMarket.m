@@ -105,8 +105,10 @@ classdef SimMarket < matlab.mixin.Copyable
         end
                
         function R = means(obj, cols, index)
-            R = splitapply(@mean, obj.data{:, cols}, ...
-                obj.data.(index));
+            % Creation of ind, and anonymous function of mean is to avoid
+            % problems with splitapply
+            [~, ~, ind] = unique(obj.data.(index));
+            R = splitapply(@(x)mean(x,1), obj.data{:, cols}, ind);
             if length(cols) == size(obj.data{:, cols},2)
                 R = array2table(R, 'VariableNames', cols);
             end
