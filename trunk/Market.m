@@ -85,8 +85,10 @@ classdef Market < Estimate
                     convCount = convCount+1;
                 end
             end
-            display(sprintf('Simulation converged for %d of %d markets', ...
-                convCount, length(marketid_list)));
+            if ~obj.config.quietly
+                display(sprintf('Simulation converged for %d of %d markets', ...
+                    convCount, length(marketid_list)));
+            end
             obj.results.convCount = convCount;
         end
   

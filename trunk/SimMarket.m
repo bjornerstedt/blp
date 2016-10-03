@@ -11,6 +11,7 @@ classdef SimMarket < matlab.mixin.Copyable
         data
         demand
         market
+        config
     end
     properties (SetAccess = protected, Hidden = true )
         simDemand % Class with settings for data generation
@@ -22,7 +23,6 @@ classdef SimMarket < matlab.mixin.Copyable
             % Create model and demand. Alternatively model can be provided:
             % generate model with empty constructor, modify and provide as
             % argument to constructor.
-            SimMarket.randDraws();
             if nargin > 0
                 obj.model = varargin{1};
             else
@@ -57,6 +57,7 @@ classdef SimMarket < matlab.mixin.Copyable
                 defmodel.endog_vcv = 0.1; % Degree of corr between x and epsilon
                 defmodel.productProbability = .8;    % Prob of product existing in market
                 obj.model = SettingsClass(defmodel);
+                obj.config.initRandomDraws = true;
             end
         end
         
@@ -117,6 +118,9 @@ classdef SimMarket < matlab.mixin.Copyable
     end
     methods (Access = protected, Hidden = true )
         function init(obj)
+            if obj.config.initRandomDraws
+                SimMarket.randDraws();
+            end
             % Simulation of dataset
             obj.demand.var.market = 'marketid';
             obj.demand.var.panel = 'productid';

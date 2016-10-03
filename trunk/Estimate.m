@@ -216,6 +216,7 @@ classdef Estimate  < matlab.mixin.Copyable
             se = sqrt(  diag(varcovar) );  
             tvalue = beta ./ se;
             obj.results.params.beta = obj.beta;
+            obj.results.params.varcovar = varcovar;
             R = array2table([beta, se, tvalue ]);
             R.Properties.VariableNames = {'Coef','Std_err', 't_value'};
             R.Properties.RowNames = varnames;
