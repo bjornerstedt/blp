@@ -12,7 +12,7 @@ classdef NLDemand < Estimate
         nest
         share
         ms
-        simMarket % Simulation data
+        simMarket % Simulation market number
         dummarket 
         G % Group membership, each column a group with 1 if member
         H % Subgroup membership
@@ -69,41 +69,35 @@ classdef NLDemand < Estimate
         end
 
         function R = estimate(obj, varargin)
-        % estimate executes a linear estimate 
-        % It uses the settings in NLDemand.settings and NLDemand.var
-        
-            % If alpha (sigma) and beta have been set, these are
-            % displayed as the true values: TODO...
-%             if ~isempty(obj.alpha) && ~isempty(obj.sigma)
-%             end
+            % estimate executes a linear estimate
+            % It uses the settings in NLDemand.settings and NLDemand.var
+            
             R = estimate@Estimate(obj, varargin{:});
-            % These conditions should always hold!:
-            if ~isempty(obj.results) && isfield(obj.results,'estimate') && ...
-                    ~isempty(obj.results.estimate)
-                price = obj.data{:, obj.var.price};  
-                if obj.settings.ces
-                    price = log(price);
-                end
-                priceName = obj.getPriceName();
-                if isempty(obj.nest)
-                    est = obj.results.estimate{priceName, 1}';
-                    obj.d = obj.share.ls - price * est';
-                elseif obj.nestCount == 1
-                    est = obj.results.estimate{[priceName, {'lsjg'}], 1}';
-                    obj.d = obj.share.ls - [price, obj.share.lsjg] * est';
-                elseif obj.nestCount == 2
-                    est = obj.results.estimate{[priceName, {'lsjh', 'lshg'}], 1}';
-                    obj.d = obj.share.ls - [price, obj.share.lsjh, obj.share.lshg] * est';
-                end
-                obj.alpha = -est(1);
-                obj.results.alpha = obj.alpha;
-                if length(est) > 1
-                    obj.sigma = est(2:end);
-                    obj.results.sigma = obj.sigma;
-                end
-            end
-            if ~isempty(obj.results) && isfield(obj.results,'trueValues') 
+
+            obj.calibrate();
+
+            if ~isempty(obj.results) && isfield(obj.results,'trueValues')
                 R = [obj.results.trueValues, obj.results.estimate];
+            end
+        end
+
+		function s = calibrate(obj)
+            price = obj.data{:, obj.var.price};
+            if obj.settings.ces
+                price = log(price);
+            end
+            est = obj.beta(1:(1 + obj.nestCount))';
+            if isempty(obj.nest)
+                shdata = price ;
+            else
+                shdata = [price, obj.share{:,(end-obj.nestCount+1):end}];
+                obj.results.sigma = obj.sigma;
+            end
+            obj.d = obj.share.ls - shdata * est';
+            obj.alpha = -obj.beta(1);
+            obj.results.alpha = obj.alpha;
+            if length(est) > 1
+                obj.sigma = est(2:end);
             end
         end
 
@@ -420,9 +414,10 @@ classdef NLDemand < Estimate
                 nestlist = strsplit(strtrim(obj.var.nests));
                 groupsubtotal =  obj.subtotals( Q, ...
                     [market nestlist(1)]);
-                S.lsjg = log( Q ./ groupsubtotal);
-                
-                if obj.nestCount == 2
+                if obj.nestCount == 1
+                    
+                    S.lsjg = log( Q ./ groupsubtotal);
+                elseif obj.nestCount == 2
                     subgroupsubtotal =  obj.subtotals( Q, ...
                         [market nestlist]);
                     S.lsjh = log( Q ./ subgroupsubtotal);
