@@ -156,8 +156,10 @@ classdef Estimate  < matlab.mixin.Copyable
             end
             if ~isempty(selection)                
                 obj.Xorig = obj.Xorig(selection, :);
-                obj.Zorig = obj.Zorig(selection, :);
-                obj.Zorig = obj.Zorig(:, sum(obj.Zorig) ~= 0);
+                if ~isempty(obj.var.instruments)
+                    obj.Zorig = obj.Zorig(selection, :);
+                    obj.Zorig = obj.Zorig(:, sum(obj.Zorig) ~= 0);
+                end
                 panelid_sel = obj.panelid(selection);
                 obj.y = obj.y(selection);
             else

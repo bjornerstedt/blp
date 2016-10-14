@@ -257,6 +257,11 @@ dt1 = m1.data;
 
 results = m1.demand.estimate()
 
+%%
+%One can estimate on a selection:
+
+results = m1.demand.estimate('selection', m1.data.marketid <= 20)
+
 %% RCDemand Monte-Carlo
 % Now we will create a slightly more complex market with mixed logit demand. 
 % A minimal definition of a |RCDemand| object is as follows:
@@ -386,6 +391,7 @@ demand.data = dt3;
 % To estimate this model, the nesting variable |type| has to be specified.
 % The same count instruments as above are used. Note that the 2SLS FE panel
 % estimate will have price and log group shares as endogenous variables.
+% LSDV estimation drops the first product dummy.
 
 demand.var.nests = 'type';
 demand.settings.paneltype = 'lsdv';
