@@ -10,11 +10,12 @@
 
 tic
 % SimMarket.randDraws(22);
-mcSim = 2
-markets = 25
-forecastMarkets = 1
+mcSim = 50
+markets = 50
+forecastMarkets = 10
 
-pinc = zeros(mcSim, 4);
+pinc = zeros(3, mcSim, 3);
+delta = zeros( 5, mcSim, 3);
 % hbar = parfor_progressbar(mcSim,'Computing...');
 for mc = 1:mcSim
 display(sprintf('*******************   Simulation %d of %d  **********************', mc, mcSim));
@@ -49,8 +50,8 @@ market2 = copy(market);
 market2.var.firm = 'firm2';
 market2.equilibrium(m.data.marketid > markets);
 
-mergerResult0 = summary(market, market2)
-pc0 = mergerResult0{1, 'PriceCh'};
+mergerResult0 = summary(market, market2, 'Selection', m.data.marketid > markets)
+pc0 = mergerResult0{:, 'PriceCh'};
 
 %% Standard simulation 
 m.demand.var.instruments = 'c';
@@ -65,7 +66,8 @@ market2 = copy(market);
 market2.var.firm = 'firm2';
 market2.equilibrium(m.data.marketid == markets);
 
-mergerResult1 = summary(market, market2)
+mergerResult1 = summary(market, market2, 'Selection', m.data.marketid == markets)
+pc1 = mergerResult1{:, 'PriceCh'};
 
 %% Expected value simulation 
 
@@ -74,107 +76,52 @@ X = mean(m.demand.data.x(m.demand.data.marketid <= markets));
 d = m.demand.beta(2).* X + m.demand.beta(3) + ...
     [0;m.demand.results.params.betadummies];
 
-d
-m.data.d(m.data.marketid > markets)
-m.data.d(m.data.marketid == markets)
+c = accumarray(m.data.productid(m.data.marketid <= markets), ...
+    m.market.c(m.data.marketid <= markets), [], @mean );
 
+delta( :, mc, 1) = accumarray(m.data.productid(m.data.marketid > markets),...
+    m.data.d(m.data.marketid > markets), [], @mean);
+delta( :, mc, 2) = m.data.d(m.data.marketid == markets);
+delta( :, mc, 3) = d;
 
-
-
-
-return
-m.findCosts();
+m.demand.d(m.data.marketid == markets+1) = d;
+m.market.c(m.data.marketid == markets+1) = c;
 market = m.market;
 
 % market.summary()
 % market.summary('Selection', m.data.marketid == 1)
+market.equilibrium(m.data.marketid == markets+1);
 
 market2 = copy(market);
 market2.var.firm = 'firm2';
-market2.equilibrium(m.data.marketid == markets);
+market2.equilibrium(m.data.marketid == markets+1);
 
-mergerResult1 = summary(market, market2)
+mergerResult2 = summary(market, market2, 'Selection', m.data.marketid == markets+1)
+pc2 = mergerResult2{:, 'PriceCh'};
 
-return
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-vcv = m.demand.results.params.varcovar;
-
-% High correlation:
-% corrbeta = vcv{'p', 'constant'} / sqrt(vcv{'p', 'p'}) / sqrt(vcv{'constant', 'constant'});
-
-%% Parametric bootstraps alpha / alpha & beta0
-% 
-% Here we estimate and use repeated draws of alpha to calculate expected
-% price increase. Use one loop to do both parametric and nonparametric
-% bootstraps.
-%
-% Estimate
-% Loop taking random draws of
-% alpha 
-% alpha x and beta0
-
-sel = {[1], [1,2,3]};
-
-bootpars = parametricBootstrap(m.demand.results.estimate{sel{1},'Coef'}, vcv{sel{1},sel{1}}, bootreps) ;
-data = m.demand.data;
-demand = copy(m.demand);
-pc = zeros(bootreps, 3);
-for r = 1:bootreps
-if true
-    
-demand.beta(1) = bootpars(r, :)';
-demand.alpha = -demand.beta(1);
-demand.calibrate();
-
-market = Market(demand);
-market.config.quietly = true;
-
-market.var.firm = 'firm';
-market.findCosts();
-
-market2 = copy(market);
-market2.var.firm = 'firm2';
-market2.equilibrium();
-
-mergerResult1 = summary(market, market2);
-pc(r,1) = demand.alpha;
-pc(r, 2) = mergerResult1{1, 'PriceCh'};
-delete(market2)
-
-end
-
-if false
-%% Non-parametric bootstrap 
-newdemand = copy(m.demand);
-newdemand.data = bootstrap(data, 'marketid');
-newdemand.estimate();
-
-market = Market(newdemand);
-
-market.var.firm = 'firm';
-market.findCosts();
-
-market2 = copy(market);
-market2.var.firm = 'firm2';
-market2.equilibrium();
-
-mergerResult1 = summary(market, market2);
-pc(r, 3) = mergerResult1{1, 'PriceCh'};
-delete(market2)
-end
+pinc( :, mc, 1) = mergerResult0{:, 'PriceCh'};
+pinc( :, mc, 2) = mergerResult1{:, 'PriceCh'};
+pinc( :, mc, 3) = mergerResult2{:, 'PriceCh'};
 
 
-end % pb loop
-pinc(mc,:) = [pc0, mean(pc,1)];
-hbar.iterate(1);
 end % mc loop
-close(hbar);
+display 'Mean square forecast errors:'
+dmsfe2 = mean(sum((delta(:,:,1) - delta(:,:,2) ) .^2 ))
+dmsfe3 = mean(sum((delta(:,:,1) - delta(:,:,3) ) .^2))
+
+msfe2 = mean(sum((pinc(:,:,1) - pinc(:,:,2) ) .^2 ))
+msfe3 = mean(sum((pinc(:,:,1) - pinc(:,:,3) ) .^2))
+
+% True price increase
+truePinc = mean(pinc(:,:,1),2)
+stderr = std(pinc(:,:,1),0,2)
+rmsfe21 = sqrt(mean(((pinc(1,:,1) - pinc(1,:,2) ) .^2 )))
+rmsfe31 = sqrt(mean(((pinc(1,:,1) - pinc(1,:,3) ) .^2)))
+
+% close(hbar);
 
 %% Comparisons
-pinc
+
 %
 % Averages and std deviation
-display Averages:
-mean(pinc)
 toc
