@@ -11,11 +11,11 @@
 tic
 % SimMarket.randDraws(22);
 mcSim = 50
-markets = 50
+markets = 30
 forecastMarkets = 10
 
-pinc = zeros(3, mcSim, 3);
-delta = zeros( 5, mcSim, 3);
+pinc = zeros(3, mcSim, 4);
+delta = zeros( 5, mcSim, 4);
 % hbar = parfor_progressbar(mcSim,'Computing...');
 for mc = 1:mcSim
 display(sprintf('*******************   Simulation %d of %d  **********************', mc, mcSim));
@@ -54,6 +54,7 @@ mergerResult0 = summary(market, market2, 'Selection', m.data.marketid > markets)
 pc0 = mergerResult0{:, 'PriceCh'};
 
 %% Standard simulation 
+msMarkets = 5;
 m.demand.var.instruments = 'c';
 m.demand.estimate()
 m.findCosts();
@@ -64,9 +65,11 @@ market = m.market;
 
 market2 = copy(market);
 market2.var.firm = 'firm2';
-market2.equilibrium(m.data.marketid == markets);
+market2.equilibrium(m.data.marketid > markets-msMarkets & m.data.marketid <= markets);
 
 mergerResult1 = summary(market, market2, 'Selection', m.data.marketid == markets)
+mergerResult1b = summary(market, market2, 'Selection', ...
+    m.data.marketid <= markets & m.data.marketid > markets-msMarkets)
 pc1 = mergerResult1{:, 'PriceCh'};
 
 %% Expected value simulation 
@@ -82,7 +85,7 @@ c = accumarray(m.data.productid(m.data.marketid <= markets), ...
 delta( :, mc, 1) = accumarray(m.data.productid(m.data.marketid > markets),...
     m.data.d(m.data.marketid > markets), [], @mean);
 delta( :, mc, 2) = m.data.d(m.data.marketid == markets);
-delta( :, mc, 3) = d;
+delta( :, mc, 4) = d;
 
 m.demand.d(m.data.marketid == markets+1) = d;
 m.market.c(m.data.marketid == markets+1) = c;
@@ -101,7 +104,8 @@ pc2 = mergerResult2{:, 'PriceCh'};
 
 pinc( :, mc, 1) = mergerResult0{:, 'PriceCh'};
 pinc( :, mc, 2) = mergerResult1{:, 'PriceCh'};
-pinc( :, mc, 3) = mergerResult2{:, 'PriceCh'};
+pinc( :, mc, 3) = mergerResult1b{:, 'PriceCh'};
+pinc( :, mc, 4) = mergerResult2{:, 'PriceCh'};
 
 
 end % mc loop
@@ -111,12 +115,14 @@ dmsfe3 = mean(sum((delta(:,:,1) - delta(:,:,3) ) .^2))
 
 msfe2 = mean(sum((pinc(:,:,1) - pinc(:,:,2) ) .^2 ))
 msfe3 = mean(sum((pinc(:,:,1) - pinc(:,:,3) ) .^2))
+msfe4 = mean(sum((pinc(:,:,1) - pinc(:,:,4) ) .^2))
 
 % True price increase
 truePinc = mean(pinc(:,:,1),2)
 stderr = std(pinc(:,:,1),0,2)
 rmsfe21 = sqrt(mean(((pinc(1,:,1) - pinc(1,:,2) ) .^2 )))
 rmsfe31 = sqrt(mean(((pinc(1,:,1) - pinc(1,:,3) ) .^2)))
+rmsfe41 = sqrt(mean(((pinc(1,:,1) - pinc(1,:,4) ) .^2)))
 
 % close(hbar);
 
