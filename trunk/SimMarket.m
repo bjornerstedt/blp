@@ -54,7 +54,7 @@ classdef SimMarket < matlab.mixin.Copyable
                 defmodel.xi = .1;
                 defmodel.varepsilon = 0; % Utility variation not observed by firms
                 
-                defmodel.endog_vcv = 0.1; % Degree of corr between x and epsilon
+                defmodel.endog_vcv = 0.1; % Degree of corr between p and epsilon
                 defmodel.productProbability = .8;    % Prob of product existing in market
                 obj.model = SettingsClass(defmodel);
                 obj.config.initRandomDraws = true;
@@ -242,7 +242,6 @@ classdef SimMarket < matlab.mixin.Copyable
                 if ~isempty(typeNames)
                     countVars = [countVars, typeNames];
                 end
-                % xxxx
                 instruments = Estimate.countInstruments(obj.data, 'marketid', countVars);
                 obj.data.nprod = instruments;
     %            obj.data.nprod2 = obj.data.nprod .^ 2;

@@ -1,26 +1,28 @@
+% Test GMM estimation. 
+% We get the same estimate but slightly better t-values
+
 clear
 
 m = SimMarket();
-model = m.model;
-model.markets = 50;
-model.epsilon = 1;
-model.gamma = 2;
-model.products = 5;
-model.typeList = [1,2,1,2,1];
-model.firm = [1,1,3,2,2]';
-model.x = [5, 0];
-% model.productProbability = .5;
+m.model.markets = 200;
+m.model.epsilon = .1;
+% Add cost shifter w with c being gamma*w
+m.model.gamma = 2;
+% m.model.products = 5;
+m.model.typeList = [1,2,1,2,1];
+m.model.firm = [1,1,3,2,2]';
+m.model.x = [5, 0];
+m.model.productProbability = .5;
 %% Test: Count instruments
-m = SimMarket(model);
 m.model.randomProducts = true;
 m.model.endog = true;
 m.demand = NLDemand;
 m.demand.var.nests = 'type';
-m.demand.alpha = .3;
+m.demand.alpha = 2;
 m.demand.sigma = 0.5;
+
 m.create()
-m.demand.data.nprod= m.demand.data.nprod(: , 1:3);
-display 'Estimate with count instruments'
+disp 'Estimate with count instruments'
 results = m.demand.estimate()
 
 %% Test: NLDemand
@@ -37,7 +39,6 @@ results = m.demand.estimate()
 display('2SLS estimate')
 % m.demand.var.instruments = 'nprod w';
 results = m.demand.estimate()
-
 
 m.findCosts(m.demand)
 mean(m.data.c)

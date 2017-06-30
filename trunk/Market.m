@@ -137,13 +137,16 @@ classdef Market < Estimate
 
         function R = estimateGMM(obj, theta)
             % Simultaneous 2SLS estimate of demand and costs over alpha
+            % obj.demand.residuals() calculates residuals after OLS,
+            % taking alpha and sigmas as gvien in theta, along the lines of
+            % BLP estimation.
             obj.data = obj.demand.data;
             obj.init();
             obj.demand.estimate();
             obj.findCosts();
             obj.y = obj.c;
             obj.estimate();
-            options = optimoptions(@fminunc, 'Algorithm', 'quasi-newton', 'MaxIter',50);
+            options = optimoptions(@fminunc, 'Display', 'iter' ,'Algorithm', 'quasi-newton', 'MaxIter',50);
             
             Z = [bsxfun(@times, obj.demand.Z, obj.demand.residuals(theta)), ...
                 bsxfun(@times, obj.X, obj.results.xi)];

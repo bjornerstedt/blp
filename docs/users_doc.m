@@ -355,6 +355,11 @@ m3.model.randomProducts = true;
 
 %%
 % We add a cost shifter |w| by specifying the |model.gamma| parameter.
+% Costs are calculated as:
+% obj.data.c = obj.data.constant * obj.model.c ...
+%     + obj.model.gamma * obj.data.w ...
+%     + randn(n, 1) * obj.model.eta;
+
 m3.model.gamma = 1;
 m3.create();
 dt3 = m3.data;
