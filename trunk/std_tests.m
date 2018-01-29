@@ -93,7 +93,7 @@ SimMarket.testSame(testVals, correctVals, 4);
 %% Test 5: RCDemand - rc_x
 display '**********************  Test 5  *************************'
 % demchoice = {RCDemand, RCDemand2};
-for i = 0:1
+for i = 0:0
     m = SimMarket();
     m.demand = RCDemand;
     m.demand.config.compiled = logical(i);

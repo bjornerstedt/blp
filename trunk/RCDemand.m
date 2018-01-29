@@ -359,7 +359,7 @@ classdef RCDemand < NLDemand
             obj.config.randstream = []; % random stream for estimation in parallel 
             obj.config.guessDelta = true;
             obj.config.hessian = false;
-            obj.config.compiled = true; % Use c++ code
+            obj.config.compiled = false; % Use c++ code
             obj.config.quietly = true;
             obj.results.estimateDescription = 'Random Coefficient Logit Demand'; 
             obj.results.sigma0 = []; 

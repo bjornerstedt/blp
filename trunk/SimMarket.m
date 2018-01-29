@@ -203,7 +203,7 @@ classdef SimMarket < matlab.mixin.Copyable
                 obj.model.markets, 1);
             
             % Create random x var:
-            x = mvnrnd(obj.model.x, obj.model.x_vcv, n);
+            x = mvnrnd(obj.model.x, diag(obj.model.x_vcv), n);
             % Create price var to satisfy demand.initAdditional
             obj.data.p = x(:, 1);
             x = x(:, 2:end);

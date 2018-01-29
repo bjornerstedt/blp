@@ -131,7 +131,8 @@ classdef Estimate  < matlab.mixin.Copyable
             switch lower(obj.settings.paneltype)
                 case 'lsdv'
                     if isempty(obj.lsdv) || isempty(selection)
-                        obj.lsdv = dummyvar(grp2idx(obj.data{:, panel } ));
+                 %       obj.lsdv = dummyvar(grp2idx(obj.data{:, panel } ));
+                        obj.lsdv = dummyvar(obj.data{:, panel } );
                         obj.lsdv = obj.lsdv(:, sum(obj.lsdv)~=0 );
                         if ~obj.settings.nocons
                             obj.lsdv = obj.lsdv(:, 2:end);
